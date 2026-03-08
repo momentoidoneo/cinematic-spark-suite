@@ -155,6 +155,24 @@ const ServicioFotografia = () => {
         </div>
       </section>
 
+      {/* Equipo image break */}
+      <section className="py-8 px-6">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <img
+              src={equipoImg}
+              alt="Equipo profesional de fotografía: cámara, objetivos, tarjetas de memoria y portátil"
+              className="rounded-2xl w-full h-auto object-cover aspect-[21/9]"
+              loading="lazy"
+            />
+          </motion.div>
+        </div>
+      </section>
+
       {/* Proceso de trabajo */}
       <section className="py-16 px-6">
         <div className="max-w-5xl mx-auto">
