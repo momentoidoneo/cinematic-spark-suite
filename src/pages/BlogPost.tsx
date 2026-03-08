@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { ArrowLeft, Calendar } from "lucide-react";
+import SEOHead, { blogPostSchema, breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
 
 interface BlogPost {
   title: string;
@@ -35,8 +36,33 @@ const BlogPost = () => {
     load();
   }, [slug]);
 
+  const siteUrl = getSiteUrl();
+
   return (
     <div className="min-h-screen bg-background">
+      {post && (
+        <SEOHead
+          title={`${post.title} | Silvio Costa Photography`}
+          description={post.excerpt || post.title}
+          canonical={`${siteUrl}/blog/${slug}`}
+          ogImage={post.cover_image || undefined}
+          ogType="article"
+          jsonLd={[
+            blogPostSchema({
+              title: post.title,
+              slug: slug || "",
+              excerpt: post.excerpt || undefined,
+              coverImage: post.cover_image || undefined,
+              publishedAt: post.published_at || undefined,
+            }),
+            breadcrumbSchema([
+              { name: "Inicio", url: siteUrl },
+              { name: "Blog", url: `${siteUrl}/blog` },
+              { name: post.title, url: `${siteUrl}/blog/${slug}` },
+            ]),
+          ]}
+        />
+      )}
       <Navbar />
       <main className="pt-28 pb-16 px-6">
         <div className="max-w-3xl mx-auto">
