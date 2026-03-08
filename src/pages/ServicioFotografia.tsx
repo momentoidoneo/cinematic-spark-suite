@@ -5,23 +5,22 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import { motion } from "framer-motion";
 import {
   Home, ShoppingBag, UtensilsCrossed, Sofa, Building2, Package,
-  Shirt, Building, Camera, Megaphone, CalendarDays, Boxes, CheckCircle2, ArrowRight
+  Shirt, Building, Camera, Megaphone, CalendarDays, Boxes, CheckCircle2, ArrowRight, Star, Users, Zap, Eye
 } from "lucide-react";
-import { Link } from "react-router-dom";
 
 const services = [
-  { icon: Home, title: "Arquitectura e interiores", desc: "Capturamos la esencia y el diseño de cualquier espacio arquitectónico con precisión profesional y composición cuidada." },
-  { icon: ShoppingBag, title: "Catálogo y e-commerce", desc: "Imágenes nítidas y atractivas que potencian tus ventas online y destacan cada detalle de tu producto." },
-  { icon: UtensilsCrossed, title: "Fotografía gastronómica", desc: "Hacemos que tus platos luzcan irresistibles con iluminación y estilismo profesional." },
-  { icon: Sofa, title: "Fotografía de interiores", desc: "Resaltamos la decoración y el ambiente de cualquier interior con perspectivas que enamoran." },
-  { icon: Building2, title: "Fotografía de arquitectura", desc: "Perspectivas únicas que destacan la majestuosidad y el carácter de las construcciones." },
-  { icon: Package, title: "Fotografía de producto", desc: "Detalles perfectos e iluminación controlada para que tus productos brillen en cualquier plataforma." },
-  { icon: Shirt, title: "Fotografía de moda", desc: "Editoriales y lookbooks con estilo, elegancia y las últimas tendencias visuales." },
-  { icon: Building, title: "Fotografía inmobiliaria", desc: "Imágenes profesionales que aceleran la venta o alquiler de propiedades destacando sus mejores atributos." },
-  { icon: Camera, title: "Fotografía aérea con dron", desc: "Vistas espectaculares desde el aire para ofrecer una perspectiva diferente e impactante." },
-  { icon: Megaphone, title: "Publicidad", desc: "Imágenes de alto impacto diseñadas para campañas publicitarias que generan resultados." },
-  { icon: CalendarDays, title: "Eventos", desc: "Cobertura completa y profesional de tus eventos más importantes, sin perder ningún momento." },
-  { icon: Boxes, title: "Renders 3D", desc: "Creación de imágenes fotorrealistas y modelado 3D para arquitectura, interiorismo y producto." },
+  { icon: Home, title: "Arquitectura e interiores", desc: "Capturamos la esencia y el diseño de cualquier espacio arquitectónico con precisión profesional y composición cuidada. Trabajamos con ópticas de alta gama para obtener líneas rectas y perspectivas impecables." },
+  { icon: ShoppingBag, title: "Catálogo y e-commerce", desc: "Imágenes nítidas y atractivas que potencian tus ventas online y destacan cada detalle de tu producto. Fondos neutros, packshots y fotografía lifestyle para tiendas online de alto rendimiento." },
+  { icon: UtensilsCrossed, title: "Fotografía gastronómica", desc: "Hacemos que tus platos luzcan irresistibles con iluminación y estilismo profesional. Ideal para cartas, redes sociales, plataformas de delivery y campañas publicitarias de restaurantes." },
+  { icon: Sofa, title: "Fotografía de interiores", desc: "Resaltamos la decoración y el ambiente de cualquier interior con perspectivas que enamoran. Capturamos la luz natural y artificial para transmitir la atmósfera única de cada espacio." },
+  { icon: Building2, title: "Fotografía de arquitectura", desc: "Perspectivas únicas que destacan la majestuosidad y el carácter de las construcciones. Fachadas, detalles constructivos y vistas panorámicas con equipos especializados." },
+  { icon: Package, title: "Fotografía de producto", desc: "Detalles perfectos e iluminación controlada para que tus productos brillen en cualquier plataforma. Desde joyería hasta mobiliario, adaptamos la técnica a cada tipo de producto." },
+  { icon: Shirt, title: "Fotografía de moda", desc: "Editoriales y lookbooks con estilo, elegancia y las últimas tendencias visuales. Sesiones en estudio o en exteriores con dirección artística profesional." },
+  { icon: Building, title: "Fotografía inmobiliaria", desc: "Imágenes profesionales que aceleran la venta o alquiler de propiedades destacando sus mejores atributos. Fotografía HDR, home staging virtual y planos de distribución." },
+  { icon: Camera, title: "Fotografía aérea con dron", desc: "Vistas espectaculares desde el aire para ofrecer una perspectiva diferente e impactante. Ideal para urbanizaciones, fincas, obras y proyectos de gran envergadura." },
+  { icon: Megaphone, title: "Publicidad", desc: "Imágenes de alto impacto diseñadas para campañas publicitarias que generan resultados. Conceptualización, producción y postproducción para medios impresos y digitales." },
+  { icon: CalendarDays, title: "Eventos", desc: "Cobertura completa y profesional de tus eventos más importantes, sin perder ningún momento. Desde conferencias corporativas hasta bodas y galas sociales." },
+  { icon: Boxes, title: "Renders 3D", desc: "Creación de imágenes fotorrealistas y modelado 3D para arquitectura, interiorismo y producto. Visualización de proyectos antes de su construcción con calidad cinematográfica." },
 ];
 
 const benefits = [
@@ -33,11 +32,18 @@ const benefits = [
   "Resultados en plazos garantizados",
 ];
 
+const processSteps = [
+  { icon: Users, title: "Briefing inicial", desc: "Analizamos tus necesidades, objetivos y el estilo visual que mejor representa tu marca. Definimos juntos el alcance del proyecto." },
+  { icon: Eye, title: "Planificación y producción", desc: "Preparamos la sesión con detalle: localización, iluminación, atrezo y dirección artística. Todo queda coordinado antes del día de la sesión." },
+  { icon: Camera, title: "Sesión fotográfica", desc: "Realizamos la captura con equipos profesionales, cuidando cada encuadre, la composición y la iluminación para obtener resultados excepcionales." },
+  { icon: Zap, title: "Postproducción y entrega", desc: "Selección, retoque profesional y optimización de las imágenes. Entrega en los formatos y resoluciones que necesites, listas para usar." },
+];
+
 const ServicioFotografia = () => {
   useEffect(() => {
     document.title = "Servicios de Fotografía Profesional | Silvio Costa";
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", "Servicios de fotografía profesional en Marbella: arquitectura, producto, moda, gastronomía, eventos y más. Imágenes que venden.");
+    if (meta) meta.setAttribute("content", "Servicios de fotografía profesional en Marbella: arquitectura, producto, moda, gastronomía, eventos y más. Más de 10 especialidades. Imágenes que venden.");
   }, []);
 
   return (
@@ -54,9 +60,40 @@ const ServicioFotografia = () => {
               Fotografía profesional<br />
               <span className="text-gradient-primary">que impulsa tu negocio</span>
             </h1>
-            <p className="text-muted-foreground text-lg md:text-xl max-w-2xl leading-relaxed">
+            <p className="text-muted-foreground text-lg md:text-xl max-w-2xl leading-relaxed mb-4">
               Más de 10 especialidades fotográficas para capturar la mejor imagen de tu marca, producto o proyecto. Calidad cinematográfica al servicio de tus objetivos comerciales.
             </p>
+            <p className="text-muted-foreground text-base max-w-2xl leading-relaxed">
+              En un mundo donde la imagen lo es todo, contar con fotografías profesionales marca la diferencia entre pasar desapercibido y destacar. Nuestro equipo combina creatividad, técnica y una profunda comprensión del mercado para crear imágenes que no solo se ven bien, sino que generan impacto real en tu audiencia y tus ventas.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Intro descriptiva */}
+      <section className="py-12 px-6">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-2xl bg-card border border-border/50 p-8 md:p-10"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <Star className="w-6 h-6 text-primary" />
+              <h2 className="font-display text-xl md:text-2xl font-bold text-foreground">¿Por qué invertir en fotografía profesional?</h2>
+            </div>
+            <div className="space-y-4 text-muted-foreground leading-relaxed">
+              <p>
+                Las estadísticas son claras: los contenidos con imágenes profesionales reciben hasta un <strong className="text-foreground">94% más de visitas</strong> que aquellos con imágenes genéricas o de baja calidad. En el sector inmobiliario, las propiedades con fotografía profesional se venden un <strong className="text-foreground">32% más rápido</strong>. En e-commerce, las imágenes de producto de calidad pueden incrementar la tasa de conversión hasta en un <strong className="text-foreground">40%</strong>.
+              </p>
+              <p>
+                No se trata solo de hacer fotos bonitas. Se trata de comunicar el valor de lo que ofreces, generar confianza en tu público y diferenciarte de la competencia. Cada imagen que producimos está pensada para cumplir un objetivo comercial concreto, ya sea vender una propiedad, lanzar un producto o posicionar tu marca.
+              </p>
+              <p>
+                Trabajamos en la Costa del Sol y toda España, adaptándonos a las particularidades de cada sector y cada cliente. Desde pequeños negocios locales hasta grandes promotoras inmobiliarias, nuestro compromiso con la excelencia visual es siempre el mismo.
+              </p>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -64,6 +101,15 @@ const ServicioFotografia = () => {
       {/* Services Grid */}
       <section className="py-16 px-6">
         <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-8"
+          >
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-2">Nuestras especialidades fotográficas</h2>
+            <p className="text-muted-foreground">Soluciones visuales profesionales para cada necesidad y sector.</p>
+          </motion.div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {services.map((s, i) => (
               <motion.div
@@ -82,6 +128,80 @@ const ServicioFotografia = () => {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Proceso de trabajo */}
+      <section className="py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-10"
+          >
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-2">Nuestro proceso de trabajo</h2>
+            <p className="text-muted-foreground">Un flujo profesional pensado para que obtengas los mejores resultados con total tranquilidad.</p>
+          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {processSteps.map((step, i) => (
+              <motion.div
+                key={step.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="flex gap-4 rounded-xl bg-card border border-border/50 p-6"
+              >
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-1">
+                  <step.icon className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-primary font-semibold mb-1">Paso {i + 1}</p>
+                  <h3 className="font-display text-lg font-semibold text-foreground mb-1">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Sectores */}
+      <section className="py-12 px-6">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-2xl bg-card border border-border/50 p-8 md:p-10"
+          >
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-6">Sectores en los que trabajamos</h2>
+            <div className="grid md:grid-cols-2 gap-6 text-muted-foreground leading-relaxed">
+              <div className="space-y-4">
+                <p>
+                  <strong className="text-foreground">Inmobiliario y construcción:</strong> Colaboramos con agencias, promotoras y arquitectos para presentar propiedades y proyectos con el máximo atractivo visual. Home staging, fotografía HDR y tomas aéreas para maximizar el impacto de cada inmueble.
+                </p>
+                <p>
+                  <strong className="text-foreground">Hostelería y gastronomía:</strong> Restaurantes, hoteles y resorts confían en nuestras imágenes para atraer huéspedes y comensales. Fotografía de platos, ambientes y experiencias que despiertan el deseo de visitar.
+                </p>
+                <p>
+                  <strong className="text-foreground">Moda y retail:</strong> Lookbooks, catálogos de temporada y contenido para redes sociales con estilo editorial. Cada sesión se planifica para transmitir la personalidad de la marca.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <p>
+                  <strong className="text-foreground">E-commerce y producto:</strong> Desde packshots sobre fondo blanco hasta fotografía lifestyle, producimos imágenes que aumentan la tasa de conversión de tu tienda online y reducen las devoluciones.
+                </p>
+                <p>
+                  <strong className="text-foreground">Eventos corporativos y sociales:</strong> Conferencias, inauguraciones, galas, bodas y celebraciones. Cobertura discreta y profesional que captura la esencia de cada momento.
+                </p>
+                <p>
+                  <strong className="text-foreground">Publicidad y marketing:</strong> Campañas para medios impresos y digitales con dirección artística, conceptualización y postproducción de alto nivel. Imágenes que comunican tu mensaje con fuerza.
+                </p>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -113,7 +233,7 @@ const ServicioFotografia = () => {
                   ¿Listo para dar el siguiente paso?
                 </h3>
                 <p className="text-muted-foreground mb-6">
-                  Solicita un presupuesto sin compromiso y descubre cómo podemos mejorar la imagen de tu proyecto.
+                  Solicita un presupuesto sin compromiso y descubre cómo podemos mejorar la imagen de tu proyecto. Te respondemos en menos de 24 horas con una propuesta personalizada.
                 </p>
                 <a
                   href="/#contacto"
