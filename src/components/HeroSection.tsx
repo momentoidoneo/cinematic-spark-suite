@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Camera, Plane, Globe, Video, PartyPopper, Boxes } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroBg from "@/assets/hero-bg.jpg";
+import logo from "@/assets/logo.png";
 
 const services = [
   { icon: Camera, label: "FOTOGRAFÍA", href: "/servicios/fotografia" },
@@ -25,6 +26,16 @@ const HeroSection = () => {
 
       {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-20 text-center">
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8 }}
+          className="mb-8"
+        >
+          <img src={logo} alt="Silvio Costa Photography" className="h-28 md:h-36 lg:h-44 w-auto mx-auto drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]" />
+        </motion.div>
+
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}

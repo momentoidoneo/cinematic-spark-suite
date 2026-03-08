@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
           <div>
-            <img src={logo} alt="Silvio Costa Photography" className="h-16 w-auto mb-4" />
+            <img src={logo} alt="Silvio Costa Photography" className="h-24 w-auto mb-4" />
             <p className="text-sm text-muted-foreground leading-relaxed">
               Elevando la fotografía a una experiencia cinematográfica. Capturando la esencia de cada momento con una estética premium y atención al detalle.
             </p>
