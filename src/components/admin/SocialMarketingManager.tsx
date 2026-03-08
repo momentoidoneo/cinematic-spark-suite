@@ -926,7 +926,7 @@ function VideoTab() {
     if (!thumbPrompt) return toast.error("Escribe un prompt para la miniatura");
     setIsGeneratingThumb(true);
     try {
-      const { data, error } = await supabase.functions.invoke("runware-image", {
+    const { data, error } = await supabase.functions.invoke("generate-thumbnail", {
         body: { prompt: thumbPrompt, width: thumbWidth, height: thumbHeight, numberResults: 2 },
       });
       if (error) throw error;
