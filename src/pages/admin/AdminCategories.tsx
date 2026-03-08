@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, SortAsc, SortDesc, ChevronUp, ChevronDown, Upload, ImageIcon, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, SortAsc, SortDesc, ChevronUp, ChevronDown, Upload, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
+import CoverGenerator from "@/components/admin/CoverGenerator";
 
 type Category = {
   id: string; name: string; slug: string; description: string | null;
@@ -22,7 +23,7 @@ const AdminCategories = () => {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("order");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [generatingCovers, setGeneratingCovers] = useState(false);
+  
 
   const fetchCategories = async () => {
     const { data } = await supabase.from("portfolio_categories").select("*").order("order");
@@ -119,36 +120,17 @@ const AdminCategories = () => {
 
   const missingCovers = categories.filter(c => !c.cover_image).length;
 
-  const handleGenerateCovers = async () => {
-    setGeneratingCovers(true);
-    toast.info("Generando portadas de categorías con IA… esto puede tardar unos minutos.");
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-covers", { body: { type: "category" } });
-      if (error) throw error;
-      toast.success(data?.message || "Portadas generadas");
-      fetchCategories();
-    } catch (e: any) {
-      toast.error("Error generando portadas: " + (e.message || "desconocido"));
-    } finally {
-      setGeneratingCovers(false);
-    }
-  };
-
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Categorías del Portafolio</h1>
         <div className="flex items-center gap-2">
-          {missingCovers > 0 && (
-            <button
-              onClick={handleGenerateCovers}
-              disabled={generatingCovers}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm font-semibold hover:bg-secondary/80 transition-colors disabled:opacity-50"
-            >
-              {generatingCovers ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-primary" />}
-              Generar {missingCovers} portadas con IA
-            </button>
-          )}
+          <CoverGenerator
+            type="category"
+            missingCount={missingCovers}
+            totalCount={categories.length}
+            onComplete={fetchCategories}
+          />
           <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
             <Plus className="w-4 h-4" /> Nueva Categoría
           </button>
