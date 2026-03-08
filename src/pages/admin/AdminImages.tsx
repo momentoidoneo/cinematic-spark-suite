@@ -44,6 +44,13 @@ const AdminImages = () => {
   };
 
   useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    // Auto-set category filter when subcategory comes from URL
+    if (filterSub && subcategories.length > 0 && !filterCat) {
+      const sub = subcategories.find(s => s.id === filterSub);
+      if (sub) setFilterCat(sub.category_id);
+    }
+  }, [filterSub, subcategories]);
   useEffect(() => { fetchImages(); }, [filterSub]);
 
   const filteredSubs = filterCat ? subcategories.filter(s => s.category_id === filterCat) : subcategories;
