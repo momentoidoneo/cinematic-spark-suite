@@ -140,8 +140,7 @@ const AdminSubcategories = () => {
         <div className="flex items-center gap-2">
           <CoverGenerator
             type="subcategory"
-            missingCount={missingCovers}
-            totalCount={subcategories.length}
+            items={subcategories.map(s => ({ id: s.id, name: s.name, cover_image: s.cover_image, categoryName: s.portfolio_categories?.name }))}
             onComplete={fetchData}
           />
           <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">

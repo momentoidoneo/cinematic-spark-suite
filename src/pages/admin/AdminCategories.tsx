@@ -127,8 +127,7 @@ const AdminCategories = () => {
         <div className="flex items-center gap-2">
           <CoverGenerator
             type="category"
-            missingCount={missingCovers}
-            totalCount={categories.length}
+            items={categories.map(c => ({ id: c.id, name: c.name, cover_image: c.cover_image }))}
             onComplete={fetchCategories}
           />
           <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
