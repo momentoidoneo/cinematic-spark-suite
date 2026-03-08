@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link, LayoutGrid, Columns, GalleryHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import GalleryGenerator from "@/components/admin/GalleryGenerator";
 
 type Category = { id: string; name: string };
 type Subcategory = { id: string; category_id: string; name: string; gallery_style: string | null };
