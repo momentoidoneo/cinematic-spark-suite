@@ -146,7 +146,7 @@ const ServicesSection = () => {
         {/* Video */}
         <div id="video">
           <SectionBanner
-            image={servicioVideoHero}
+            image={bannerVideo}
             alt="Producción de video profesional"
             title="Producción Audiovisual"
             subtitle="Vídeos corporativos, spots publicitarios, cobertura de eventos y contenido para redes sociales con calidad cinematográfica."
