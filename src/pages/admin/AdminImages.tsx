@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link } from "lucide-react";
+import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link, LayoutGrid, Columns, GalleryHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
 type Category = { id: string; name: string };
@@ -186,7 +186,7 @@ const AdminImages = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-6">
         <select value={filterCat} onChange={(e) => { setFilterCat(e.target.value); setFilterSub(""); }} className="px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm">
           <option value="">Todas las categorías</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -196,6 +196,39 @@ const AdminImages = () => {
           {filteredSubs.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </div>
+
+      {/* Gallery style selector */}
+      {filterSub && (() => {
+        const currentSub = subcategories.find(s => s.id === filterSub);
+        if (!currentSub) return null;
+        const currentStyle = currentSub.gallery_style || "grid";
+        const styles = [
+          { value: "grid", label: "Grid", icon: <LayoutGrid className="w-4 h-4" /> },
+          { value: "masonry", label: "Masonry", icon: <Columns className="w-4 h-4" /> },
+          { value: "carousel", label: "Carousel", icon: <GalleryHorizontal className="w-4 h-4" /> },
+        ];
+        const handleStyleChange = async (style: string) => {
+          await supabase.from("portfolio_subcategories").update({ gallery_style: style }).eq("id", filterSub);
+          setSubcategories(prev => prev.map(s => s.id === filterSub ? { ...s, gallery_style: style } : s));
+          toast.success("Estilo de galería actualizado");
+        };
+        return (
+          <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-secondary/50 border border-border">
+            <span className="text-sm font-medium text-muted-foreground">Estilo de galería:</span>
+            <div className="flex gap-1">
+              {styles.map(s => (
+                <button
+                  key={s.value}
+                  onClick={() => handleStyleChange(s.value)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${currentStyle === s.value ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground border border-border"}`}
+                >
+                  {s.icon} {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Content Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
