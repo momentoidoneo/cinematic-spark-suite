@@ -15,6 +15,7 @@ type SortKey = "name" | "category" | "order" | "gallery_style";
 type SortDir = "asc" | "desc";
 
 const AdminSubcategories = () => {
+  const navigate = useNavigate();
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filterCat, setFilterCat] = useState("");
