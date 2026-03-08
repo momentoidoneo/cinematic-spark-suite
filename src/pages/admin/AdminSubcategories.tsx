@@ -151,8 +151,8 @@ const AdminSubcategories = () => {
           </thead>
           <tbody>
             {filtered.map((s, idx) => (
-              <tr key={s.id} className="border-t border-border hover:bg-secondary/20">
-                <td className="px-4 py-3 text-foreground font-medium">{s.name}</td>
+              <tr key={s.id} className="border-t border-border hover:bg-secondary/20 cursor-pointer" onClick={() => navigate(`/admin/images?subcategory=${s.id}`)}>
+                <td className="px-4 py-3 text-foreground font-medium flex items-center gap-2">{s.name} <Eye className="w-3.5 h-3.5 text-muted-foreground" /></td>
                 <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">{(s as any).portfolio_categories?.name}</span></td>
                 <td className="px-4 py-3 text-muted-foreground truncate max-w-[200px]">{s.description || "—"}</td>
                 <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full bg-secondary text-muted-foreground text-xs">{galleryLabels[s.gallery_style || "grid"] || s.gallery_style}</span></td>
