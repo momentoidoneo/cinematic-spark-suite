@@ -360,6 +360,37 @@ const AdminImages = () => {
           </div>
         </div>
       )}
+
+      {/* Lightbox */}
+      {lightboxIdx !== null && images[lightboxIdx] && (
+        <div className="fixed inset-0 z-50 bg-background/90 flex items-center justify-center" onClick={() => setLightboxIdx(null)}>
+          <button onClick={() => setLightboxIdx(null)} className="absolute top-4 right-4 p-2 rounded-full bg-secondary text-foreground hover:bg-secondary/80 z-10">
+            <X className="w-6 h-6" />
+          </button>
+          {lightboxIdx > 0 && (
+            <button onClick={(e) => { e.stopPropagation(); setLightboxIdx(lightboxIdx - 1); }} className="absolute left-4 p-2 rounded-full bg-secondary text-foreground hover:bg-secondary/80 z-10">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          )}
+          {lightboxIdx < images.length - 1 && (
+            <button onClick={(e) => { e.stopPropagation(); setLightboxIdx(lightboxIdx + 1); }} className="absolute right-4 p-2 rounded-full bg-secondary text-foreground hover:bg-secondary/80 z-10">
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          )}
+          <div className="max-w-[90vw] max-h-[85vh] flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
+            {images[lightboxIdx].media_type === "image" ? (
+              <img src={images[lightboxIdx].image_url} alt={images[lightboxIdx].alt_text || ""} className="max-w-full max-h-[80vh] object-contain rounded-lg" />
+            ) : images[lightboxIdx].media_type === "video" ? (
+              <video src={images[lightboxIdx].video_url || images[lightboxIdx].image_url} controls className="max-w-full max-h-[80vh] rounded-lg" />
+            ) : (
+              <iframe src={images[lightboxIdx].video_url || ""} className="w-[80vw] h-[75vh] rounded-lg border-0" allowFullScreen />
+            )}
+            {images[lightboxIdx].title && (
+              <p className="text-sm text-muted-foreground">{images[lightboxIdx].title}</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
