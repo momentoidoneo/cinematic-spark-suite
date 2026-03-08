@@ -29,6 +29,7 @@ const videoServices = [
   { icon: PartyPopper, title: "Videos de eventos", desc: "Resúmenes y coberturas completas de tus eventos más destacados." },
   { icon: Clapperboard, title: "Vídeos sociales", desc: "Contenido optimizado y atractivo para tus redes sociales." },
   { icon: Clock, title: "Timelapse de larga duración", desc: "Documenta la evolución de proyectos a lo largo del tiempo." },
+  { icon: Tv, title: "Streaming", desc: "Transmisiones en directo con calidad profesional para eventos, conferencias y más." },
 ];
 
 const dronServices = [
