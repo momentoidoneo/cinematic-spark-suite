@@ -23,6 +23,8 @@ const AdminPromotions = () => {
   const [editing, setEditing] = useState<Promotion | null>(null);
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     title: "", description: "", discount_type: "percentage", discount_value: "",
     code: "", cover_image: "", is_active: true, starts_at: "", ends_at: "",
