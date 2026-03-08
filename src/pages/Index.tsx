@@ -5,6 +5,7 @@ import MatterportSection from "@/components/MatterportSection";
 import PortfolioSection from "@/components/PortfolioSection";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 const Index = () => {
   return (
@@ -16,6 +17,7 @@ const Index = () => {
       <PortfolioSection />
       <CTASection />
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };
