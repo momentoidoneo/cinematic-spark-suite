@@ -253,10 +253,6 @@ const AdminImages = () => {
                 <Star className="w-3 h-3 text-accent-foreground" />
               </div>
             )}
-            {img.title && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/80 to-transparent p-2">
-                <p className="text-xs text-foreground truncate">{img.title}</p>
-              </div>
             )}
           </div>
         ))}
