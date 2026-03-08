@@ -253,7 +253,6 @@ const AdminImages = () => {
                 <Star className="w-3 h-3 text-accent-foreground" />
               </div>
             )}
-            )}
           </div>
         ))}
         {images.length === 0 && (
