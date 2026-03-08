@@ -2,7 +2,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Globe, Monitor, Zap, MapPin, Smartphone, Euro } from "lucide-react";
 import matterportTour from "@/assets/blog-matterport-tour.jpg";
-import portfolioTour from "@/assets/portfolio-tour.jpg";
+import streetviewImg from "@/assets/matterport-streetview.jpg";
 
 const features = [
   { icon: Monitor, title: "Calidad 8K HD", desc: "Resolución ultra alta para apreciar cada detalle del espacio con total nitidez." },
@@ -85,7 +85,7 @@ const MatterportSection = () => {
         >
           <div className="relative w-full md:w-2/5 min-h-[200px]">
             <img
-              src={portfolioTour}
+              src={streetviewImg}
               alt="Tour virtual integrado en Google Street View"
               title=""
               className="absolute inset-0 w-full h-full object-cover"
