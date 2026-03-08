@@ -153,8 +153,6 @@ const Navbar = () => {
           </Link>
         </div>
 
-        {/* Spacer for mobile to balance layout */}
-        <div className="w-6 md:hidden" />
       </div>
 
       {/* Mobile menu */}
