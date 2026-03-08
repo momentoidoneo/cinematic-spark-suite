@@ -135,7 +135,7 @@ const Portfolio = () => {
 
         {/* Step 1: Categories */}
         {!selectedCat && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 [&>*:last-child:nth-child(3n+1)]:col-start-2 [&>*:last-child:nth-child(3n+1)]:lg:col-start-2">
             {categories.map((cat, i) => (
               <motion.button
                 key={cat.id}
