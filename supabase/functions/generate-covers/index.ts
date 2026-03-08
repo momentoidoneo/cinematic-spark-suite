@@ -6,48 +6,48 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const prompts: Record<string, string> = {
-  // Fotografía
-  "Real Estate": "Professional real estate photography of a modern luxury villa interior, bright natural light, wide angle, HDR style, warm tones, magazine quality",
-  "Eventos": "Professional event photography, elegant gala dinner with ambient lighting, candid moments, warm golden tones, bokeh background",
-  "Deportiva": "Dynamic sports photography, athlete in action, frozen motion, dramatic lighting, high contrast, professional stadium",
-  "Producto": "Clean product photography, premium item on minimal background, studio lighting, sharp details, commercial quality",
-  "Publicidad": "Creative advertising photography, bold composition, vibrant colors, high-end commercial production, dramatic lighting",
-  "Retrato": "Professional portrait photography, studio lighting, shallow depth of field, warm skin tones, elegant and natural expression",
-  "Moda": "High fashion editorial photography, model in designer clothing, dramatic pose, studio lighting, magazine cover quality",
-  "Life Style": "Lifestyle photography, authentic candid moment, natural light, warm colors, people enjoying everyday luxury",
-  "Fotografía Social": "Social event photography, people celebrating at an elegant party, warm ambient lighting, candid joyful moments",
-  "Fotografía 360": "360 degree panoramic photography equipment setup, immersive virtual reality photography, modern tech, futuristic feel",
-  // Dron
-  "Fotografía aérea": "Stunning aerial drone photography of Mediterranean coastline with luxury properties, golden hour, breathtaking bird eye view",
-  // Dron > Video
-  "Dron_Video": "Cinematic aerial drone video shot over a modern city at sunset, smooth motion, 4K quality, warm golden light",
-  "Fotogrametría": "Photogrammetry 3D mapping from drone, digital elevation model of terrain, technical yet visually striking, topographic colors",
-  "Inspecciones": "Drone inspection of a tall building facade, close-up industrial inspection, professional technical photography, safety theme",
-  // Tours Virtuales
-  "Matterport": "Matterport 3D virtual tour of a luxury modern apartment, dollhouse view, immersive technology, clean architectural lines",
-  "Renders": "Photorealistic 3D architectural render of a modern building, exterior visualization, dramatic sky, professional CGI quality",
-  // Video
-  "Video_Real Estate": "Professional real estate videography, gimbal shot through luxury home, cinematic warm lighting, smooth camera movement",
-  "Video_Publicidad": "Professional advertising video production set, cinema camera, dramatic lighting, creative commercial production",
-  "Podcast": "Professional podcast studio setup, microphones, acoustic panels, warm ambient lighting, modern minimalist design",
-  "Timelapse de larga duración": "Long duration timelapse of a construction project, day to night transition, dramatic clouds, progress documentation",
-  "Video_Eventos": "Professional event videography, multicamera setup at corporate conference, cinematic quality, warm stage lighting",
-  "Video_Producto": "Product video production, smooth turntable rotation, studio lighting, premium commercial quality, macro details",
-  "Deporte": "Dynamic sports videography, action camera following athlete, motion blur, cinematic slow motion, dramatic lighting",
-  "Streaming": "Professional live streaming setup, multiple cameras, mixing console, broadcast monitors, modern production studio",
-  // Eventos
-  "Eventos_Streaming": "Live event streaming production, professional broadcast cameras, stage with LED screens, corporate event atmosphere",
-  "Eventos_Fotografía": "Event photography coverage, photographer capturing keynote speaker on stage, professional equipment, dynamic angle",
-  "Eventos_Video": "Event video production, cinema camera on dolly tracking speakers at conference, professional broadcast quality",
-  "Sonido": "Professional sound engineering at live event, mixing console, speakers, audio equipment, concert atmosphere, warm lighting",
-  // Renders
-  "Renders 3D": "Stunning photorealistic 3D render of a modern architectural project, interior visualization, dramatic lighting, CGI masterpiece",
+const defaultPrompts: Record<string, string> = {
+  "Real Estate": "Professional real estate photography of a modern luxury villa interior, bright natural light, wide angle, HDR style, warm tones",
+  "Eventos": "Professional event photography, elegant gala dinner with ambient lighting, candid moments, warm golden tones",
+  "Deportiva": "Dynamic sports photography, athlete in action, frozen motion, dramatic lighting, high contrast",
+  "Producto": "Clean product photography, premium item on minimal background, studio lighting, sharp details",
+  "Publicidad": "Creative advertising photography, bold composition, vibrant colors, high-end commercial production",
+  "Retrato": "Professional portrait photography, studio lighting, shallow depth of field, warm skin tones",
+  "Moda": "High fashion editorial photography, model in designer clothing, dramatic pose, studio lighting",
+  "Life Style": "Lifestyle photography, authentic candid moment, natural light, warm colors",
+  "Fotografía Social": "Social event photography, people celebrating at an elegant party, warm ambient lighting",
+  "Fotografía 360": "360 degree panoramic photography equipment, immersive virtual reality photography, futuristic feel",
+  "Fotografía aérea": "Stunning aerial drone photography of Mediterranean coastline, golden hour, bird eye view",
+  "Dron_Video": "Cinematic aerial drone video over a modern city at sunset, smooth motion, warm golden light",
+  "Fotogrametría": "Photogrammetry 3D mapping from drone, digital elevation model, topographic colors",
+  "Inspecciones": "Drone inspection of a tall building facade, industrial inspection, technical photography",
+  "Matterport": "Matterport 3D virtual tour of a luxury apartment, dollhouse view, immersive technology",
+  "Renders": "Photorealistic 3D architectural render, exterior visualization, dramatic sky",
+  "Video_Real Estate": "Professional real estate videography, gimbal shot through luxury home, cinematic lighting",
+  "Video_Publicidad": "Professional advertising video production set, cinema camera, dramatic lighting",
+  "Podcast": "Professional podcast studio setup, microphones, acoustic panels, warm ambient lighting",
+  "Timelapse de larga duración": "Long duration timelapse of construction project, day to night transition",
+  "Video_Eventos": "Professional event videography, multicamera setup at corporate conference",
+  "Video_Producto": "Product video production, smooth turntable rotation, studio lighting, macro details",
+  "Deporte": "Dynamic sports videography, action camera following athlete, cinematic slow motion",
+  "Streaming": "Professional live streaming setup, multiple cameras, mixing console, broadcast monitors",
+  "Eventos_Streaming": "Live event streaming production, professional broadcast cameras, LED screens",
+  "Eventos_Fotografía": "Event photography coverage, photographer capturing keynote speaker, professional equipment",
+  "Eventos_Video": "Event video production, cinema camera on dolly tracking speakers",
+  "Sonido": "Professional sound engineering at live event, mixing console, speakers, concert atmosphere",
+  "Renders 3D": "Stunning photorealistic 3D render of a modern architectural project, interior visualization",
 };
 
-// Map subcategory id+name+category to the right prompt key
+const categoryPrompts: Record<string, string> = {
+  "Fotografía": "Professional photography studio with cameras, lenses, and lighting equipment, warm ambient light",
+  "Dron": "Professional drone flying over stunning Mediterranean coastline at golden hour, aerial perspective",
+  "Tours Virtuales": "Immersive 3D virtual tour technology, Matterport camera scanning a luxury interior",
+  "Video": "Professional cinema camera on gimbal rig, film production set with dramatic lighting",
+  "Eventos": "Grand corporate event with professional stage setup, LED screens, dramatic lighting",
+  "Renders": "Stunning photorealistic 3D architectural visualization, modern building exterior at sunset",
+};
+
 function getPromptKey(name: string, categoryName: string): string {
-  // Handle duplicates across categories
   if (categoryName === "Dron" && name === "Video") return "Dron_Video";
   if (categoryName === "Video" && name === "Real Estate") return "Video_Real Estate";
   if (categoryName === "Video" && name === "Publicidad") return "Video_Publicidad";
@@ -59,32 +59,33 @@ function getPromptKey(name: string, categoryName: string): string {
   return name;
 }
 
-const categoryPrompts: Record<string, string> = {
-  "Fotografía": "Professional photography studio with multiple cameras, lenses, and lighting equipment, warm ambient light, elegant workspace, magazine quality",
-  "Dron": "Professional drone flying over stunning Mediterranean coastline at golden hour, aerial perspective, cinematic wide shot, breathtaking landscape",
-  "Tours Virtuales": "Immersive 3D virtual tour technology, Matterport camera scanning a luxury interior, futuristic visualization, clean modern aesthetic",
-  "Video": "Professional cinema camera on gimbal rig, film production set with dramatic lighting, cinematic atmosphere, high-end equipment",
-  "Eventos": "Grand corporate event with professional stage setup, LED screens, dramatic lighting, audience silhouettes, broadcast quality production",
-  "Renders": "Stunning photorealistic 3D architectural visualization, modern building exterior at sunset, CGI masterpiece, dramatic sky and reflections",
-};
+function buildPrompt(item: any, type: "category" | "subcategory", styleHint?: string): string {
+  let base: string;
+  if (type === "category") {
+    base = categoryPrompts[item.name] || `Professional ${item.name} service, cinematic lighting`;
+  } else {
+    const catName = item.portfolio_categories?.name || "";
+    const key = getPromptKey(item.name, catName);
+    base = defaultPrompts[key] || `Professional photography of ${item.name}, cinematic lighting`;
+  }
+
+  if (styleHint) {
+    return `${base}. Style: ${styleHint}`;
+  }
+  return base;
+}
 
 async function generateCoversForItems(
   supabase: any,
   LOVABLE_API_KEY: string,
   items: any[],
-  type: "subcategory" | "category"
+  type: "subcategory" | "category",
+  styleHint?: string,
 ) {
   const results: { id: string; name: string; status: string }[] = [];
 
   for (const item of items) {
-    let prompt: string;
-    if (type === "category") {
-      prompt = categoryPrompts[item.name] || `Professional ${item.name} service, high quality, cinematic lighting, wide 16:9, magazine quality`;
-    } else {
-      const catName = (item as any).portfolio_categories?.name || "";
-      const promptKey = getPromptKey(item.name, catName);
-      prompt = prompts[promptKey] || `Professional photography of ${item.name}, high quality, cinematic lighting, magazine quality`;
-    }
+    const prompt = buildPrompt(item, type, styleHint);
 
     try {
       console.log(`Generating ${type} cover for: ${item.name}`);
@@ -114,7 +115,6 @@ async function generateCoversForItems(
       const imageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
       if (!imageUrl || !imageUrl.startsWith("data:image")) {
-        console.error(`No image returned for ${item.name}`);
         results.push({ id: item.id, name: item.name, status: "no image returned" });
         continue;
       }
@@ -137,8 +137,10 @@ async function generateCoversForItems(
       }
 
       const { data: urlData } = supabase.storage.from("portfolio").getPublicUrl(filePath);
+      // Add cache buster to force refresh
+      const publicUrl = urlData.publicUrl + `?t=${Date.now()}`;
       const table = type === "category" ? "portfolio_categories" : "portfolio_subcategories";
-      await supabase.from(table).update({ cover_image: urlData.publicUrl }).eq("id", item.id);
+      await supabase.from(table).update({ cover_image: publicUrl }).eq("id", item.id);
 
       results.push({ id: item.id, name: item.name, status: "ok" });
       console.log(`✓ ${item.name}`);
@@ -164,31 +166,37 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const type: "subcategory" | "category" = body.type === "category" ? "category" : "subcategory";
+    const regenerateAll: boolean = body.regenerate === true;
+    const specificIds: string[] | undefined = body.ids;
+    const styleHint: string | undefined = body.style;
 
     let items: any[];
-    if (type === "category") {
-      const { data, error } = await supabase
-        .from("portfolio_categories")
-        .select("id, name, cover_image")
-        .is("cover_image", null);
+    const table = type === "category" ? "portfolio_categories" : "portfolio_subcategories";
+    const selectCols = type === "category"
+      ? "id, name, cover_image"
+      : "id, name, cover_image, portfolio_categories(name)";
+
+    if (specificIds && specificIds.length > 0) {
+      const { data, error } = await supabase.from(table).select(selectCols).in("id", specificIds);
+      if (error) throw error;
+      items = data || [];
+    } else if (regenerateAll) {
+      const { data, error } = await supabase.from(table).select(selectCols);
       if (error) throw error;
       items = data || [];
     } else {
-      const { data, error } = await supabase
-        .from("portfolio_subcategories")
-        .select("id, name, cover_image, portfolio_categories(name)")
-        .is("cover_image", null);
+      const { data, error } = await supabase.from(table).select(selectCols).is("cover_image", null);
       if (error) throw error;
       items = data || [];
     }
 
     if (items.length === 0) {
-      return new Response(JSON.stringify({ message: `All ${type === "category" ? "categories" : "subcategories"} already have covers`, generated: 0 }), {
+      return new Response(JSON.stringify({ message: "No items to generate covers for", generated: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const results = await generateCoversForItems(supabase, LOVABLE_API_KEY, items, type);
+    const results = await generateCoversForItems(supabase, LOVABLE_API_KEY, items, type, styleHint);
     const generated = results.filter(r => r.status === "ok").length;
 
     return new Response(JSON.stringify({ message: `Generated ${generated}/${items.length} covers`, results }), {
