@@ -372,16 +372,13 @@ const AdminImages = () => {
               <ChevronRight className="w-6 h-6" />
             </button>
           )}
-          <div className="max-w-[90vw] max-h-[85vh] flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
+          <div className="max-w-[90vw] max-h-[85vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
             {images[lightboxIdx].media_type === "image" ? (
-              <img src={images[lightboxIdx].image_url} alt={images[lightboxIdx].alt_text || ""} className="max-w-full max-h-[80vh] object-contain rounded-lg" />
+              <img src={images[lightboxIdx].image_url} alt={images[lightboxIdx].alt_text || ""} className="max-w-full max-h-[80vh] object-contain rounded-lg select-none pointer-events-auto" draggable={false} onContextMenu={(e) => e.preventDefault()} />
             ) : images[lightboxIdx].media_type === "video" ? (
-              <video src={images[lightboxIdx].video_url || images[lightboxIdx].image_url} controls className="max-w-full max-h-[80vh] rounded-lg" />
+              <video src={images[lightboxIdx].video_url || images[lightboxIdx].image_url} controls controlsList="nodownload" className="max-w-full max-h-[80vh] rounded-lg" onContextMenu={(e) => e.preventDefault()} />
             ) : (
               <iframe src={images[lightboxIdx].video_url || ""} className="w-[80vw] h-[75vh] rounded-lg border-0" allowFullScreen />
-            )}
-            {images[lightboxIdx].title && (
-              <p className="text-sm text-muted-foreground">{images[lightboxIdx].title}</p>
             )}
           </div>
         </div>
