@@ -26,6 +26,7 @@ const AdminImages = () => {
   const [mediaMode, setMediaMode] = useState<MediaMode>("image");
   const [uploadForm, setUploadForm] = useState({ subcategory_id: "", title: "", alt_text: "", video_url: "", thumbnail_url: "" });
   const fileRef = useRef<HTMLInputElement>(null);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   const fetchData = async () => {
     const [{ data: cats }, { data: subs }] = await Promise.all([
