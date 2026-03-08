@@ -60,6 +60,7 @@ const App = () => (
               <Route path="legal" element={<AdminLegalTexts />} />
               <Route path="social" element={<AdminSocialMedia />} />
               <Route path="api-keys" element={<AdminApiKeys />} />
+              <Route path="landing" element={<AdminLanding />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

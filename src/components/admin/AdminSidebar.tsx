@@ -37,6 +37,7 @@ const whatsappItems = [
 ];
 
 const settingsItems = [
+  { title: "Landing Page", url: "/admin/landing", icon: Monitor },
   { title: "Textos Legales", url: "/admin/legal", icon: Scale },
   { title: "Redes Sociales", url: "/admin/social", icon: Share2 },
   { title: "API Keys", url: "/admin/api-keys", icon: Key },
