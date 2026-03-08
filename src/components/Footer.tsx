@@ -1,7 +1,50 @@
-import { Mail, Phone, MessageCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Mail, Phone, MessageCircle, Instagram, Facebook, Youtube, Linkedin, Twitter, Globe, Send, Pin, Video, Music, Camera, Twitch } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 
+interface SocialLink {
+  id: string;
+  platform: string;
+  url: string;
+  label: string | null;
+  is_active: boolean;
+}
+
+const socialIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  instagram: Instagram,
+  facebook: Facebook,
+  youtube: Youtube,
+  linkedin: Linkedin,
+  twitter: Twitter,
+  tiktok: Music,
+  pinterest: Pin,
+  threads: MessageCircle,
+  vimeo: Video,
+  whatsapp: MessageCircle,
+  telegram: Send,
+  snapchat: Camera,
+  twitch: Twitch,
+  behance: Globe,
+  dribbble: Globe,
+  flickr: Camera,
+  website: Globe,
+};
+
 const Footer = () => {
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("social_links")
+      .select("id, platform, url, label, is_active")
+      .eq("is_active", true)
+      .order("order")
+      .then(({ data }) => {
+        if (data) setSocialLinks(data);
+      });
+  }, []);
+
   return (
     <footer id="contacto" className="border-t border-border bg-card/50 pt-16 pb-8 px-6">
       <div className="max-w-7xl mx-auto">
@@ -12,6 +55,25 @@ const Footer = () => {
             <p className="text-sm text-muted-foreground leading-relaxed">
               Elevando la fotografía a una experiencia cinematográfica. Capturando la esencia de cada momento con una estética premium y atención al detalle.
             </p>
+            {socialLinks.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {socialLinks.map((link) => {
+                  const Icon = socialIconMap[link.platform] || Globe;
+                  return (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={link.label || link.platform}
+                      className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/50 hover:scale-110 transition-all duration-300"
+                    >
+                      <Icon className="w-4 h-4" />
+                    </a>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Nav */}
