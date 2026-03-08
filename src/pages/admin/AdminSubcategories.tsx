@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, ChevronUp, ChevronDown, SortAsc, Eye, Upload, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, ChevronUp, ChevronDown, SortAsc, Eye, Upload, ImageIcon, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Category = { id: string; name: string };
