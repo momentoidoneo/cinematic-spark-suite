@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Calendar, Sparkles, FolderOpen, BarChart3, Plus, Trash2, Send,
