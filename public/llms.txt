@@ -1,0 +1,54 @@
+# Silvio Costa Photography
+
+> Servicios profesionales de fotografía, vídeo, dron y tours virtuales 360° en España y Portugal.
+
+## Sobre Nosotros
+
+Silvio Costa Photography es un estudio de producción audiovisual profesional que ofrece servicios de fotografía, vídeo corporativo, grabación con drones y tours virtuales 360° con tecnología Matterport Pro3. Operamos en toda España y Portugal, con especialización en contenido visual de alta calidad para inmobiliarias, arquitectura, hostelería, eventos y empresas.
+
+## Servicios
+
+### Fotografía Profesional
+- Fotografía inmobiliaria y de arquitectura
+- Fotografía de producto y gastronomía
+- Fotografía de moda y retrato corporativo
+- Fotografía de eventos y bodas
+- Fotografía aérea con dron
+- Fotografía industrial y corporativa
+
+### Vídeo Profesional y Dron
+- Vídeo corporativo y publicitario
+- Grabación aérea con drones profesionales (4K)
+- Streaming en directo de eventos
+- Fotogrametría y modelado 3D
+- Timelapse y hyperlapse
+- Vídeo de eventos y bodas
+
+### Tours Virtuales 360° y Matterport
+- Tours virtuales 360° con Matterport Pro3
+- Gemelos digitales de espacios
+- Planos de planta precisos
+- Medición de espacios
+- Integración con Google Street View
+- Tours virtuales para inmobiliarias, hoteles y comercios
+
+## Contacto
+
+- Teléfono: +34 640 934 640
+- Email: silvio@silviocosta.net
+- Web: https://cinematic-spark-suite.lovable.app
+- Zona de servicio: España y Portugal
+
+## Horario
+
+Lunes a Viernes: 09:00 - 20:00
+
+## Enlaces
+
+- [Inicio](https://cinematic-spark-suite.lovable.app/)
+- [Fotografía Profesional](https://cinematic-spark-suite.lovable.app/servicios/fotografia)
+- [Vídeo y Dron](https://cinematic-spark-suite.lovable.app/servicios/video-dron)
+- [Tour Virtual 360°](https://cinematic-spark-suite.lovable.app/servicios/tour-virtual)
+- [Portafolio](https://cinematic-spark-suite.lovable.app/portafolio)
+- [Blog](https://cinematic-spark-suite.lovable.app/blog)
+- [Documentación completa](https://cinematic-spark-suite.lovable.app/llms-full.txt)
