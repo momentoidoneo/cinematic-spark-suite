@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ChevronDown, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/logo.png";
 
 type NavChild = { label: string; href: string; isAnchor: boolean };
 type NavItem = { label: string; href: string; isAnchor: boolean; children?: NavChild[] };
