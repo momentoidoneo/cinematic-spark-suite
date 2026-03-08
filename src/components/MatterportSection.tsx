@@ -1,6 +1,8 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Globe, Monitor, Zap, MapPin, Smartphone, Euro } from "lucide-react";
+import matterportTour from "@/assets/blog-matterport-tour.jpg";
+import portfolioTour from "@/assets/portfolio-tour.jpg";
 
 const features = [
   { icon: Monitor, title: "Calidad 8K HD", desc: "Resolución ultra alta para apreciar cada detalle del espacio con total nitidez." },
@@ -16,21 +18,44 @@ const MatterportSection = () => {
   return (
     <section id="tour" className="py-24 px-6" ref={ref}>
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          className="text-center mb-16"
-        >
-          <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-            Tecnología{" "}
-            <span className="text-gradient-accent italic">Matterport</span>
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Utilizamos la tecnología líder en el mercado para crear gemelos digitales exactos de cualquier espacio físico. 
-            Ideal para inmobiliarias, hoteles, restaurantes, comercios y espacios de eventos.
-          </p>
-        </motion.div>
+        {/* Header with image */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.7 }}
+          >
+            <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
+              Tecnología{" "}
+              <span className="text-gradient-accent italic">Matterport</span>
+            </h2>
+            <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
+              Utilizamos la tecnología líder en el mercado para crear gemelos digitales exactos de cualquier espacio físico.
+              Ideal para inmobiliarias, hoteles, restaurantes, comercios y espacios de eventos.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="relative rounded-2xl overflow-hidden aspect-[16/10] shadow-lg"
+          >
+            <img
+              src={matterportTour}
+              alt="Tour virtual Matterport"
+              title=""
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4">
+              <span className="px-3 py-1.5 rounded-full bg-accent/90 text-accent-foreground text-xs font-semibold">
+                Tour Virtual 360°
+              </span>
+            </div>
+          </motion.div>
+        </div>
 
         {/* Feature cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
@@ -51,21 +76,32 @@ const MatterportSection = () => {
           ))}
         </div>
 
-        {/* Google Street View */}
+        {/* Google Street View with image */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.6 }}
-          className="rounded-2xl bg-secondary/50 border border-border/50 p-10 text-center mb-16"
+          className="rounded-2xl overflow-hidden border border-border/50 mb-16 flex flex-col md:flex-row-reverse items-stretch min-h-[280px]"
         >
-          <MapPin className="w-10 h-10 text-accent mx-auto mb-4" />
-          <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">
-            Compatibilidad con Google Street View
-          </h3>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Aumenta tu visibilidad online publicando tu tour virtual directamente en Google Maps y Google My Business. 
-            Mejora tu posicionamiento SEO local y permite que los clientes te encuentren y visiten virtualmente desde el buscador más utilizado del mundo.
-          </p>
+          <div className="relative w-full md:w-2/5 min-h-[200px]">
+            <img
+              src={portfolioTour}
+              alt="Tour virtual integrado en Google Street View"
+              title=""
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+          <div className="w-full md:w-3/5 bg-secondary/50 p-10 flex flex-col justify-center">
+            <MapPin className="w-10 h-10 text-accent mb-4" />
+            <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">
+              Compatibilidad con Google Street View
+            </h3>
+            <p className="text-muted-foreground max-w-2xl">
+              Aumenta tu visibilidad online publicando tu tour virtual directamente en Google Maps y Google My Business.
+              Mejora tu posicionamiento SEO local y permite que los clientes te encuentren y visiten virtualmente desde el buscador más utilizado del mundo.
+            </p>
+          </div>
         </motion.div>
 
         {/* Pricing CTA */}
