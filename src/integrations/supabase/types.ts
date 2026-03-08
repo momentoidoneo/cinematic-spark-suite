@@ -354,6 +354,51 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_prospects: {
+        Row: {
+          analysis: Json | null
+          brand_context: string | null
+          created_at: string
+          created_by: string | null
+          generated_dms: string | null
+          id: string
+          message_style: string | null
+          profile_content: string | null
+          profile_description: string | null
+          profile_title: string | null
+          profile_url: string | null
+          username: string
+        }
+        Insert: {
+          analysis?: Json | null
+          brand_context?: string | null
+          created_at?: string
+          created_by?: string | null
+          generated_dms?: string | null
+          id?: string
+          message_style?: string | null
+          profile_content?: string | null
+          profile_description?: string | null
+          profile_title?: string | null
+          profile_url?: string | null
+          username: string
+        }
+        Update: {
+          analysis?: Json | null
+          brand_context?: string | null
+          created_at?: string
+          created_by?: string | null
+          generated_dms?: string | null
+          id?: string
+          message_style?: string | null
+          profile_content?: string | null
+          profile_description?: string | null
+          profile_title?: string | null
+          profile_url?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           created_at: string
@@ -554,6 +599,184 @@ export type Database = {
           url?: string
         }
         Relationships: []
+      }
+      social_platform_connections: {
+        Row: {
+          access_token: string | null
+          account_id: string | null
+          account_name: string | null
+          connection_status: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_verified_at: string | null
+          meta_data: Json | null
+          platform: string
+          refresh_token: string | null
+          scopes: string[] | null
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          account_id?: string | null
+          account_name?: string | null
+          connection_status?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_verified_at?: string | null
+          meta_data?: Json | null
+          platform: string
+          refresh_token?: string | null
+          scopes?: string[] | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          account_id?: string | null
+          account_name?: string | null
+          connection_status?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_verified_at?: string | null
+          meta_data?: Json | null
+          platform?: string
+          refresh_token?: string | null
+          scopes?: string[] | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      social_publish_logs: {
+        Row: {
+          action: string
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          platform: string
+          queue_id: string | null
+          request_payload: Json | null
+          response_payload: Json | null
+          status: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          platform: string
+          queue_id?: string | null
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          platform?: string
+          queue_id?: string | null
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_publish_logs_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "social_publish_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_publish_queue: {
+        Row: {
+          attempt_count: number
+          caption: string | null
+          content_id: string | null
+          created_at: string
+          hashtags: string[] | null
+          id: string
+          last_error: string | null
+          max_attempts: number
+          media_type: string | null
+          media_url: string | null
+          next_retry_at: string | null
+          platform: string
+          platform_post_id: string | null
+          platform_post_url: string | null
+          platform_response: Json | null
+          publish_mode: string
+          published_at: string | null
+          scheduled_at: string | null
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          caption?: string | null
+          content_id?: string | null
+          created_at?: string
+          hashtags?: string[] | null
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          media_type?: string | null
+          media_url?: string | null
+          next_retry_at?: string | null
+          platform: string
+          platform_post_id?: string | null
+          platform_post_url?: string | null
+          platform_response?: Json | null
+          publish_mode?: string
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          caption?: string | null
+          content_id?: string | null
+          created_at?: string
+          hashtags?: string[] | null
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          media_type?: string | null
+          media_url?: string | null
+          next_retry_at?: string | null
+          platform?: string
+          platform_post_id?: string | null
+          platform_post_url?: string | null
+          platform_response?: Json | null
+          publish_mode?: string
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_publish_queue_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "social_content"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
