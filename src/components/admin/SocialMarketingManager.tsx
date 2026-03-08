@@ -5,7 +5,7 @@ import {
   Instagram, Youtube, Clock, CheckCircle2, FileText, Hash, Lightbulb,
   TrendingUp, Eye, Copy, Wand2, Globe, Music, RefreshCw, Link2,
   ArrowRightLeft, Search, Video, AlertCircle, ExternalLink, XCircle,
-  Bookmark, Play, Pause, RotateCcw, Shield, Unplug
+  Bookmark, Play, Pause, RotateCcw, Shield, Unplug, Upload, ImageIcon
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -833,6 +833,7 @@ function VideoTab() {
   const [videoMode, setVideoMode] = useState<"text" | "image">("text");
   const [videoPrompt, setVideoPrompt] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [videoRatio, setVideoRatio] = useState("1280:720");
   const [videoDuration, setVideoDuration] = useState(5);
   const [videoModel, setVideoModel] = useState("gen4");
@@ -970,7 +971,51 @@ function VideoTab() {
               </div>
               <div><Label>Prompt</Label><Textarea value={videoPrompt} onChange={e => setVideoPrompt(e.target.value)} rows={3} placeholder="Ej: Vista aérea de una villa de lujo al atardecer con dron cinematográfico..." /></div>
               {videoMode === "image" && (
-                <div><Label>URL de la imagen</Label><Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://..." /></div>
+                <div className="space-y-2">
+                  <Label>Imagen de referencia</Label>
+                  {imageUrl && (
+                    <div className="relative rounded-lg overflow-hidden border border-border">
+                      <img src={imageUrl} alt="Preview" className="w-full h-40 object-cover" />
+                      <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-6 w-6" onClick={() => setImageUrl("")}>
+                        <XCircle className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <label className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setIsUploadingImage(true);
+                          try {
+                            const ext = file.name.split(".").pop() || "jpg";
+                            const path = `runway-inputs/${crypto.randomUUID()}.${ext}`;
+                            const { error: uploadError } = await supabase.storage.from("social-media-assets").upload(path, file, { contentType: file.type });
+                            if (uploadError) throw uploadError;
+                            const { data: urlData } = supabase.storage.from("social-media-assets").getPublicUrl(path);
+                            setImageUrl(urlData.publicUrl);
+                            toast.success("Imagen subida");
+                          } catch (err: any) {
+                            toast.error(err.message || "Error subiendo imagen");
+                          } finally {
+                            setIsUploadingImage(false);
+                          }
+                        }}
+                      />
+                      <Button type="button" variant="outline" className="w-full gap-1.5" disabled={isUploadingImage} asChild>
+                        <span><Upload className="w-4 h-4" />{isUploadingImage ? "Subiendo..." : "Subir imagen"}</span>
+                      </Button>
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">o</span>
+                    <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://... (URL directa)" className="flex-1" />
+                  </div>
+                </div>
               )}
               <div className="grid grid-cols-3 gap-3">
                 <div><Label>Modelo</Label>
