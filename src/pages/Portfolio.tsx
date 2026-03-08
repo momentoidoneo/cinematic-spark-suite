@@ -145,7 +145,7 @@ const Portfolio = () => {
                 onClick={() => setSelectedCat(cat)}
                 className="group relative aspect-[4/3] rounded-2xl overflow-hidden text-left border border-border bg-card hover:border-primary/30 transition-all"
               >
-                {cat.cover_image && <img src={cat.cover_image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />}
+                {cat.cover_image && {cat.cover_image && <img src={cat.cover_image} alt={cat.name} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />}}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
                 <div className="absolute bottom-6 left-6">
                   <h3 className="font-display text-2xl font-bold text-foreground">{cat.name}</h3>
