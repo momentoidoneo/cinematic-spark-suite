@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Edit, Trash2, GripVertical, ToggleLeft, ToggleRight, Instagram, Facebook, Youtube, Linkedin, Twitter, Globe } from "lucide-react";
+import { Plus, Edit, Trash2, GripVertical, ToggleLeft, ToggleRight, Instagram, Facebook, Youtube, Linkedin, Twitter, Globe, MessageCircle, Send, Pin, Video, Music, Camera, Twitch } from "lucide-react";
 import { toast } from "sonner";
 
 interface SocialLink {
@@ -19,11 +19,25 @@ const platformIcons: Record<string, React.ReactNode> = {
   youtube: <Youtube className="w-5 h-5 text-red-400" />,
   linkedin: <Linkedin className="w-5 h-5 text-blue-300" />,
   twitter: <Twitter className="w-5 h-5 text-sky-400" />,
-  tiktok: <Globe className="w-5 h-5 text-foreground" />,
+  tiktok: <Music className="w-5 h-5 text-foreground" />,
+  pinterest: <Pin className="w-5 h-5 text-red-500" />,
+  threads: <MessageCircle className="w-5 h-5 text-foreground" />,
+  vimeo: <Video className="w-5 h-5 text-blue-400" />,
+  whatsapp: <MessageCircle className="w-5 h-5 text-green-400" />,
+  telegram: <Send className="w-5 h-5 text-blue-400" />,
+  snapchat: <Camera className="w-5 h-5 text-yellow-400" />,
+  twitch: <Twitch className="w-5 h-5 text-purple-400" />,
+  behance: <Globe className="w-5 h-5 text-blue-500" />,
+  dribbble: <Globe className="w-5 h-5 text-pink-500" />,
+  flickr: <Camera className="w-5 h-5 text-pink-400" />,
   website: <Globe className="w-5 h-5 text-primary" />,
 };
 
-const platforms = ["instagram", "facebook", "youtube", "linkedin", "twitter", "tiktok", "website"];
+const platforms = [
+  "instagram", "facebook", "youtube", "linkedin", "twitter", "tiktok",
+  "pinterest", "threads", "vimeo", "whatsapp", "telegram", "snapchat",
+  "twitch", "behance", "dribbble", "flickr", "website",
+];
 
 const AdminSocialMedia = () => {
   const [links, setLinks] = useState<SocialLink[]>([]);
