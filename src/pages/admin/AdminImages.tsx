@@ -132,7 +132,12 @@ const AdminImages = () => {
     toast.success("Contenido añadido correctamente");
     setUploading(false);
     setShowUpload(false);
-    fetchImages();
+    // Update filter to show the subcategory where content was uploaded
+    if (uploadForm.subcategory_id !== filterSub) {
+      setFilterSub(uploadForm.subcategory_id);
+    } else {
+      fetchImages();
+    }
   };
 
   const handleDelete = async (img: PortfolioImage) => {
