@@ -822,55 +822,349 @@ function SavedProspectsTab() {
   );
 }
 
-// ─── Video Tab ─────────────────────────────────────
+// ─── Video IA Tab ──────────────────────────────────
 function VideoTab() {
-  const { contents } = useSocialContent();
+  const { contents, createContent } = useSocialContent();
   const videoContents = contents.filter(c => c.content_type === "video" || c.content_type === "reel" || c.content_type === "short");
+
+  const [activeSubTab, setActiveSubTab] = useState<"generate" | "thumbnail" | "library">("generate");
+
+  // ── Video Generation State ──
+  const [videoMode, setVideoMode] = useState<"text" | "image">("text");
+  const [videoPrompt, setVideoPrompt] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [videoRatio, setVideoRatio] = useState("1280:720");
+  const [videoDuration, setVideoDuration] = useState(5);
+  const [videoModel, setVideoModel] = useState("gen4");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [taskId, setTaskId] = useState<string | null>(null);
+  const [taskStatus, setTaskStatus] = useState<string | null>(null);
+  const [taskProgress, setTaskProgress] = useState<number | null>(null);
+  const [videoOutput, setVideoOutput] = useState<string[] | null>(null);
+  const [pollInterval, setPollInterval] = useState<ReturnType<typeof setInterval> | null>(null);
+
+  // ── Thumbnail State ──
+  const [thumbPrompt, setThumbPrompt] = useState("");
+  const [thumbWidth, setThumbWidth] = useState(1280);
+  const [thumbHeight, setThumbHeight] = useState(720);
+  const [isGeneratingThumb, setIsGeneratingThumb] = useState(false);
+  const [generatedThumbs, setGeneratedThumbs] = useState<{ imageURL: string; positivePrompt: string }[]>([]);
+
+  const handleGenerateVideo = async () => {
+    if (videoMode === "text" && !videoPrompt) return toast.error("Escribe un prompt para el vídeo");
+    if (videoMode === "image" && !imageUrl) return toast.error("Introduce la URL de la imagen");
+    setIsGenerating(true);
+    setVideoOutput(null);
+    setTaskStatus(null);
+    setTaskProgress(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("runway-video", {
+        body: {
+          action: videoMode === "text" ? "text_to_video" : "image_to_video",
+          prompt: videoPrompt,
+          imageUrl: videoMode === "image" ? imageUrl : undefined,
+          ratio: videoRatio,
+          duration: videoDuration,
+          model: videoModel,
+        },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      setTaskId(data.taskId);
+      setTaskStatus("THROTTLED");
+      toast.success("Tarea de vídeo iniciada. Monitorizando...");
+      startPolling(data.taskId);
+    } catch (e: any) {
+      toast.error(e.message || "Error generando vídeo");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const startPolling = (id: string) => {
+    if (pollInterval) clearInterval(pollInterval);
+    const interval = setInterval(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("runway-video", {
+          body: { action: "check_status", taskId: id },
+        });
+        if (error) throw error;
+        setTaskStatus(data.status);
+        setTaskProgress(data.progress ? Math.round(data.progress * 100) : null);
+        if (data.status === "SUCCEEDED" && data.output) {
+          setVideoOutput(data.output);
+          clearInterval(interval);
+          setPollInterval(null);
+          toast.success("¡Vídeo generado con éxito!");
+        } else if (data.status === "FAILED") {
+          clearInterval(interval);
+          setPollInterval(null);
+          toast.error(data.failure || "La generación del vídeo falló");
+        }
+      } catch {
+        clearInterval(interval);
+        setPollInterval(null);
+      }
+    }, 5000);
+    setPollInterval(interval);
+  };
+
+  const handleSaveVideo = (url: string) => {
+    createContent.mutate({
+      title: videoPrompt.slice(0, 60) || "Vídeo generado con IA",
+      caption: videoPrompt,
+      platform: "instagram",
+      content_type: "video",
+      status: "draft",
+      video_url: url,
+      ai_generated: true,
+    });
+    toast.success("Vídeo guardado en calendario");
+  };
+
+  const handleGenerateThumbnail = async () => {
+    if (!thumbPrompt) return toast.error("Escribe un prompt para la miniatura");
+    setIsGeneratingThumb(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("runware-image", {
+        body: { prompt: thumbPrompt, width: thumbWidth, height: thumbHeight, numberResults: 2 },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      setGeneratedThumbs(prev => [...(data.images || []), ...prev]);
+      toast.success("Miniaturas generadas");
+    } catch (e: any) {
+      toast.error(e.message || "Error generando miniatura");
+    } finally {
+      setIsGeneratingThumb(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-sm font-medium">Contenido de vídeo</h3>
-          <p className="text-xs text-muted-foreground">Reels, Shorts y vídeos largos de todas las plataformas</p>
-        </div>
-        <Badge variant="secondary">{videoContents.length} vídeos</Badge>
+      {/* Sub-tabs */}
+      <div className="flex gap-2 border-b border-border pb-2">
+        {([
+          { key: "generate", icon: <Wand2 className="w-3.5 h-3.5" />, label: "Generar Vídeo" },
+          { key: "thumbnail", icon: <Eye className="w-3.5 h-3.5" />, label: "Thumbnails" },
+          { key: "library", icon: <FolderOpen className="w-3.5 h-3.5" />, label: "Biblioteca" },
+        ] as const).map(({ key, icon, label }) => (
+          <Button key={key} variant={activeSubTab === key ? "default" : "ghost"} size="sm" onClick={() => setActiveSubTab(key)} className="gap-1.5">
+            {icon}{label}
+          </Button>
+        ))}
       </div>
 
-      {videoContents.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Video className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p>No hay contenido de vídeo todavía.</p>
-            <p className="text-xs mt-1">Crea reels, shorts o vídeos desde el Calendario o el Generador IA.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          {videoContents.map(item => (
-            <Card key={item.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className={`p-1.5 rounded-md ${platformColors[item.platform]}`}>{platformIcons[item.platform]}</span>
-                  <div className="min-w-0">
-                    <h4 className="font-medium text-sm truncate">{item.title}</h4>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">{item.content_type}</Badge>
-                      <Badge className={`text-[10px] ${statusColors[item.status]}`}>{item.status}</Badge>
-                    </div>
-                  </div>
+      {/* ── Generate Video ── */}
+      {activeSubTab === "generate" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2"><Video className="w-4 h-4 text-primary" />Generar vídeo con Runway</CardTitle>
+              <CardDescription>Crea vídeos a partir de texto o imagen con IA generativa</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-2">
+                <Button variant={videoMode === "text" ? "default" : "outline"} size="sm" onClick={() => setVideoMode("text")}>Texto → Vídeo</Button>
+                <Button variant={videoMode === "image" ? "default" : "outline"} size="sm" onClick={() => setVideoMode("image")}>Imagen → Vídeo</Button>
+              </div>
+              <div><Label>Prompt</Label><Textarea value={videoPrompt} onChange={e => setVideoPrompt(e.target.value)} rows={3} placeholder="Ej: Vista aérea de una villa de lujo al atardecer con dron cinematográfico..." /></div>
+              {videoMode === "image" && (
+                <div><Label>URL de la imagen</Label><Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://..." /></div>
+              )}
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>Modelo</Label>
+                  <Select value={videoModel} onValueChange={setVideoModel}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gen4">Gen-4</SelectItem>
+                      <SelectItem value="gen4_turbo">Gen-4 Turbo</SelectItem>
+                      <SelectItem value="gen3a_turbo">Gen-3α Turbo</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                {item.caption && <p className="text-xs text-muted-foreground line-clamp-2">{item.caption}</p>}
-                {item.video_url && (
-                  <a href={item.video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
-                    <Play className="w-3 h-3" />Ver vídeo
-                  </a>
-                )}
-                {item.scheduled_at && <p className="text-[10px] text-muted-foreground">{format(new Date(item.scheduled_at), "dd MMM HH:mm", { locale: es })}</p>}
+                <div><Label>Ratio</Label>
+                  <Select value={videoRatio} onValueChange={setVideoRatio}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1280:720">16:9 (Landscape)</SelectItem>
+                      <SelectItem value="720:1280">9:16 (Vertical)</SelectItem>
+                      <SelectItem value="1024:1024">1:1 (Cuadrado)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Duración</Label>
+                  <Select value={String(videoDuration)} onValueChange={v => setVideoDuration(Number(v))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 seg</SelectItem>
+                      <SelectItem value="10">10 seg</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button onClick={handleGenerateVideo} disabled={isGenerating} className="w-full">
+                <Video className="w-4 h-4 mr-1.5" />
+                {isGenerating ? "Iniciando..." : "Generar Vídeo"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2"><Play className="w-4 h-4 text-green-500" />Resultado</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!taskId && !videoOutput ? (
+                <div className="text-center py-16 text-muted-foreground text-sm">
+                  <Video className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  Configura los parámetros y genera un vídeo
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {taskStatus && taskStatus !== "SUCCEEDED" && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+                        <span className="text-sm font-medium">
+                          {taskStatus === "THROTTLED" ? "En cola..." : taskStatus === "RUNNING" ? "Generando..." : taskStatus}
+                        </span>
+                      </div>
+                      {taskProgress !== null && (
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${taskProgress}%` }} />
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground">La generación puede tardar 1-3 minutos. No cierres esta pestaña.</p>
+                    </div>
+                  )}
+                  {videoOutput && videoOutput.map((url, i) => (
+                    <div key={i} className="space-y-2">
+                      <video src={url} controls className="w-full rounded-lg border border-border" />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => handleSaveVideo(url)}>
+                          <Calendar className="w-3.5 h-3.5 mr-1" />Guardar en calendario
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(url); toast.success("URL copiada"); }}>
+                          <Copy className="w-3.5 h-3.5 mr-1" />Copiar URL
+                        </Button>
+                        <a href={url} target="_blank" rel="noopener noreferrer">
+                          <Button size="sm" variant="ghost"><ExternalLink className="w-3.5 h-3.5 mr-1" />Abrir</Button>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                  {taskStatus === "FAILED" && (
+                    <div className="text-center py-8 text-destructive">
+                      <AlertCircle className="w-8 h-8 mx-auto mb-2" />
+                      <p className="text-sm">La generación falló. Intenta con otro prompt o modelo.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ── Thumbnails ── */}
+      {activeSubTab === "thumbnail" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2"><Eye className="w-4 h-4 text-primary" />Generar Thumbnails con Runware</CardTitle>
+              <CardDescription>Crea miniaturas profesionales para tus vídeos con IA</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div><Label>Prompt</Label><Textarea value={thumbPrompt} onChange={e => setThumbPrompt(e.target.value)} rows={3} placeholder="Ej: Thumbnail cinematográfico de fotografía inmobiliaria de lujo, texto grande 'TOUR VIRTUAL', colores vibrantes..." /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Ancho (px)</Label><Input type="number" value={thumbWidth} onChange={e => setThumbWidth(Number(e.target.value) || 1280)} /></div>
+                <div><Label>Alto (px)</Label><Input type="number" value={thumbHeight} onChange={e => setThumbHeight(Number(e.target.value) || 720)} /></div>
+              </div>
+              <Button onClick={handleGenerateThumbnail} disabled={isGeneratingThumb} className="w-full">
+                <Sparkles className="w-4 h-4 mr-1.5" />
+                {isGeneratingThumb ? "Generando..." : "Generar Thumbnails"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Miniaturas generadas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {generatedThumbs.length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground text-sm">
+                  <Eye className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  Las miniaturas aparecerán aquí
+                </div>
+              ) : (
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-3 pr-2">
+                    {generatedThumbs.map((img, i) => (
+                      <div key={i} className="space-y-1.5">
+                        <img src={img.imageURL} alt={img.positivePrompt} className="w-full rounded-lg border border-border" />
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(img.imageURL); toast.success("URL copiada"); }}>
+                            <Copy className="w-3 h-3 mr-1" />Copiar URL
+                          </Button>
+                          <a href={img.imageURL} target="_blank" rel="noopener noreferrer">
+                            <Button size="sm" variant="ghost"><ExternalLink className="w-3 h-3 mr-1" />Abrir</Button>
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ── Video Library ── */}
+      {activeSubTab === "library" && (
+        <>
+          <div className="flex justify-between items-center">
+            <p className="text-xs text-muted-foreground">Reels, Shorts y vídeos largos de todas las plataformas</p>
+            <Badge variant="secondary">{videoContents.length} vídeos</Badge>
+          </div>
+          {videoContents.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <Video className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p>No hay contenido de vídeo todavía.</p>
+                <p className="text-xs mt-1">Genera vídeos desde la pestaña "Generar Vídeo" o crea contenido en el Calendario.</p>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {videoContents.map(item => (
+                <Card key={item.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`p-1.5 rounded-md ${platformColors[item.platform]}`}>{platformIcons[item.platform]}</span>
+                      <div className="min-w-0">
+                        <h4 className="font-medium text-sm truncate">{item.title}</h4>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-[10px]">{item.content_type}</Badge>
+                          <Badge className={`text-[10px] ${statusColors[item.status]}`}>{item.status}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                    {item.caption && <p className="text-xs text-muted-foreground line-clamp-2">{item.caption}</p>}
+                    {item.video_url && (
+                      <a href={item.video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                        <Play className="w-3 h-3" />Ver vídeo
+                      </a>
+                    )}
+                    {item.scheduled_at && <p className="text-[10px] text-muted-foreground">{format(new Date(item.scheduled_at), "dd MMM HH:mm", { locale: es })}</p>}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
