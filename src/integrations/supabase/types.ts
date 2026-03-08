@@ -381,6 +381,144 @@ export type Database = {
         }
         Relationships: []
       }
+      social_analytics: {
+        Row: {
+          comments: number | null
+          created_at: string
+          engagement_rate: number | null
+          followers: number | null
+          id: string
+          impressions: number | null
+          likes: number | null
+          metric_date: string
+          platform: string
+          profile_views: number | null
+          reach: number | null
+          shares: number | null
+          website_clicks: number | null
+        }
+        Insert: {
+          comments?: number | null
+          created_at?: string
+          engagement_rate?: number | null
+          followers?: number | null
+          id?: string
+          impressions?: number | null
+          likes?: number | null
+          metric_date: string
+          platform: string
+          profile_views?: number | null
+          reach?: number | null
+          shares?: number | null
+          website_clicks?: number | null
+        }
+        Update: {
+          comments?: number | null
+          created_at?: string
+          engagement_rate?: number | null
+          followers?: number | null
+          id?: string
+          impressions?: number | null
+          likes?: number | null
+          metric_date?: string
+          platform?: string
+          profile_views?: number | null
+          reach?: number | null
+          shares?: number | null
+          website_clicks?: number | null
+        }
+        Relationships: []
+      }
+      social_content: {
+        Row: {
+          ai_generated: boolean | null
+          campaign: string | null
+          caption: string | null
+          content_type: string
+          created_at: string
+          hashtags: string[] | null
+          id: string
+          image_url: string | null
+          platform: string
+          scheduled_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          campaign?: string | null
+          caption?: string | null
+          content_type?: string
+          created_at?: string
+          hashtags?: string[] | null
+          id?: string
+          image_url?: string | null
+          platform?: string
+          scheduled_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          ai_generated?: boolean | null
+          campaign?: string | null
+          caption?: string | null
+          content_type?: string
+          created_at?: string
+          hashtags?: string[] | null
+          id?: string
+          image_url?: string | null
+          platform?: string
+          scheduled_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      social_content_bank: {
+        Row: {
+          category: string | null
+          content: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          tags: string[] | null
+          times_used: number | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          tags?: string[] | null
+          times_used?: number | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          tags?: string[] | null
+          times_used?: number | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       social_links: {
         Row: {
           created_at: string
