@@ -56,14 +56,33 @@ const AdminCategories = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", slug: "", description: "", icon: "", order: categories.length });
+    setForm({ name: "", slug: "", description: "", icon: "", order: categories.length, cover_image: "" });
+    setCoverFile(null); setCoverPreview(null);
     setShowForm(true);
   };
 
   const openEdit = (cat: Category) => {
     setEditing(cat);
-    setForm({ name: cat.name, slug: cat.slug, description: cat.description || "", icon: cat.icon || "", order: cat.order });
+    setForm({ name: cat.name, slug: cat.slug, description: cat.description || "", icon: cat.icon || "", order: cat.order, cover_image: cat.cover_image || "" });
+    setCoverFile(null); setCoverPreview(cat.cover_image || null);
     setShowForm(true);
+  };
+
+  const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const uploadCover = async (): Promise<string | null> => {
+    if (!coverFile) return form.cover_image || null;
+    const ext = coverFile.name.split(".").pop();
+    const path = `covers/categories/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("portfolio").upload(path, coverFile);
+    if (error) { toast.error("Error subiendo imagen"); return null; }
+    const { data } = supabase.storage.from("portfolio").getPublicUrl(path);
+    return data.publicUrl;
   };
 
   const handleSave = async () => {
