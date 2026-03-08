@@ -15,11 +15,12 @@ type PortfolioImage = {
 type MediaMode = "image" | "video" | "iframe";
 
 const AdminImages = () => {
+  const [searchParams] = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [images, setImages] = useState<PortfolioImage[]>([]);
   const [filterCat, setFilterCat] = useState("");
-  const [filterSub, setFilterSub] = useState("");
+  const [filterSub, setFilterSub] = useState(searchParams.get("subcategory") || "");
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [mediaMode, setMediaMode] = useState<MediaMode>("image");
