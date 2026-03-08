@@ -70,6 +70,7 @@ const App = () => (
               <Route path="social" element={<AdminSocialMedia />} />
               <Route path="api-keys" element={<AdminApiKeys />} />
               <Route path="landing" element={<AdminLanding />} />
+              <Route path="tracking" element={<AdminTracking />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
