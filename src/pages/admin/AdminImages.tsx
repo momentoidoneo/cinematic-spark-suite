@@ -235,7 +235,7 @@ const AdminImages = () => {
       <div className="flex flex-wrap gap-3">
         {images.map((img, idx) => (
           <div key={img.id} className="group relative h-48 rounded-xl overflow-hidden border border-border bg-card flex-shrink-0 cursor-pointer" onClick={() => setLightboxIdx(idx)}>
-            <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="h-full w-auto object-cover" />
+            <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="h-full w-auto object-cover pointer-events-none select-none" draggable={false} onContextMenu={(e) => e.preventDefault()} />
             {/* Media type badge */}
             <div className={`absolute top-2 left-2 ${mediaColor(img.media_type)} text-white rounded-full p-1.5 flex items-center gap-1`}>
               {mediaIcon(img.media_type)}
