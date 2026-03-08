@@ -79,7 +79,7 @@ const HeroSection = () => {
       </div>
 
       {/* Service cards */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 pb-20 w-full">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pb-10 w-full">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {services.map((s, i) => (
             <motion.div

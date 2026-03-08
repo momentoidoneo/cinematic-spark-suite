@@ -75,7 +75,7 @@ const ServicesSection = () => {
   const inView = useInView(ref, { once: true });
 
   return (
-    <section id="servicios" className="py-24 px-6" ref={ref}>
+    <section id="servicios" className="pt-12 pb-24 px-6" ref={ref}>
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
