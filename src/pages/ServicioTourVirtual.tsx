@@ -138,6 +138,38 @@ const ServicioTourVirtual = () => {
         </div>
       </section>
 
+      {/* Tour de ejemplo */}
+      <section className="py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-6 text-center"
+          >
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-2">Explora un tour virtual en directo</h2>
+            <p className="text-muted-foreground">Navega por este espacio real escaneado con tecnología Matterport. Haz clic, arrastra y descubre cada rincón.</p>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-2xl overflow-hidden border border-border/50 aspect-video"
+          >
+            <iframe
+              width="100%"
+              height="100%"
+              src="https://my.matterport.com/show/?m=buNhXbQW5V6"
+              frameBorder="0"
+              allowFullScreen
+              allow="autoplay; fullscreen; web-share; xr-spatial-tracking;"
+              className="w-full h-full"
+              title="Tour virtual Matterport de ejemplo"
+            />
+          </motion.div>
+        </div>
+      </section>
+
       {/* Funcionalidades Matterport */}
       <section className="py-16 px-6">
         <div className="max-w-7xl mx-auto">
