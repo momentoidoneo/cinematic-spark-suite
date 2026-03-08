@@ -230,11 +230,11 @@ const AdminImages = () => {
         );
       })()}
 
-      {/* Content Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {/* Content Grid - rows with fixed height, respecting aspect ratio */}
+      <div className="flex flex-wrap gap-3">
         {images.map((img) => (
-          <div key={img.id} className="group relative aspect-square rounded-xl overflow-hidden border border-border bg-card">
-            <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="w-full h-full object-cover" />
+          <div key={img.id} className="group relative h-48 rounded-xl overflow-hidden border border-border bg-card flex-shrink-0">
+            <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="h-full w-auto object-cover" />
             {/* Media type badge */}
             <div className={`absolute top-2 left-2 ${mediaColor(img.media_type)} text-white rounded-full p-1.5 flex items-center gap-1`}>
               {mediaIcon(img.media_type)}
@@ -260,7 +260,7 @@ const AdminImages = () => {
           </div>
         ))}
         {images.length === 0 && (
-          <div className="col-span-full text-center text-muted-foreground py-16">
+          <div className="w-full text-center text-muted-foreground py-16">
             No hay contenido. Selecciona una subcategoría o añade nuevo contenido.
           </div>
         )}
