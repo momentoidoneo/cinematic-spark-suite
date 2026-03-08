@@ -233,18 +233,18 @@ const AdminImages = () => {
 
       {/* Content Grid - rows with fixed height, respecting aspect ratio */}
       <div className="flex flex-wrap gap-3">
-        {images.map((img) => (
-          <div key={img.id} className="group relative h-48 rounded-xl overflow-hidden border border-border bg-card flex-shrink-0">
+        {images.map((img, idx) => (
+          <div key={img.id} className="group relative h-48 rounded-xl overflow-hidden border border-border bg-card flex-shrink-0 cursor-pointer" onClick={() => setLightboxIdx(idx)}>
             <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="h-full w-auto object-cover" />
             {/* Media type badge */}
             <div className={`absolute top-2 left-2 ${mediaColor(img.media_type)} text-white rounded-full p-1.5 flex items-center gap-1`}>
               {mediaIcon(img.media_type)}
             </div>
             <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <button onClick={() => toggleFeatured(img)} className={`p-2 rounded-lg ${img.is_featured ? "bg-accent text-accent-foreground" : "bg-secondary text-foreground"}`}>
+              <button onClick={(e) => { e.stopPropagation(); toggleFeatured(img); }} className={`p-2 rounded-lg ${img.is_featured ? "bg-accent text-accent-foreground" : "bg-secondary text-foreground"}`}>
                 <Star className="w-4 h-4" />
               </button>
-              <button onClick={() => handleDelete(img)} className="p-2 rounded-lg bg-destructive text-destructive-foreground">
+              <button onClick={(e) => { e.stopPropagation(); handleDelete(img); }} className="p-2 rounded-lg bg-destructive text-destructive-foreground">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
