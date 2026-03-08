@@ -1,8 +1,8 @@
-import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { motion } from "framer-motion";
+import SEOHead, { videoDronServiceSchema, breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
 import {
   Video, Tv, PartyPopper, Clapperboard, Clock, Map,
   Plane as PlaneIcon, Eye, Image, Boxes, HomeIcon, CheckCircle2, ArrowRight,
