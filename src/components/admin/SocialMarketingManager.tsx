@@ -767,12 +767,12 @@ function SavedProspectsTab() {
   const [prospects, setProspects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useState(() => {
+  useEffect(() => {
     supabase.from("saved_prospects").select("*").order("created_at", { ascending: false }).then(({ data }) => {
       setProspects(data || []);
       setIsLoading(false);
     });
-  });
+  }, []);
 
   const handleDelete = async (id: string) => {
     await supabase.from("saved_prospects").delete().eq("id", id);
