@@ -125,16 +125,12 @@ const AdminCategories = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Categorías del Portafolio</h1>
         <div className="flex items-center gap-2">
-          {missingCovers > 0 && (
-            <button
-              onClick={handleGenerateCovers}
-              disabled={generatingCovers}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm font-semibold hover:bg-secondary/80 transition-colors disabled:opacity-50"
-            >
-              {generatingCovers ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-primary" />}
-              Generar {missingCovers} portadas con IA
-            </button>
-          )}
+          <CoverGenerator
+            type="category"
+            missingCount={missingCovers}
+            totalCount={categories.length}
+            onComplete={fetchCategories}
+          />
           <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
             <Plus className="w-4 h-4" /> Nueva Categoría
           </button>
