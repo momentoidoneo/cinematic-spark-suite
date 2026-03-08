@@ -1,4 +1,5 @@
 import { Mail, Phone, MessageCircle } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const Footer = () => {
   return (
