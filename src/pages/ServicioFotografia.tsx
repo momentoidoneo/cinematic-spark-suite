@@ -7,6 +7,8 @@ import {
   Home, ShoppingBag, UtensilsCrossed, Sofa, Building2, Package,
   Shirt, Building, Camera, Megaphone, CalendarDays, Boxes, CheckCircle2, ArrowRight, Star, Users, Zap, Eye
 } from "lucide-react";
+import heroImg from "@/assets/servicio-foto-hero.jpg";
+import equipoImg from "@/assets/servicio-foto-equipo.jpg";
 
 const services = [
   { icon: Home, title: "Arquitectura e interiores", desc: "Capturamos la esencia y el diseño de cualquier espacio arquitectónico con precisión profesional y composición cuidada. Trabajamos con ópticas de alta gama para obtener líneas rectas y perspectivas impecables." },
