@@ -34,8 +34,19 @@ const Blog = () => {
     load();
   }, []);
 
+  const siteUrl = getSiteUrl();
+
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Blog de Fotografía y Producción Audiovisual | Silvio Costa Photography"
+        description="Artículos sobre fotografía profesional, drones, tours virtuales Matterport, vídeo corporativo y tendencias del sector audiovisual en España y Portugal."
+        canonical={`${siteUrl}/blog`}
+        jsonLd={breadcrumbSchema([
+          { name: "Inicio", url: siteUrl },
+          { name: "Blog", url: `${siteUrl}/blog` },
+        ])}
+      />
       <Navbar />
       <main className="pt-28 pb-16 px-6">
         <div className="max-w-5xl mx-auto">

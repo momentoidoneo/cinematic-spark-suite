@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { X, ChevronLeft, ChevronRight, Play, Globe } from "lucide-react";
+import SEOHead, { breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
 
 type Category = { id: string; name: string; slug: string; description: string | null; cover_image: string | null };
 type Subcategory = { id: string; name: string; category_id: string; description: string | null; gallery_style: string | null; cover_image: string | null };
