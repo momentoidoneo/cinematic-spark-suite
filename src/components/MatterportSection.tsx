@@ -85,7 +85,7 @@ const MatterportSection = () => {
         >
           <div className="relative w-full md:w-2/5 min-h-[200px]">
             <img
-              src={portfolioTour}
+              src={streetviewImg}
               alt="Tour virtual integrado en Google Street View"
               title=""
               className="absolute inset-0 w-full h-full object-cover"
