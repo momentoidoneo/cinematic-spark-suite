@@ -1,23 +1,24 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, SortAsc, SortDesc, ChevronUp, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 type Category = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  cover_image: string | null;
-  icon: string | null;
-  order: number;
+  id: string; name: string; slug: string; description: string | null;
+  cover_image: string | null; icon: string | null; order: number;
 };
+
+type SortKey = "name" | "slug" | "order";
+type SortDir = "asc" | "desc";
 
 const AdminCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [form, setForm] = useState({ name: "", slug: "", description: "", icon: "", order: 0 });
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("order");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const fetchCategories = async () => {
     const { data } = await supabase.from("portfolio_categories").select("*").order("order");
@@ -26,9 +27,33 @@ const AdminCategories = () => {
 
   useEffect(() => { fetchCategories(); }, []);
 
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const filtered = categories
+    .filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.slug.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      if (sortKey === "order") return (a.order - b.order) * dir;
+      return a[sortKey].localeCompare(b[sortKey]) * dir;
+    });
+
+  const moveOrder = async (cat: Category, direction: "up" | "down") => {
+    const idx = filtered.findIndex(c => c.id === cat.id);
+    const swapWith = direction === "up" ? filtered[idx - 1] : filtered[idx + 1];
+    if (!swapWith) return;
+    await Promise.all([
+      supabase.from("portfolio_categories").update({ order: swapWith.order }).eq("id", cat.id),
+      supabase.from("portfolio_categories").update({ order: cat.order }).eq("id", swapWith.id),
+    ]);
+    fetchCategories();
+  };
+
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", slug: "", description: "", icon: "", order: 0 });
+    setForm({ name: "", slug: "", description: "", icon: "", order: categories.length });
     setShowForm(true);
   };
 
@@ -60,6 +85,11 @@ const AdminCategories = () => {
     fetchCategories();
   };
 
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <SortAsc className="w-3.5 h-3.5 opacity-30" />;
+    return sortDir === "asc" ? <ChevronUp className="w-3.5 h-3.5 text-primary" /> : <ChevronDown className="w-3.5 h-3.5 text-primary" />;
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -69,39 +99,64 @@ const AdminCategories = () => {
         </button>
       </div>
 
-      {/* Table */}
+      {/* Search */}
+      <div className="relative mb-4 max-w-xs">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar categoría..."
+          className="w-full pl-9 pr-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground"
+        />
+      </div>
+
       <div className="rounded-xl border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-secondary/50">
             <tr>
-              <th className="text-left px-4 py-3 text-muted-foreground font-medium">Nombre</th>
-              <th className="text-left px-4 py-3 text-muted-foreground font-medium">Slug</th>
+              <th className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none" onClick={() => toggleSort("name")}>
+                <span className="flex items-center gap-1">Nombre <SortIcon col="name" /></span>
+              </th>
+              <th className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none" onClick={() => toggleSort("slug")}>
+                <span className="flex items-center gap-1">Slug <SortIcon col="slug" /></span>
+              </th>
               <th className="text-left px-4 py-3 text-muted-foreground font-medium">Descripción</th>
-              <th className="text-left px-4 py-3 text-muted-foreground font-medium">Orden</th>
+              <th className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none" onClick={() => toggleSort("order")}>
+                <span className="flex items-center gap-1">Orden <SortIcon col="order" /></span>
+              </th>
               <th className="text-right px-4 py-3 text-muted-foreground font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {categories.map((cat) => (
+            {filtered.map((cat, idx) => (
               <tr key={cat.id} className="border-t border-border hover:bg-secondary/20">
                 <td className="px-4 py-3 text-foreground font-medium">{cat.name}</td>
-                <td className="px-4 py-3 text-muted-foreground">{cat.slug}</td>
+                <td className="px-4 py-3 text-muted-foreground"><code className="px-1.5 py-0.5 rounded bg-secondary text-xs">{cat.slug}</code></td>
                 <td className="px-4 py-3 text-muted-foreground truncate max-w-[200px]">{cat.description || "—"}</td>
-                <td className="px-4 py-3 text-muted-foreground">{cat.order}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground w-6 text-center">{cat.order}</span>
+                    <button onClick={() => moveOrder(cat, "up")} disabled={idx === 0} className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-30">
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => moveOrder(cat, "down")} disabled={idx === filtered.length - 1} className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-30">
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </td>
                 <td className="px-4 py-3 text-right">
                   <button onClick={() => openEdit(cat)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
                   <button onClick={() => handleDelete(cat.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive ml-1"><Trash2 className="w-4 h-4" /></button>
                 </td>
               </tr>
             ))}
-            {categories.length === 0 && (
-              <tr><td colSpan={5} className="text-center text-muted-foreground py-8">No hay categorías creadas aún</td></tr>
+            {filtered.length === 0 && (
+              <tr><td colSpan={5} className="text-center text-muted-foreground py-8">{search ? "Sin resultados" : "No hay categorías creadas aún"}</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
-      {/* Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 bg-background/80 flex items-center justify-center p-4">
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md">

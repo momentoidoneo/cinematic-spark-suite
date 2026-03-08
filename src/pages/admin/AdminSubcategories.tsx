@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, ChevronUp, ChevronDown, SortAsc } from "lucide-react";
 import { toast } from "sonner";
 
 type Category = { id: string; name: string };
@@ -10,10 +10,16 @@ type Subcategory = {
   portfolio_categories?: Category;
 };
 
+type SortKey = "name" | "category" | "order" | "gallery_style";
+type SortDir = "asc" | "desc";
+
 const AdminSubcategories = () => {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filterCat, setFilterCat] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("order");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Subcategory | null>(null);
   const [form, setForm] = useState({ category_id: "", name: "", description: "", icon: "", order: 0, gallery_style: "grid" });
@@ -29,7 +35,32 @@ const AdminSubcategories = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  const filtered = filterCat ? subcategories.filter(s => s.category_id === filterCat) : subcategories;
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const filtered = subcategories
+    .filter(s => !filterCat || s.category_id === filterCat)
+    .filter(s => !search || s.name.toLowerCase().includes(search.toLowerCase()) || (s.portfolio_categories?.name || "").toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      if (sortKey === "order") return (a.order - b.order) * dir;
+      if (sortKey === "category") return ((a.portfolio_categories?.name || "").localeCompare(b.portfolio_categories?.name || "")) * dir;
+      if (sortKey === "gallery_style") return ((a.gallery_style || "").localeCompare(b.gallery_style || "")) * dir;
+      return a.name.localeCompare(b.name) * dir;
+    });
+
+  const moveOrder = async (sub: Subcategory, direction: "up" | "down") => {
+    const idx = filtered.findIndex(s => s.id === sub.id);
+    const swapWith = direction === "up" ? filtered[idx - 1] : filtered[idx + 1];
+    if (!swapWith) return;
+    await Promise.all([
+      supabase.from("portfolio_subcategories").update({ order: swapWith.order }).eq("id", sub.id),
+      supabase.from("portfolio_subcategories").update({ order: sub.order }).eq("id", swapWith.id),
+    ]);
+    fetchData();
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -63,6 +94,13 @@ const AdminSubcategories = () => {
     fetchData();
   };
 
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <SortAsc className="w-3.5 h-3.5 opacity-30" />;
+    return sortDir === "asc" ? <ChevronUp className="w-3.5 h-3.5 text-primary" /> : <ChevronDown className="w-3.5 h-3.5 text-primary" />;
+  };
+
+  const galleryLabels: Record<string, string> = { grid: "Grid", masonry: "Masonry", carousel: "Carousel" };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -72,34 +110,61 @@ const AdminSubcategories = () => {
         </button>
       </div>
 
-      {/* Filter */}
-      <div className="mb-4">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 mb-4">
         <select value={filterCat} onChange={(e) => setFilterCat(e.target.value)} className="px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm">
           <option value="">Todas las categorías</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar subcategoría..."
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground"
+          />
+        </div>
       </div>
 
       <div className="rounded-xl border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-secondary/50">
             <tr>
-              <th className="text-left px-4 py-3 text-muted-foreground font-medium">Nombre</th>
-              <th className="text-left px-4 py-3 text-muted-foreground font-medium">Categoría</th>
+              <th className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none" onClick={() => toggleSort("name")}>
+                <span className="flex items-center gap-1">Nombre <SortIcon col="name" /></span>
+              </th>
+              <th className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none" onClick={() => toggleSort("category")}>
+                <span className="flex items-center gap-1">Categoría <SortIcon col="category" /></span>
+              </th>
               <th className="text-left px-4 py-3 text-muted-foreground font-medium">Descripción</th>
-              <th className="text-left px-4 py-3 text-muted-foreground font-medium">Estilo</th>
-              <th className="text-left px-4 py-3 text-muted-foreground font-medium">Orden</th>
+              <th className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none" onClick={() => toggleSort("gallery_style")}>
+                <span className="flex items-center gap-1">Estilo <SortIcon col="gallery_style" /></span>
+              </th>
+              <th className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none" onClick={() => toggleSort("order")}>
+                <span className="flex items-center gap-1">Orden <SortIcon col="order" /></span>
+              </th>
               <th className="text-right px-4 py-3 text-muted-foreground font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((s) => (
+            {filtered.map((s, idx) => (
               <tr key={s.id} className="border-t border-border hover:bg-secondary/20">
                 <td className="px-4 py-3 text-foreground font-medium">{s.name}</td>
                 <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">{(s as any).portfolio_categories?.name}</span></td>
                 <td className="px-4 py-3 text-muted-foreground truncate max-w-[200px]">{s.description || "—"}</td>
-                <td className="px-4 py-3 text-muted-foreground">{s.gallery_style}</td>
-                <td className="px-4 py-3 text-muted-foreground">{s.order}</td>
+                <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full bg-secondary text-muted-foreground text-xs">{galleryLabels[s.gallery_style || "grid"] || s.gallery_style}</span></td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground w-6 text-center">{s.order}</span>
+                    <button onClick={() => moveOrder(s, "up")} disabled={idx === 0} className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-30">
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => moveOrder(s, "down")} disabled={idx === filtered.length - 1} className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-30">
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </td>
                 <td className="px-4 py-3 text-right">
                   <button onClick={() => openEdit(s)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
                   <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive ml-1"><Trash2 className="w-4 h-4" /></button>
@@ -107,7 +172,7 @@ const AdminSubcategories = () => {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={6} className="text-center text-muted-foreground py-8">No hay subcategorías</td></tr>
+              <tr><td colSpan={6} className="text-center text-muted-foreground py-8">{search || filterCat ? "Sin resultados" : "No hay subcategorías"}</td></tr>
             )}
           </tbody>
         </table>
