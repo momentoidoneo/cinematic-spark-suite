@@ -6,7 +6,7 @@ import { toast } from "sonner";
 interface StorageFile {
   name: string;
   id: string;
-  metadata: { size: number; mimetype: string } | null;
+  metadata: Record<string, any> | null;
   created_at: string;
 }
 
