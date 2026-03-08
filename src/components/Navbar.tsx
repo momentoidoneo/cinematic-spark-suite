@@ -1,20 +1,22 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, Settings } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
 const navItems = [
-  { label: "Inicio", href: "#inicio" },
+  { label: "Inicio", href: "/#inicio", isAnchor: true },
   {
     label: "Servicios",
-    href: "#servicios",
+    href: "/#servicios",
+    isAnchor: true,
     children: [
-      { label: "Fotografía", href: "#fotografia" },
-      { label: "Video y Dron", href: "#video" },
-      { label: "Tour Virtual 360°", href: "#tour" },
+      { label: "Fotografía", href: "/#fotografia", isAnchor: true },
+      { label: "Video y Dron", href: "/#video", isAnchor: true },
+      { label: "Tour Virtual 360°", href: "/#tour", isAnchor: true },
     ],
   },
-  { label: "Portafolio", href: "#portafolio" },
-  { label: "Contacto", href: "#contacto" },
+  { label: "Portafolio", href: "/portafolio", isAnchor: false },
+  { label: "Contacto", href: "/#contacto", isAnchor: true },
 ];
 
 const Navbar = () => {
