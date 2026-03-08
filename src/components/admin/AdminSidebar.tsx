@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, BarChart3, Image, FolderOpen, Layers, HardDrive,
-  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target
+  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +42,7 @@ const settingsItems = [
   { title: "Textos Legales", url: "/admin/legal", icon: Scale },
   { title: "Redes Sociales", url: "/admin/social", icon: Share2 },
   { title: "API Keys", url: "/admin/api-keys", icon: Key },
+  { title: "Migración Wix", url: "/admin/migration", icon: ArrowRightLeft },
 ];
 
 const MenuGroup = ({
