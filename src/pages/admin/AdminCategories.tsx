@@ -23,7 +23,7 @@ const AdminCategories = () => {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("order");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [generatingCovers, setGeneratingCovers] = useState(false);
+  
 
   const fetchCategories = async () => {
     const { data } = await supabase.from("portfolio_categories").select("*").order("order");
