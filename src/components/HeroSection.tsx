@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { Camera, Plane, Globe } from "lucide-react";
-import heroBg from "@/assets/hero-bg.jpg";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import heroBgFallback from "@/assets/hero-bg.jpg";
 
 const services = [
   { icon: Camera, label: "FOTOGRAFÍA" },
@@ -12,6 +14,19 @@ const services = [
 ];
 
 const HeroSection = () => {
+  const [heroBg, setHeroBg] = useState(heroBgFallback);
+
+  useEffect(() => {
+    supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "hero_bg")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.value) setHeroBg(data.value);
+      });
+  }, []);
+
   return (
     <section id="inicio" className="relative min-h-screen flex flex-col justify-center overflow-hidden">
       {/* Background */}

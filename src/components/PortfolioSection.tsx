@@ -1,6 +1,10 @@
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Camera } from "lucide-react";
+
+// Static fallbacks
 import portfolioFoto from "@/assets/portfolio-foto.jpg";
 import portfolioDron from "@/assets/portfolio-dron.jpg";
 import portfolioTour from "@/assets/portfolio-tour.jpg";
@@ -8,18 +12,37 @@ import portfolioVideo from "@/assets/portfolio-video.jpg";
 import portfolioEventos from "@/assets/portfolio-eventos.jpg";
 import portfolioRenders from "@/assets/portfolio-renders.jpg";
 
-const categories = [
-  { title: "Fotografía", slug: "fotografia", image: portfolioFoto },
-  { title: "Dron", slug: "dron", image: portfolioDron },
-  { title: "Tours Virtuales", slug: "tours-virtuales", image: portfolioTour },
-  { title: "Video", slug: "video", image: portfolioVideo },
-  { title: "Eventos", slug: "eventos", image: portfolioEventos },
-  { title: "Renders", slug: "renders", image: portfolioRenders },
-];
+const fallbackImages: Record<string, string> = {
+  fotografia: portfolioFoto,
+  dron: portfolioDron,
+  "tours-virtuales": portfolioTour,
+  video: portfolioVideo,
+  eventos: portfolioEventos,
+  renders: portfolioRenders,
+};
+
+type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  cover_image: string | null;
+  order: number;
+};
 
 const PortfolioSection = () => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("portfolio_categories")
+      .select("id, name, slug, cover_image, order")
+      .order("order")
+      .then(({ data }) => {
+        if (data) setCategories(data);
+      });
+  }, []);
 
   return (
     <section id="portafolio" className="py-24 px-6" ref={ref}>
@@ -41,7 +64,7 @@ const PortfolioSection = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {categories.map((cat, i) => (
             <motion.div
-              key={cat.title}
+              key={cat.id}
               initial={{ opacity: 0, y: 30 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.2 + i * 0.1 }}
@@ -50,14 +73,20 @@ const PortfolioSection = () => {
                 to={`/portafolio/${cat.slug}`}
                 className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer block"
               >
-                <img
-                  src={cat.image}
-                  alt={cat.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
+                {(cat.cover_image || fallbackImages[cat.slug]) ? (
+                  <img
+                    src={cat.cover_image || fallbackImages[cat.slug]}
+                    alt={cat.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-secondary flex items-center justify-center">
+                    <Camera className="w-12 h-12 text-muted-foreground" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
                 <div className="absolute bottom-6 left-6">
-                  <h3 className="font-display text-2xl font-bold text-foreground">{cat.title}</h3>
+                  <h3 className="font-display text-2xl font-bold text-foreground">{cat.name}</h3>
                 </div>
               </Link>
             </motion.div>
