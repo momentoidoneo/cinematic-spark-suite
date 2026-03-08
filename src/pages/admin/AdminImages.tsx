@@ -175,7 +175,7 @@ const AdminImages = () => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Galería de Contenidos</h1>
-        <button onClick={() => { setShowUpload(true); setMediaMode("image"); setUploadForm({ subcategory_id: subcategories[0]?.id || "", title: "", alt_text: "", video_url: "", thumbnail_url: "" }); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
+        <button onClick={() => { setShowUpload(true); setMediaMode("image"); setUploadForm({ subcategory_id: filterSub || subcategories[0]?.id || "", title: "", alt_text: "", video_url: "", thumbnail_url: "" }); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
           <Upload className="w-4 h-4" /> Añadir Contenido
         </button>
       </div>
