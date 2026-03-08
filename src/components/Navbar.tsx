@@ -160,10 +160,8 @@ const Navbar = () => {
           </Link>
         </div>
 
-        {/* Mobile toggle */}
-        <button onClick={() => setOpen(!open)} className="md:hidden text-foreground">
-          {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        {/* Spacer for mobile to balance layout */}
+        <div className="w-6 md:hidden" />
       </div>
 
       {/* Mobile menu */}
