@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ChevronDown, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/logo.png";
 
 type NavChild = { label: string; href: string; isAnchor: boolean };
 type NavItem = { label: string; href: string; isAnchor: boolean; children?: NavChild[] };
@@ -67,8 +68,8 @@ const Navbar = () => {
       className="fixed top-0 left-0 right-0 z-50 glass"
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <a href="#inicio" className="font-display text-xl font-bold tracking-wide text-foreground">
-          SILVIO COSTA
+        <a href="#inicio" className="flex items-center gap-2">
+          <img src={logo} alt="Silvio Costa Photography" className="h-10 w-auto" />
         </a>
 
         {/* Desktop */}
