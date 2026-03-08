@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, ChevronUp, ChevronDown, SortAsc, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, ChevronUp, ChevronDown, SortAsc, Eye, Upload, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 type Category = { id: string; name: string };
@@ -25,6 +25,9 @@ const AdminSubcategories = () => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Subcategory | null>(null);
   const [form, setForm] = useState({ category_id: "", name: "", description: "", icon: "", order: 0, gallery_style: "grid" });
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const fetchData = async () => {
     const [{ data: cats }, { data: subs }] = await Promise.all([
@@ -67,24 +70,47 @@ const AdminSubcategories = () => {
   const openCreate = () => {
     setEditing(null);
     setForm({ category_id: categories[0]?.id || "", name: "", description: "", icon: "", order: 0, gallery_style: "grid" });
+    setCoverFile(null); setCoverPreview(null);
     setShowForm(true);
   };
 
   const openEdit = (s: Subcategory) => {
     setEditing(s);
     setForm({ category_id: s.category_id, name: s.name, description: s.description || "", icon: s.icon || "", order: s.order, gallery_style: s.gallery_style || "grid" });
+    setCoverFile(null); setCoverPreview(s.cover_image || null);
     setShowForm(true);
+  };
+
+  const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const uploadCover = async (): Promise<string | null> => {
+    if (!coverFile) return editing?.cover_image || null;
+    const ext = coverFile.name.split(".").pop();
+    const path = `covers/subcategories/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("portfolio").upload(path, coverFile);
+    if (error) { toast.error("Error subiendo imagen"); return null; }
+    const { data } = supabase.storage.from("portfolio").getPublicUrl(path);
+    return data.publicUrl;
   };
 
   const handleSave = async () => {
     if (!form.name || !form.category_id) { toast.error("Campos obligatorios"); return; }
+    setUploading(true);
+    const coverUrl = await uploadCover();
+    const payload = { ...form, cover_image: coverUrl || null };
     if (editing) {
-      await supabase.from("portfolio_subcategories").update(form).eq("id", editing.id);
+      await supabase.from("portfolio_subcategories").update(payload).eq("id", editing.id);
       toast.success("Subcategoría actualizada");
     } else {
-      await supabase.from("portfolio_subcategories").insert(form);
+      await supabase.from("portfolio_subcategories").insert(payload);
       toast.success("Subcategoría creada");
     }
+    setUploading(false);
     setShowForm(false);
     fetchData();
   };
@@ -202,6 +228,22 @@ const AdminSubcategories = () => {
                 <label className="text-sm font-medium text-foreground mb-1 block">Descripción</label>
                 <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm" rows={2} />
               </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Imagen de portada</label>
+                <div className="flex items-center gap-3">
+                  {coverPreview ? (
+                    <img src={coverPreview} alt="Cover" className="w-16 h-16 rounded-lg object-cover border border-border" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-lg bg-secondary border border-border flex items-center justify-center">
+                      <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground cursor-pointer hover:bg-secondary/80">
+                    <Upload className="w-4 h-4" /> Subir imagen
+                    <input type="file" accept="image/*" onChange={handleCoverSelect} className="hidden" />
+                  </label>
+                </div>
+              </div>
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label className="text-sm font-medium text-foreground mb-1 block">Estilo galería</label>
@@ -216,8 +258,8 @@ const AdminSubcategories = () => {
                   <input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm" />
                 </div>
               </div>
-              <button onClick={handleSave} className="w-full py-2.5 rounded-lg bg-gradient-primary text-primary-foreground font-semibold text-sm">
-                {editing ? "Actualizar" : "Crear"}
+              <button onClick={handleSave} disabled={uploading} className="w-full py-2.5 rounded-lg bg-gradient-primary text-primary-foreground font-semibold text-sm disabled:opacity-50">
+                {uploading ? "Subiendo..." : editing ? "Actualizar" : "Crear"}
               </button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, SortAsc, SortDesc, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, SortAsc, SortDesc, ChevronUp, ChevronDown, Upload, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 type Category = {
@@ -15,7 +15,10 @@ const AdminCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
-  const [form, setForm] = useState({ name: "", slug: "", description: "", icon: "", order: 0 });
+  const [form, setForm] = useState({ name: "", slug: "", description: "", icon: "", order: 0, cover_image: "" });
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("order");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -53,27 +56,50 @@ const AdminCategories = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", slug: "", description: "", icon: "", order: categories.length });
+    setForm({ name: "", slug: "", description: "", icon: "", order: categories.length, cover_image: "" });
+    setCoverFile(null); setCoverPreview(null);
     setShowForm(true);
   };
 
   const openEdit = (cat: Category) => {
     setEditing(cat);
-    setForm({ name: cat.name, slug: cat.slug, description: cat.description || "", icon: cat.icon || "", order: cat.order });
+    setForm({ name: cat.name, slug: cat.slug, description: cat.description || "", icon: cat.icon || "", order: cat.order, cover_image: cat.cover_image || "" });
+    setCoverFile(null); setCoverPreview(cat.cover_image || null);
     setShowForm(true);
+  };
+
+  const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const uploadCover = async (): Promise<string | null> => {
+    if (!coverFile) return form.cover_image || null;
+    const ext = coverFile.name.split(".").pop();
+    const path = `covers/categories/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("portfolio").upload(path, coverFile);
+    if (error) { toast.error("Error subiendo imagen"); return null; }
+    const { data } = supabase.storage.from("portfolio").getPublicUrl(path);
+    return data.publicUrl;
   };
 
   const handleSave = async () => {
     if (!form.name || !form.slug) { toast.error("Nombre y slug son obligatorios"); return; }
+    setUploading(true);
+    const coverUrl = await uploadCover();
+    const payload = { ...form, cover_image: coverUrl || null };
     if (editing) {
-      const { error } = await supabase.from("portfolio_categories").update(form).eq("id", editing.id);
-      if (error) { toast.error("Error al actualizar"); return; }
+      const { error } = await supabase.from("portfolio_categories").update(payload).eq("id", editing.id);
+      if (error) { toast.error("Error al actualizar"); setUploading(false); return; }
       toast.success("Categoría actualizada");
     } else {
-      const { error } = await supabase.from("portfolio_categories").insert(form);
-      if (error) { toast.error("Error al crear"); return; }
+      const { error } = await supabase.from("portfolio_categories").insert(payload);
+      if (error) { toast.error("Error al crear"); setUploading(false); return; }
       toast.success("Categoría creada");
     }
+    setUploading(false);
     setShowForm(false);
     fetchCategories();
   };
@@ -177,6 +203,22 @@ const AdminCategories = () => {
                 <label className="text-sm font-medium text-foreground mb-1 block">Descripción</label>
                 <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm" rows={2} />
               </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Imagen de portada</label>
+                <div className="flex items-center gap-3">
+                  {coverPreview ? (
+                    <img src={coverPreview} alt="Cover" className="w-16 h-16 rounded-lg object-cover border border-border" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-lg bg-secondary border border-border flex items-center justify-center">
+                      <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground cursor-pointer hover:bg-secondary/80">
+                    <Upload className="w-4 h-4" /> Subir imagen
+                    <input type="file" accept="image/*" onChange={handleCoverSelect} className="hidden" />
+                  </label>
+                </div>
+              </div>
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label className="text-sm font-medium text-foreground mb-1 block">Icono</label>
@@ -187,8 +229,8 @@ const AdminCategories = () => {
                   <input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm" />
                 </div>
               </div>
-              <button onClick={handleSave} className="w-full py-2.5 rounded-lg bg-gradient-primary text-primary-foreground font-semibold text-sm">
-                {editing ? "Actualizar" : "Crear"} Categoría
+              <button onClick={handleSave} disabled={uploading} className="w-full py-2.5 rounded-lg bg-gradient-primary text-primary-foreground font-semibold text-sm disabled:opacity-50">
+                {uploading ? "Subiendo..." : editing ? "Actualizar" : "Crear"} Categoría
               </button>
             </div>
           </div>
