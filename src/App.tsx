@@ -25,6 +25,7 @@ import AdminWhatsAppConfig from "./pages/admin/AdminWhatsAppConfig";
 import AdminLegalTexts from "./pages/admin/AdminLegalTexts";
 import AdminSocialMedia from "./pages/admin/AdminSocialMedia";
 import AdminApiKeys from "./pages/admin/AdminApiKeys";
+import AdminLanding from "./pages/admin/AdminLanding";
 import Legal from "./pages/Legal";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ const App = () => (
               <Route path="legal" element={<AdminLegalTexts />} />
               <Route path="social" element={<AdminSocialMedia />} />
               <Route path="api-keys" element={<AdminApiKeys />} />
+              <Route path="landing" element={<AdminLanding />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
