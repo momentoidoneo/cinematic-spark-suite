@@ -99,19 +99,32 @@ const ServicioVideoDron = () => {
       {/* Hero */}
       <section className="pt-28 pb-20 px-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
-        <div className="max-w-5xl mx-auto relative z-10">
+        <div className="max-w-6xl mx-auto relative z-10 grid md:grid-cols-2 gap-10 items-center">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <p className="text-primary font-medium text-sm tracking-widest uppercase mb-4">Producción Audiovisual</p>
             <h1 className="font-display text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
               Video y dron profesional<br />
               <span className="text-gradient-primary">para proyectos únicos</span>
             </h1>
-            <p className="text-muted-foreground text-lg md:text-xl max-w-2xl leading-relaxed mb-4">
-              Producción de video en 4K y servicios aéreos con dron para publicidad, corporativo, eventos e inmobiliaria. Perspectivas que transforman la percepción de tu proyecto.
+            <p className="text-muted-foreground text-lg md:text-xl leading-relaxed mb-4">
+              Producción de video en 4K y servicios aéreos con dron para publicidad, corporativo, eventos e inmobiliaria.
             </p>
-            <p className="text-muted-foreground text-base max-w-2xl leading-relaxed">
-              El vídeo es el formato de contenido más consumido en Internet y el que genera mayor engagement. Combinado con tomas aéreas de dron, el resultado es un material audiovisual que eleva la percepción de cualquier marca, propiedad o evento a otro nivel.
+            <p className="text-muted-foreground text-base leading-relaxed">
+              El vídeo es el formato más consumido en Internet. Combinado con tomas aéreas de dron, el resultado eleva cualquier marca a otro nivel.
             </p>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="hidden md:block"
+          >
+            <img
+              src={heroImg}
+              alt="Dron profesional grabando villa de lujo en la Costa del Sol al atardecer"
+              className="rounded-2xl shadow-2xl w-full h-auto object-cover aspect-[16/10]"
+              loading="eager"
+            />
           </motion.div>
         </div>
       </section>
