@@ -29,8 +29,16 @@ const AdminLayout = () => {
               <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Panel de Administración</span>
             </div>
             <div className="flex items-center gap-4">
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Ver Landing
+              </a>
               <span className="text-sm text-muted-foreground">{user.email}</span>
-              <ChangePasswordDialog />
               <button
                 onClick={signOut}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
