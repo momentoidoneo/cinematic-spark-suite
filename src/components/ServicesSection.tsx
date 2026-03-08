@@ -10,7 +10,7 @@ import {
 
 import servicioFotoHero from "@/assets/servicio-foto-hero.jpg";
 import servicioVideoHero from "@/assets/servicio-video-hero.jpg";
-import portfolioDron from "@/assets/portfolio-dron.jpg";
+import bannerDron from "@/assets/banner-dron.jpg";
 
 const photoServices = [
   { icon: Home, title: "Arquitectura e interiores", desc: "Capturamos la esencia y el diseño de cualquier espacio arquitectónico con precisión." },
@@ -162,7 +162,7 @@ const ServicesSection = () => {
 
         {/* Dron */}
         <SectionBanner
-          image={portfolioDron}
+          image={bannerDron}
           alt="Servicios de dron profesional"
           title="Servicios de Dron"
           subtitle="Perspectivas aéreas espectaculares con drones de última generación. Fotografía, vídeo, fotogrametría e inspecciones en altura."
