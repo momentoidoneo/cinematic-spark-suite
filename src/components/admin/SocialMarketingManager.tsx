@@ -926,7 +926,7 @@ function VideoTab() {
     if (!thumbPrompt) return toast.error("Escribe un prompt para la miniatura");
     setIsGeneratingThumb(true);
     try {
-      const { data, error } = await supabase.functions.invoke("runware-image", {
+    const { data, error } = await supabase.functions.invoke("generate-thumbnail", {
         body: { prompt: thumbPrompt, width: thumbWidth, height: thumbHeight, numberResults: 2 },
       });
       if (error) throw error;
@@ -1072,7 +1072,7 @@ function VideoTab() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2"><Eye className="w-4 h-4 text-primary" />Generar Thumbnails con Runware</CardTitle>
+              <CardTitle className="text-base flex items-center gap-2"><Eye className="w-4 h-4 text-primary" />Generar Thumbnails con IA</CardTitle>
               <CardDescription>Crea miniaturas profesionales para tus vídeos con IA</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
