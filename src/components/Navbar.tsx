@@ -10,9 +10,9 @@ const navItems = [
     href: "/#servicios",
     isAnchor: true,
     children: [
-      { label: "Fotografía", href: "/#fotografia", isAnchor: true },
-      { label: "Video y Dron", href: "/#video", isAnchor: true },
-      { label: "Tour Virtual 360°", href: "/#tour", isAnchor: true },
+      { label: "Fotografía", href: "/servicios/fotografia", isAnchor: false },
+      { label: "Video y Dron", href: "/servicios/video-dron", isAnchor: false },
+      { label: "Tour Virtual 360°", href: "/servicios/tour-virtual", isAnchor: false },
     ],
   },
   { label: "Portafolio", href: "/portafolio", isAnchor: false },
