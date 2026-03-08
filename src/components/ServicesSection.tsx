@@ -162,7 +162,7 @@ const ServicesSection = () => {
 
         {/* Dron */}
         <SectionBanner
-          image={portfolioDron}
+          image={bannerDron}
           alt="Servicios de dron profesional"
           title="Servicios de Dron"
           subtitle="Perspectivas aéreas espectaculares con drones de última generación. Fotografía, vídeo, fotogrametría e inspecciones en altura."
