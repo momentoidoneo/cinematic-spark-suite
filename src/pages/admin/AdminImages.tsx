@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link, LayoutGrid, Columns, GalleryHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import GalleryGenerator from "@/components/admin/GalleryGenerator";
 
 type Category = { id: string; name: string };
 type Subcategory = { id: string; category_id: string; name: string; gallery_style: string | null };
@@ -181,9 +182,23 @@ const AdminImages = () => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Galería de Contenidos</h1>
-        <button onClick={() => { setShowUpload(true); setMediaMode("image"); setUploadForm({ subcategory_id: filterSub || subcategories[0]?.id || "", title: "", alt_text: "", video_url: "", thumbnail_url: "" }); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
-          <Upload className="w-4 h-4" /> Añadir Contenido
-        </button>
+        <div className="flex items-center gap-2">
+          {filterSub && (() => {
+            const currentSub = subcategories.find(s => s.id === filterSub);
+            const cat = currentSub ? categories.find(c => c.id === currentSub.category_id) : null;
+            return currentSub ? (
+              <GalleryGenerator
+                subcategoryId={filterSub}
+                subcategoryName={currentSub.name}
+                categoryName={cat?.name || ""}
+                onComplete={fetchImages}
+              />
+            ) : null;
+          })()}
+          <button onClick={() => { setShowUpload(true); setMediaMode("image"); setUploadForm({ subcategory_id: filterSub || subcategories[0]?.id || "", title: "", alt_text: "", video_url: "", thumbnail_url: "" }); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
+            <Upload className="w-4 h-4" /> Añadir Contenido
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
