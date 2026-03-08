@@ -120,21 +120,6 @@ const AdminCategories = () => {
 
   const missingCovers = categories.filter(c => !c.cover_image).length;
 
-  const handleGenerateCovers = async () => {
-    setGeneratingCovers(true);
-    toast.info("Generando portadas de categorías con IA… esto puede tardar unos minutos.");
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-covers", { body: { type: "category" } });
-      if (error) throw error;
-      toast.success(data?.message || "Portadas generadas");
-      fetchCategories();
-    } catch (e: any) {
-      toast.error("Error generando portadas: " + (e.message || "desconocido"));
-    } finally {
-      setGeneratingCovers(false);
-    }
-  };
-
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
