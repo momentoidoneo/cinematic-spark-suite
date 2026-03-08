@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Edit, Trash2, Tag, Calendar, ToggleLeft, ToggleRight, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Tag, Calendar, ToggleLeft, ToggleRight, Search, Upload, X, Image } from "lucide-react";
 import { toast } from "sonner";
 
 interface Promotion {
