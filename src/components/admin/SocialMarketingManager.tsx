@@ -1017,7 +1017,6 @@ function VideoTab() {
                   </div>
                 </div>
               )}
-              )}
               <div className="grid grid-cols-3 gap-3">
                 <div><Label>Modelo</Label>
                   <Select value={videoModel} onValueChange={setVideoModel}>
