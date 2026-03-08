@@ -833,6 +833,7 @@ function VideoTab() {
   const [videoMode, setVideoMode] = useState<"text" | "image">("text");
   const [videoPrompt, setVideoPrompt] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [videoRatio, setVideoRatio] = useState("1280:720");
   const [videoDuration, setVideoDuration] = useState(5);
   const [videoModel, setVideoModel] = useState("gen4");
