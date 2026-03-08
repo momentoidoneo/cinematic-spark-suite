@@ -14,16 +14,196 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      portfolio_categories: {
+        Row: {
+          cover_image: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          order: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          order?: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          order?: number
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      portfolio_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          is_featured: boolean
+          order: number
+          subcategory_id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          is_featured?: boolean
+          order?: number
+          subcategory_id: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          is_featured?: boolean
+          order?: number
+          subcategory_id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_images_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_subcategories: {
+        Row: {
+          category_id: string
+          cover_image: string | null
+          created_at: string
+          description: string | null
+          gallery_style: string | null
+          icon: string | null
+          id: string
+          name: string
+          order: number
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          gallery_style?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          order?: number
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          gallery_style?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_subcategories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +330,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
