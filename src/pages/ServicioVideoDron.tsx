@@ -75,14 +75,23 @@ const ServiceBlock = ({ title, subtitle, items }: { title: string; subtitle: str
 );
 
 const ServicioVideoDron = () => {
-  useEffect(() => {
-    document.title = "Servicios de Video y Dron Profesional | Silvio Costa";
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", "Producción audiovisual y servicios de dron profesional en Marbella: videos corporativos, aéreos, streaming, fotogrametría, timelapse y más. Calidad 4K.");
-  }, []);
+  const siteUrl = getSiteUrl();
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Vídeo Profesional y Dron en España y Portugal | Silvio Costa Photography"
+        description="Producción audiovisual profesional y grabación con drones: vídeos corporativos, aéreos, streaming, fotogrametría y timelapse. Calidad 4K en toda España y Portugal."
+        canonical={`${siteUrl}/servicios/video-dron`}
+        jsonLd={[
+          videoDronServiceSchema,
+          breadcrumbSchema([
+            { name: "Inicio", url: siteUrl },
+            { name: "Servicios", url: `${siteUrl}/#servicios` },
+            { name: "Vídeo y Dron", url: `${siteUrl}/servicios/video-dron` },
+          ]),
+        ]}
+      />
       <Navbar />
 
       {/* Hero */}

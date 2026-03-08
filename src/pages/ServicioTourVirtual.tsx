@@ -47,14 +47,23 @@ const matterportFeatures = [
 ];
 
 const ServicioTourVirtual = () => {
-  useEffect(() => {
-    document.title = "Tour Virtual 360° y Matterport | Silvio Costa";
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", "Tours virtuales 360° con tecnología Matterport Pro3 en Marbella. Gemelos digitales, planos de planta, medición de espacios y Google Street View para inmobiliarias, hostelería y comercios.");
-  }, []);
+  const siteUrl = getSiteUrl();
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Tours Virtuales 360° y Matterport en España y Portugal | Silvio Costa Photography"
+        description="Tours virtuales 360° con tecnología Matterport Pro3. Gemelos digitales, planos de planta, medición de espacios y Google Street View para inmobiliarias, hostelería y comercios en España y Portugal."
+        canonical={`${siteUrl}/servicios/tour-virtual`}
+        jsonLd={[
+          tourVirtualServiceSchema,
+          breadcrumbSchema([
+            { name: "Inicio", url: siteUrl },
+            { name: "Servicios", url: `${siteUrl}/#servicios` },
+            { name: "Tour Virtual 360°", url: `${siteUrl}/servicios/tour-virtual` },
+          ]),
+        ]}
+      />
       <Navbar />
 
       {/* Hero */}

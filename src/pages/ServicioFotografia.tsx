@@ -40,14 +40,23 @@ const processSteps = [
 ];
 
 const ServicioFotografia = () => {
-  useEffect(() => {
-    document.title = "Servicios de Fotografía Profesional | Silvio Costa";
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", "Servicios de fotografía profesional en Marbella: arquitectura, producto, moda, gastronomía, eventos y más. Más de 10 especialidades. Imágenes que venden.");
-  }, []);
+  const siteUrl = getSiteUrl();
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Fotografía Profesional en España y Portugal | Silvio Costa Photography"
+        description="Servicios de fotografía profesional: inmobiliaria, arquitectura, producto, gastronomía, moda y eventos. +10 especialidades con calidad cinematográfica en toda España y Portugal."
+        canonical={`${siteUrl}/servicios/fotografia`}
+        jsonLd={[
+          photographyServiceSchema,
+          breadcrumbSchema([
+            { name: "Inicio", url: siteUrl },
+            { name: "Servicios", url: `${siteUrl}/#servicios` },
+            { name: "Fotografía Profesional", url: `${siteUrl}/servicios/fotografia` },
+          ]),
+        ]}
+      />
       <Navbar />
 
       {/* Hero */}
