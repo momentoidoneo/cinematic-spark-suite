@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Camera, Plane, Globe, Video, PartyPopper, Boxes } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroBg from "@/assets/hero-bg.jpg";
+import logo from "@/assets/logo.png";
 
 const services = [
   { icon: Camera, label: "FOTOGRAFÍA", href: "/servicios/fotografia" },
