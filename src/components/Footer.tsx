@@ -84,8 +84,10 @@ const Footer = () => {
             © 2026 Silvio Costa Photography. Todos los derechos reservados.
           </p>
           <div className="flex gap-4">
-            <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacidad</a>
-            <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Términos</a>
+            <a href="/legal/privacy-policy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacidad</a>
+            <a href="/legal/legal-notice" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Aviso Legal</a>
+            <a href="/legal/cookies" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Cookies</a>
+            <a href="/legal/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Términos</a>
           </div>
         </div>
       </div>
