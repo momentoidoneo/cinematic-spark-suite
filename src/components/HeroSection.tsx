@@ -1,14 +1,16 @@
 import { motion } from "framer-motion";
-import { Camera, Plane, Globe } from "lucide-react";
+import { Camera, Plane, Globe, Video, PartyPopper, Boxes } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const services = [
-{ icon: Camera, label: "FOTOGRAFÍA" },
-{ icon: Plane, label: "SERVICIOS DRON" },
-{ icon: Globe, label: "TOUR VIRTUAL" },
-{ icon: Camera, label: "VIDEO" },
-{ icon: Camera, label: "EVENTOS" },
-{ icon: Camera, label: "RENDERS 3D" }];
+  { icon: Camera, label: "FOTOGRAFÍA", href: "/servicios/fotografia" },
+  { icon: Plane, label: "SERVICIOS DRON", href: "/servicios/video-dron" },
+  { icon: Globe, label: "TOUR VIRTUAL", href: "/servicios/tour-virtual" },
+  { icon: Video, label: "VIDEO", href: "/#video" },
+  { icon: PartyPopper, label: "EVENTOS", href: "/#servicios" },
+  { icon: Boxes, label: "RENDERS 3D", href: "/#servicios" },
+];
 
 
 const HeroSection = () => {
@@ -71,20 +73,29 @@ const HeroSection = () => {
       {/* Service cards */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 pb-20 w-full">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {services.map((s, i) =>
-          <motion.div
-            key={s.label}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.9 + i * 0.1 }}
-            className="group rounded-xl bg-card/60 border border-border/50 p-6 text-center hover:border-primary/40 hover:shadow-glow transition-all cursor-pointer">
-            
-              <s.icon className="w-8 h-8 mx-auto text-primary mb-3 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-semibold tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
-                {s.label}
-              </span>
-            </motion.div>
-          )}
+          {services.map((s, i) => {
+            const isExternal = s.href.startsWith("/#");
+            const Wrapper = isExternal ? "a" : Link;
+            const linkProps = isExternal ? { href: s.href } : { to: s.href };
+            return (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.9 + i * 0.1 }}
+              >
+                <Wrapper
+                  {...(linkProps as any)}
+                  className="group rounded-xl bg-card/60 border border-border/50 p-6 text-center hover:border-primary/40 hover:shadow-glow transition-all cursor-pointer block"
+                >
+                  <s.icon className="w-8 h-8 mx-auto text-primary mb-3 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-semibold tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
+                    {s.label}
+                  </span>
+                </Wrapper>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>);
