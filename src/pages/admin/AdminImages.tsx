@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link } from "lucide-react";
 import { toast } from "sonner";
@@ -14,11 +15,12 @@ type PortfolioImage = {
 type MediaMode = "image" | "video" | "iframe";
 
 const AdminImages = () => {
+  const [searchParams] = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [images, setImages] = useState<PortfolioImage[]>([]);
   const [filterCat, setFilterCat] = useState("");
-  const [filterSub, setFilterSub] = useState("");
+  const [filterSub, setFilterSub] = useState(searchParams.get("subcategory") || "");
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [mediaMode, setMediaMode] = useState<MediaMode>("image");
@@ -42,6 +44,13 @@ const AdminImages = () => {
   };
 
   useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    // Auto-set category filter when subcategory comes from URL
+    if (filterSub && subcategories.length > 0 && !filterCat) {
+      const sub = subcategories.find(s => s.id === filterSub);
+      if (sub) setFilterCat(sub.category_id);
+    }
+  }, [filterSub, subcategories]);
   useEffect(() => { fetchImages(); }, [filterSub]);
 
   const filteredSubs = filterCat ? subcategories.filter(s => s.category_id === filterCat) : subcategories;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, ChevronUp, ChevronDown, SortAsc } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, ChevronUp, ChevronDown, SortAsc, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 type Category = { id: string; name: string };
@@ -14,6 +15,7 @@ type SortKey = "name" | "category" | "order" | "gallery_style";
 type SortDir = "asc" | "desc";
 
 const AdminSubcategories = () => {
+  const navigate = useNavigate();
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filterCat, setFilterCat] = useState("");
@@ -149,8 +151,8 @@ const AdminSubcategories = () => {
           </thead>
           <tbody>
             {filtered.map((s, idx) => (
-              <tr key={s.id} className="border-t border-border hover:bg-secondary/20">
-                <td className="px-4 py-3 text-foreground font-medium">{s.name}</td>
+              <tr key={s.id} className="border-t border-border hover:bg-secondary/20 cursor-pointer" onClick={() => navigate(`/admin/images?subcategory=${s.id}`)}>
+                <td className="px-4 py-3 text-foreground font-medium flex items-center gap-2">{s.name} <Eye className="w-3.5 h-3.5 text-muted-foreground" /></td>
                 <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">{(s as any).portfolio_categories?.name}</span></td>
                 <td className="px-4 py-3 text-muted-foreground truncate max-w-[200px]">{s.description || "—"}</td>
                 <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full bg-secondary text-muted-foreground text-xs">{galleryLabels[s.gallery_style || "grid"] || s.gallery_style}</span></td>
@@ -165,7 +167,7 @@ const AdminSubcategories = () => {
                     </button>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                   <button onClick={() => openEdit(s)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
                   <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive ml-1"><Trash2 className="w-4 h-4" /></button>
                 </td>
