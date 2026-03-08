@@ -1,14 +1,17 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, X, Upload, Star } from "lucide-react";
+import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link } from "lucide-react";
 import { toast } from "sonner";
 
 type Category = { id: string; name: string };
-type Subcategory = { id: string; category_id: string; name: string };
+type Subcategory = { id: string; category_id: string; name: string; gallery_style: string | null };
 type PortfolioImage = {
   id: string; subcategory_id: string; title: string | null; description: string | null;
   image_url: string; alt_text: string | null; order: number; is_featured: boolean;
+  media_type: string; video_url: string | null; thumbnail_url: string | null;
 };
+
+type MediaMode = "image" | "video" | "iframe";
 
 const AdminImages = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -18,13 +21,14 @@ const AdminImages = () => {
   const [filterSub, setFilterSub] = useState("");
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadForm, setUploadForm] = useState({ subcategory_id: "", title: "", alt_text: "" });
+  const [mediaMode, setMediaMode] = useState<MediaMode>("image");
+  const [uploadForm, setUploadForm] = useState({ subcategory_id: "", title: "", alt_text: "", video_url: "", thumbnail_url: "" });
   const fileRef = useRef<HTMLInputElement>(null);
 
   const fetchData = async () => {
     const [{ data: cats }, { data: subs }] = await Promise.all([
       supabase.from("portfolio_categories").select("id, name").order("order"),
-      supabase.from("portfolio_subcategories").select("id, category_id, name").order("order"),
+      supabase.from("portfolio_subcategories").select("id, category_id, name, gallery_style").order("order"),
     ]);
     if (cats) setCategories(cats);
     if (subs) setSubcategories(subs);
@@ -34,7 +38,7 @@ const AdminImages = () => {
     let query = supabase.from("portfolio_images").select("*").order("order");
     if (filterSub) query = query.eq("subcategory_id", filterSub);
     const { data } = await query;
-    if (data) setImages(data);
+    if (data) setImages(data as PortfolioImage[]);
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -43,42 +47,101 @@ const AdminImages = () => {
   const filteredSubs = filterCat ? subcategories.filter(s => s.category_id === filterCat) : subcategories;
 
   const handleUpload = async () => {
-    const files = fileRef.current?.files;
-    if (!files?.length || !uploadForm.subcategory_id) { toast.error("Selecciona subcategoría y archivos"); return; }
+    if (!uploadForm.subcategory_id) { toast.error("Selecciona una subcategoría"); return; }
 
     setUploading(true);
-    for (const file of Array.from(files)) {
-      const ext = file.name.split(".").pop();
-      const path = `${uploadForm.subcategory_id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage.from("portfolio").upload(path, file);
-      if (uploadError) { toast.error(`Error subiendo ${file.name}`); continue; }
-
-      const { data: { publicUrl } } = supabase.storage.from("portfolio").getPublicUrl(path);
-
+    if (mediaMode === "image") {
+      const files = fileRef.current?.files;
+      if (!files?.length) { toast.error("Selecciona archivos"); setUploading(false); return; }
+      for (const file of Array.from(files)) {
+        const ext = file.name.split(".").pop();
+        const path = `${uploadForm.subcategory_id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from("portfolio").upload(path, file);
+        if (uploadError) { toast.error(`Error subiendo ${file.name}`); continue; }
+        const { data: { publicUrl } } = supabase.storage.from("portfolio").getPublicUrl(path);
+        await supabase.from("portfolio_images").insert({
+          subcategory_id: uploadForm.subcategory_id,
+          image_url: publicUrl,
+          title: uploadForm.title || file.name,
+          alt_text: uploadForm.alt_text || file.name,
+          order: images.length,
+          media_type: "image",
+        });
+      }
+    } else if (mediaMode === "video") {
+      // Video: either upload file or provide URL
+      const files = fileRef.current?.files;
+      if (files?.length) {
+        for (const file of Array.from(files)) {
+          const ext = file.name.split(".").pop();
+          const path = `${uploadForm.subcategory_id}/video-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+          const { error: uploadError } = await supabase.storage.from("portfolio").upload(path, file);
+          if (uploadError) { toast.error(`Error subiendo ${file.name}`); continue; }
+          const { data: { publicUrl } } = supabase.storage.from("portfolio").getPublicUrl(path);
+          await supabase.from("portfolio_images").insert({
+            subcategory_id: uploadForm.subcategory_id,
+            image_url: uploadForm.thumbnail_url || publicUrl,
+            video_url: publicUrl,
+            title: uploadForm.title || file.name,
+            alt_text: uploadForm.alt_text || file.name,
+            order: images.length,
+            media_type: "video",
+            thumbnail_url: uploadForm.thumbnail_url || null,
+          });
+        }
+      } else if (uploadForm.video_url) {
+        await supabase.from("portfolio_images").insert({
+          subcategory_id: uploadForm.subcategory_id,
+          image_url: uploadForm.thumbnail_url || "/placeholder.svg",
+          video_url: uploadForm.video_url,
+          title: uploadForm.title || "Video",
+          alt_text: uploadForm.alt_text || "Video",
+          order: images.length,
+          media_type: "video",
+          thumbnail_url: uploadForm.thumbnail_url || null,
+        });
+      } else {
+        toast.error("Proporciona un archivo de vídeo o un enlace");
+        setUploading(false);
+        return;
+      }
+    } else if (mediaMode === "iframe") {
+      if (!uploadForm.video_url) { toast.error("Proporciona el enlace del tour virtual"); setUploading(false); return; }
       await supabase.from("portfolio_images").insert({
         subcategory_id: uploadForm.subcategory_id,
-        image_url: publicUrl,
-        title: uploadForm.title || file.name,
-        alt_text: uploadForm.alt_text || file.name,
+        image_url: uploadForm.thumbnail_url || "/placeholder.svg",
+        video_url: uploadForm.video_url,
+        title: uploadForm.title || "Tour Virtual",
+        alt_text: uploadForm.alt_text || "Tour Virtual",
         order: images.length,
+        media_type: "iframe",
+        thumbnail_url: uploadForm.thumbnail_url || null,
       });
     }
 
-    toast.success("Imágenes subidas correctamente");
+    toast.success("Contenido añadido correctamente");
     setUploading(false);
     setShowUpload(false);
     fetchImages();
   };
 
   const handleDelete = async (img: PortfolioImage) => {
-    if (!confirm("¿Eliminar esta imagen?")) return;
-    // Try to delete from storage
-    const url = new URL(img.image_url);
-    const storagePath = url.pathname.split("/portfolio/")[1];
-    if (storagePath) await supabase.storage.from("portfolio").remove([storagePath]);
+    if (!confirm("¿Eliminar este elemento?")) return;
+    try {
+      const url = new URL(img.image_url);
+      const storagePath = url.pathname.split("/portfolio/")[1];
+      if (storagePath) await supabase.storage.from("portfolio").remove([storagePath]);
+    } catch {}
+    if (img.video_url) {
+      try {
+        const url = new URL(img.video_url);
+        const storagePath = url.pathname.split("/portfolio/")[1];
+        if (storagePath) await supabase.storage.from("portfolio").remove([storagePath]);
+      } catch {}
+    }
     await supabase.from("portfolio_images").delete().eq("id", img.id);
-    toast.success("Imagen eliminada");
+    toast.success("Eliminado");
     fetchImages();
   };
 
@@ -87,12 +150,24 @@ const AdminImages = () => {
     fetchImages();
   };
 
+  const mediaIcon = (type: string) => {
+    if (type === "video") return <Video className="w-3 h-3" />;
+    if (type === "iframe") return <Globe className="w-3 h-3" />;
+    return <Image className="w-3 h-3" />;
+  };
+
+  const mediaColor = (type: string) => {
+    if (type === "video") return "bg-blue-500/80";
+    if (type === "iframe") return "bg-emerald-500/80";
+    return "bg-primary/80";
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Galería de Imágenes</h1>
-        <button onClick={() => { setShowUpload(true); setUploadForm({ subcategory_id: subcategories[0]?.id || "", title: "", alt_text: "" }); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
-          <Upload className="w-4 h-4" /> Subir Imágenes
+        <h1 className="font-display text-2xl font-bold text-foreground">Galería de Contenidos</h1>
+        <button onClick={() => { setShowUpload(true); setMediaMode("image"); setUploadForm({ subcategory_id: subcategories[0]?.id || "", title: "", alt_text: "", video_url: "", thumbnail_url: "" }); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
+          <Upload className="w-4 h-4" /> Añadir Contenido
         </button>
       </div>
 
@@ -108,11 +183,15 @@ const AdminImages = () => {
         </select>
       </div>
 
-      {/* Image Grid */}
+      {/* Content Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {images.map((img) => (
           <div key={img.id} className="group relative aspect-square rounded-xl overflow-hidden border border-border bg-card">
-            <img src={img.image_url} alt={img.alt_text || ""} className="w-full h-full object-cover" />
+            <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="w-full h-full object-cover" />
+            {/* Media type badge */}
+            <div className={`absolute top-2 left-2 ${mediaColor(img.media_type)} text-white rounded-full p-1.5 flex items-center gap-1`}>
+              {mediaIcon(img.media_type)}
+            </div>
             <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <button onClick={() => toggleFeatured(img)} className={`p-2 rounded-lg ${img.is_featured ? "bg-accent text-accent-foreground" : "bg-secondary text-foreground"}`}>
                 <Star className="w-4 h-4" />
@@ -126,11 +205,16 @@ const AdminImages = () => {
                 <Star className="w-3 h-3 text-accent-foreground" />
               </div>
             )}
+            {img.title && (
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/80 to-transparent p-2">
+                <p className="text-xs text-foreground truncate">{img.title}</p>
+              </div>
+            )}
           </div>
         ))}
         {images.length === 0 && (
           <div className="col-span-full text-center text-muted-foreground py-16">
-            No hay imágenes. Selecciona una subcategoría o sube nuevas imágenes.
+            No hay contenido. Selecciona una subcategoría o añade nuevo contenido.
           </div>
         )}
       </div>
@@ -138,12 +222,28 @@ const AdminImages = () => {
       {/* Upload Modal */}
       {showUpload && (
         <div className="fixed inset-0 z-50 bg-background/80 flex items-center justify-center p-4">
-          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md">
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-lg font-bold text-foreground">Subir Imágenes</h2>
+              <h2 className="font-display text-lg font-bold text-foreground">Añadir Contenido</h2>
               <button onClick={() => setShowUpload(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
             </div>
             <div className="space-y-4">
+              {/* Media type selector */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">Tipo de contenido</label>
+                <div className="flex gap-2">
+                  {([["image", "Imagen", <Image key="i" className="w-4 h-4" />], ["video", "Vídeo", <Video key="v" className="w-4 h-4" />], ["iframe", "Tour/iFrame", <Globe key="g" className="w-4 h-4" />]] as const).map(([type, label, icon]) => (
+                    <button
+                      key={type}
+                      onClick={() => setMediaMode(type as MediaMode)}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors ${mediaMode === type ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+                    >
+                      {icon} {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="text-sm font-medium text-foreground mb-1 block">Categoría</label>
                 <select
@@ -166,12 +266,47 @@ const AdminImages = () => {
                 <label className="text-sm font-medium text-foreground mb-1 block">Título (opcional)</label>
                 <input value={uploadForm.title} onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm" />
               </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">Archivos</label>
-                <input ref={fileRef} type="file" accept="image/*" multiple className="w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary file:font-semibold file:text-sm" />
-              </div>
+
+              {/* Conditional fields by media type */}
+              {mediaMode === "image" && (
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Archivos de imagen</label>
+                  <input ref={fileRef} type="file" accept="image/*" multiple className="w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary file:font-semibold file:text-sm" />
+                </div>
+              )}
+
+              {mediaMode === "video" && (
+                <>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-1 block">Archivo de vídeo (opcional)</label>
+                    <input ref={fileRef} type="file" accept="video/*" className="w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary file:font-semibold file:text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-1 block flex items-center gap-1"><Link className="w-3 h-3" /> O enlace de vídeo (YouTube, Vimeo...)</label>
+                    <input value={uploadForm.video_url} onChange={(e) => setUploadForm({ ...uploadForm, video_url: e.target.value })} placeholder="https://youtube.com/watch?v=..." className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-1 block">Miniatura (URL, opcional)</label>
+                    <input value={uploadForm.thumbnail_url} onChange={(e) => setUploadForm({ ...uploadForm, thumbnail_url: e.target.value })} placeholder="https://..." className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm" />
+                  </div>
+                </>
+              )}
+
+              {mediaMode === "iframe" && (
+                <>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-1 block flex items-center gap-1"><Globe className="w-3 h-3" /> Enlace del tour virtual / iFrame</label>
+                    <input value={uploadForm.video_url} onChange={(e) => setUploadForm({ ...uploadForm, video_url: e.target.value })} placeholder="https://my.matterport.com/show/?m=..." className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-1 block">Miniatura (URL, opcional)</label>
+                    <input value={uploadForm.thumbnail_url} onChange={(e) => setUploadForm({ ...uploadForm, thumbnail_url: e.target.value })} placeholder="https://..." className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm" />
+                  </div>
+                </>
+              )}
+
               <button onClick={handleUpload} disabled={uploading} className="w-full py-2.5 rounded-lg bg-gradient-primary text-primary-foreground font-semibold text-sm disabled:opacity-50">
-                {uploading ? "Subiendo..." : "Subir Imágenes"}
+                {uploading ? "Subiendo..." : "Añadir"}
               </button>
             </div>
           </div>
