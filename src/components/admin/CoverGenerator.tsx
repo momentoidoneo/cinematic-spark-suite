@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Loader2, RefreshCw, ChevronDown } from "lucide-react";
+import { Sparkles, Loader2, RefreshCw, ChevronDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -10,28 +10,54 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+export interface CoverItem {
+  id: string;
+  name: string;
+  cover_image: string | null;
+  categoryName?: string;
+}
+
 interface CoverGeneratorProps {
   type: "category" | "subcategory";
-  missingCount: number;
-  totalCount: number;
+  items: CoverItem[];
   onComplete: () => void;
 }
 
-const CoverGenerator = ({ type, missingCount, totalCount, onComplete }: CoverGeneratorProps) => {
+const CoverGenerator = ({ type, items, onComplete }: CoverGeneratorProps) => {
   const [generating, setGenerating] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
-  const [mode, setMode] = useState<"missing" | "all">("missing");
+  const [mode, setMode] = useState<"missing" | "all" | "selected">("missing");
   const [style, setStyle] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const missingCount = items.filter(i => !i.cover_image).length;
+  const totalCount = items.length;
+
+  const toggleItem = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selectedIds.size === items.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(items.map(i => i.id)));
+  };
 
   const handleGenerate = async () => {
     setShowDialog(false);
     setGenerating(true);
-    const count = mode === "missing" ? missingCount : totalCount;
+
+    const count = mode === "missing" ? missingCount : mode === "all" ? totalCount : selectedIds.size;
     toast.info(`Generando ${count} portadas con IA… esto puede tardar unos minutos.`);
 
     try {
       const payload: any = { type };
       if (mode === "all") payload.regenerate = true;
+      if (mode === "selected") payload.ids = Array.from(selectedIds);
       if (style.trim()) payload.style = style.trim();
 
       const { data, error } = await supabase.functions.invoke("generate-covers", { body: payload });
@@ -45,12 +71,35 @@ const CoverGenerator = ({ type, missingCount, totalCount, onComplete }: CoverGen
     }
   };
 
-  const openDialog = (m: "missing" | "all") => {
+  const openDialog = (m: "missing" | "all" | "selected") => {
     setMode(m);
+    if (m === "selected") setSelectedIds(new Set());
     setShowDialog(true);
   };
 
   if (totalCount === 0) return null;
+
+  const dialogTitle = mode === "missing"
+    ? `Generar ${missingCount} portadas`
+    : mode === "all"
+    ? `Regenerar ${totalCount} portadas`
+    : `Generar portadas seleccionadas (${selectedIds.size})`;
+
+  const dialogDesc = mode === "missing"
+    ? "Se generarán portadas solo para los elementos sin imagen."
+    : mode === "all"
+    ? "Se regenerarán TODAS las portadas, reemplazando las existentes."
+    : "Selecciona los elementos para los que quieres generar o regenerar portadas.";
+
+  // Group items by category for subcategories
+  const groupedItems = type === "subcategory"
+    ? items.reduce<Record<string, CoverItem[]>>((acc, item) => {
+        const cat = item.categoryName || "Sin categoría";
+        if (!acc[cat]) acc[cat] = [];
+        acc[cat].push(item);
+        return acc;
+      }, {})
+    : null;
 
   return (
     <>
@@ -72,6 +121,10 @@ const CoverGenerator = ({ type, missingCount, totalCount, onComplete }: CoverGen
               Generar {missingCount} sin portada
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem onClick={() => openDialog("selected")}>
+            <Check className="w-4 h-4 mr-2" />
+            Seleccionar elementos…
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => openDialog("all")}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Regenerar todas ({totalCount})
@@ -80,18 +133,73 @@ const CoverGenerator = ({ type, missingCount, totalCount, onComplete }: CoverGen
       </DropdownMenu>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>
-              {mode === "missing" ? `Generar ${missingCount} portadas` : `Regenerar ${totalCount} portadas`}
-            </DialogTitle>
-            <DialogDescription>
-              {mode === "missing"
-                ? "Se generarán portadas solo para los elementos sin imagen."
-                : "Se regenerarán TODAS las portadas, reemplazando las existentes."}
-            </DialogDescription>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogDescription>{dialogDesc}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
+          <div className="space-y-4 pt-2 flex-1 overflow-hidden flex flex-col">
+            {/* Item selector for "selected" mode */}
+            {mode === "selected" && (
+              <div className="flex-1 overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">{selectedIds.size} seleccionados</span>
+                  <button onClick={selectAll} className="text-xs text-primary hover:underline">
+                    {selectedIds.size === items.length ? "Deseleccionar todo" : "Seleccionar todo"}
+                  </button>
+                </div>
+                <div className="overflow-y-auto flex-1 border border-border rounded-lg divide-y divide-border max-h-[300px]">
+                  {groupedItems ? (
+                    Object.entries(groupedItems).map(([catName, catItems]) => (
+                      <div key={catName}>
+                        <div className="px-3 py-1.5 bg-secondary/50 text-xs font-semibold text-muted-foreground sticky top-0">
+                          {catName}
+                        </div>
+                        {catItems.map(item => (
+                          <label
+                            key={item.id}
+                            className="flex items-center gap-3 px-3 py-2 hover:bg-secondary/30 cursor-pointer"
+                          >
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                              selectedIds.has(item.id) ? "bg-primary border-primary" : "border-muted-foreground/40"
+                            }`}>
+                              {selectedIds.has(item.id) && <Check className="w-3 h-3 text-primary-foreground" />}
+                            </div>
+                            <span className="text-sm text-foreground flex-1">{item.name}</span>
+                            {item.cover_image ? (
+                              <img src={item.cover_image} alt="" className="w-8 h-8 rounded object-cover border border-border" />
+                            ) : (
+                              <span className="text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">Sin portada</span>
+                            )}
+                          </label>
+                        ))}
+                      </div>
+                    ))
+                  ) : (
+                    items.map(item => (
+                      <label
+                        key={item.id}
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-secondary/30 cursor-pointer"
+                      >
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                          selectedIds.has(item.id) ? "bg-primary border-primary" : "border-muted-foreground/40"
+                        }`}>
+                          {selectedIds.has(item.id) && <Check className="w-3 h-3 text-primary-foreground" />}
+                        </div>
+                        <span className="text-sm text-foreground flex-1">{item.name}</span>
+                        {item.cover_image ? (
+                          <img src={item.cover_image} alt="" className="w-8 h-8 rounded object-cover border border-border" />
+                        ) : (
+                          <span className="text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">Sin portada</span>
+                        )}
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Style input */}
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">
                 Estilo general (opcional)
@@ -111,9 +219,13 @@ const CoverGenerator = ({ type, missingCount, totalCount, onComplete }: CoverGen
               <Button variant="outline" onClick={() => setShowDialog(false)} className="flex-1">
                 Cancelar
               </Button>
-              <Button onClick={handleGenerate} className="flex-1">
+              <Button
+                onClick={handleGenerate}
+                className="flex-1"
+                disabled={mode === "selected" && selectedIds.size === 0}
+              >
                 <Sparkles className="w-4 h-4 mr-2" />
-                {mode === "missing" ? "Generar" : "Regenerar"}
+                {mode === "selected" ? `Generar (${selectedIds.size})` : mode === "missing" ? "Generar" : "Regenerar"}
               </Button>
             </div>
           </div>
