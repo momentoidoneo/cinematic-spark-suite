@@ -156,9 +156,10 @@ const CoverGenerator = ({ type, items, onComplete }: CoverGeneratorProps) => {
                           {catName}
                         </div>
                         {catItems.map(item => (
-                          <label
+                          <div
                             key={item.id}
-                            className="flex items-center gap-3 px-3 py-2 hover:bg-secondary/30 cursor-pointer"
+                            onClick={() => toggleItem(item.id)}
+                            className="flex items-center gap-3 px-3 py-2 hover:bg-secondary/30 cursor-pointer select-none"
                           >
                             <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
                               selectedIds.has(item.id) ? "bg-primary border-primary" : "border-muted-foreground/40"
@@ -171,7 +172,7 @@ const CoverGenerator = ({ type, items, onComplete }: CoverGeneratorProps) => {
                             ) : (
                               <span className="text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">Sin portada</span>
                             )}
-                          </label>
+                          </div>
                         ))}
                       </div>
                     ))
