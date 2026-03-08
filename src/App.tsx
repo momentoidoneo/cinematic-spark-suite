@@ -13,6 +13,16 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminSubcategories from "./pages/admin/AdminSubcategories";
 import AdminImages from "./pages/admin/AdminImages";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminStorage from "./pages/admin/AdminStorage";
+import AdminMarketing from "./pages/admin/AdminMarketing";
+import AdminPromotions from "./pages/admin/AdminPromotions";
+import AdminBlog from "./pages/admin/AdminBlog";
+import AdminWhatsAppChats from "./pages/admin/AdminWhatsAppChats";
+import AdminWhatsAppConfig from "./pages/admin/AdminWhatsAppConfig";
+import AdminLegalTexts from "./pages/admin/AdminLegalTexts";
+import AdminSocialMedia from "./pages/admin/AdminSocialMedia";
+import AdminApiKeys from "./pages/admin/AdminApiKeys";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +43,16 @@ const App = () => (
               <Route path="categories" element={<AdminCategories />} />
               <Route path="subcategories" element={<AdminSubcategories />} />
               <Route path="images" element={<AdminImages />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
+              <Route path="storage" element={<AdminStorage />} />
+              <Route path="marketing" element={<AdminMarketing />} />
+              <Route path="promotions" element={<AdminPromotions />} />
+              <Route path="blog" element={<AdminBlog />} />
+              <Route path="whatsapp-chats" element={<AdminWhatsAppChats />} />
+              <Route path="whatsapp-config" element={<AdminWhatsAppConfig />} />
+              <Route path="legal" element={<AdminLegalTexts />} />
+              <Route path="social" element={<AdminSocialMedia />} />
+              <Route path="api-keys" element={<AdminApiKeys />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
