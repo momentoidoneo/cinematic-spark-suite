@@ -29,7 +29,9 @@ import AdminLegalTexts from "./pages/admin/AdminLegalTexts";
 import AdminSocialMedia from "./pages/admin/AdminSocialMedia";
 import AdminApiKeys from "./pages/admin/AdminApiKeys";
 import AdminLanding from "./pages/admin/AdminLanding";
+import AdminTracking from "./pages/admin/AdminTracking";
 import Legal from "./pages/Legal";
+import TrackingScripts from "./components/TrackingScripts";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +42,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <TrackingScripts />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
@@ -67,6 +70,7 @@ const App = () => (
               <Route path="social" element={<AdminSocialMedia />} />
               <Route path="api-keys" element={<AdminApiKeys />} />
               <Route path="landing" element={<AdminLanding />} />
+              <Route path="tracking" element={<AdminTracking />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
