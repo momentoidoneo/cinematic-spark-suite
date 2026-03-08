@@ -228,6 +228,22 @@ const AdminSubcategories = () => {
                 <label className="text-sm font-medium text-foreground mb-1 block">Descripción</label>
                 <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm" rows={2} />
               </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Imagen de portada</label>
+                <div className="flex items-center gap-3">
+                  {coverPreview ? (
+                    <img src={coverPreview} alt="Cover" className="w-16 h-16 rounded-lg object-cover border border-border" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-lg bg-secondary border border-border flex items-center justify-center">
+                      <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground cursor-pointer hover:bg-secondary/80">
+                    <Upload className="w-4 h-4" /> Subir imagen
+                    <input type="file" accept="image/*" onChange={handleCoverSelect} className="hidden" />
+                  </label>
+                </div>
+              </div>
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label className="text-sm font-medium text-foreground mb-1 block">Estilo galería</label>
@@ -242,8 +258,8 @@ const AdminSubcategories = () => {
                   <input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm" />
                 </div>
               </div>
-              <button onClick={handleSave} className="w-full py-2.5 rounded-lg bg-gradient-primary text-primary-foreground font-semibold text-sm">
-                {editing ? "Actualizar" : "Crear"}
+              <button onClick={handleSave} disabled={uploading} className="w-full py-2.5 rounded-lg bg-gradient-primary text-primary-foreground font-semibold text-sm disabled:opacity-50">
+                {uploading ? "Subiendo..." : editing ? "Actualizar" : "Crear"}
               </button>
             </div>
           </div>
