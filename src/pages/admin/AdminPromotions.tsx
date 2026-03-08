@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Edit, Trash2, Tag, Calendar, ToggleLeft, ToggleRight, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Tag, Calendar, ToggleLeft, ToggleRight, Search, Upload, X, Image } from "lucide-react";
 import { toast } from "sonner";
 
 interface Promotion {
@@ -23,6 +23,8 @@ const AdminPromotions = () => {
   const [editing, setEditing] = useState<Promotion | null>(null);
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     title: "", description: "", discount_type: "percentage", discount_value: "",
     code: "", cover_image: "", is_active: true, starts_at: "", ends_at: "",
@@ -115,8 +117,33 @@ const AdminPromotions = () => {
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-4 py-2.5 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none" rows={3} placeholder="Detalles de la promoción..." />
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Imagen (URL)</label>
-              <input value={form.cover_image} onChange={(e) => setForm({ ...form, cover_image: e.target.value })} className="w-full px-4 py-2.5 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="https://..." />
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Imagen de portada</label>
+              {form.cover_image && (
+                <div className="relative mb-2 rounded-lg overflow-hidden border border-border aspect-video">
+                  <img src={form.cover_image} alt="Portada" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => setForm({ ...form, cover_image: "" })} className="absolute top-2 right-2 p-1 rounded-full bg-background/80 text-destructive hover:bg-background transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setUploading(true);
+                  const ext = file.name.split(".").pop();
+                  const path = `promotions/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+                  const { error } = await supabase.storage.from("portfolio").upload(path, file);
+                  if (error) { toast.error("Error al subir imagen"); setUploading(false); return; }
+                  const { data: { publicUrl } } = supabase.storage.from("portfolio").getPublicUrl(path);
+                  setForm({ ...form, cover_image: publicUrl });
+                  setUploading(false);
+                }} />
+                <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary border border-border text-foreground text-sm hover:bg-accent transition-colors disabled:opacity-50">
+                  {uploading ? <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" /> : <Upload className="w-4 h-4" />}
+                  {uploading ? "Subiendo..." : "Subir imagen"}
+                </button>
+              </div>
             </div>
           </div>
           <div className="space-y-4">
