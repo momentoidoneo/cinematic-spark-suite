@@ -10,9 +10,9 @@ const navItems = [
     href: "/#servicios",
     isAnchor: true,
     children: [
-      { label: "Fotografía", href: "/#fotografia", isAnchor: true },
-      { label: "Video y Dron", href: "/#video", isAnchor: true },
-      { label: "Tour Virtual 360°", href: "/#tour", isAnchor: true },
+      { label: "Fotografía", href: "/servicios/fotografia", isAnchor: false },
+      { label: "Video y Dron", href: "/servicios/video-dron", isAnchor: false },
+      { label: "Tour Virtual 360°", href: "/servicios/tour-virtual", isAnchor: false },
     ],
   },
   { label: "Portafolio", href: "/portafolio", isAnchor: false },
@@ -62,15 +62,25 @@ const Navbar = () => {
                         exit={{ opacity: 0, y: -8 }}
                         className="glass rounded-lg p-2 min-w-[180px]"
                       >
-                        {item.children.map((child) => (
-                          <a
-                            key={child.label}
-                            href={child.href}
-                            className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-md transition-colors"
-                          >
-                            {child.label}
-                          </a>
-                        ))}
+                        {item.children.map((child) =>
+                          child.isAnchor ? (
+                            <a
+                              key={child.label}
+                              href={child.href}
+                              className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-md transition-colors"
+                            >
+                              {child.label}
+                            </a>
+                          ) : (
+                            <Link
+                              key={child.label}
+                              to={child.href}
+                              className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-md transition-colors"
+                            >
+                              {child.label}
+                            </Link>
+                          )
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -120,11 +130,17 @@ const Navbar = () => {
                   </a>
                   {item.children && (
                     <div className="pl-4 mt-1 space-y-1">
-                      {item.children.map((c) => (
-                        <a key={c.label} href={c.href} onClick={() => setOpen(false)} className="block text-xs text-muted-foreground hover:text-foreground">
-                          {c.label}
-                        </a>
-                      ))}
+                      {item.children.map((c) =>
+                        c.isAnchor ? (
+                          <a key={c.label} href={c.href} onClick={() => setOpen(false)} className="block text-xs text-muted-foreground hover:text-foreground">
+                            {c.label}
+                          </a>
+                        ) : (
+                          <Link key={c.label} to={c.href} onClick={() => setOpen(false)} className="block text-xs text-muted-foreground hover:text-foreground">
+                            {c.label}
+                          </Link>
+                        )
+                      )}
                     </div>
                   )}
                 </div>
