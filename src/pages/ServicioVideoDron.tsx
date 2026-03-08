@@ -8,6 +8,8 @@ import {
   Plane as PlaneIcon, Eye, Image, Boxes, HomeIcon, CheckCircle2, ArrowRight,
   Film, Shield, Gauge, Layers
 } from "lucide-react";
+import heroImg from "@/assets/servicio-video-hero.jpg";
+import produccionImg from "@/assets/servicio-video-produccion.jpg";
 
 const videoServices = [
   { icon: Video, title: "Videos corporativos", desc: "Presenta tu empresa con profesionalismo y calidad cinematográfica que transmite confianza y solidez. Ideales para webs, presentaciones comerciales y ferias sectoriales." },
