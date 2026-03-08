@@ -59,6 +59,98 @@ function getPromptKey(name: string, categoryName: string): string {
   return name;
 }
 
+const categoryPrompts: Record<string, string> = {
+  "Fotografía": "Professional photography studio with multiple cameras, lenses, and lighting equipment, warm ambient light, elegant workspace, magazine quality",
+  "Dron": "Professional drone flying over stunning Mediterranean coastline at golden hour, aerial perspective, cinematic wide shot, breathtaking landscape",
+  "Tours Virtuales": "Immersive 3D virtual tour technology, Matterport camera scanning a luxury interior, futuristic visualization, clean modern aesthetic",
+  "Video": "Professional cinema camera on gimbal rig, film production set with dramatic lighting, cinematic atmosphere, high-end equipment",
+  "Eventos": "Grand corporate event with professional stage setup, LED screens, dramatic lighting, audience silhouettes, broadcast quality production",
+  "Renders": "Stunning photorealistic 3D architectural visualization, modern building exterior at sunset, CGI masterpiece, dramatic sky and reflections",
+};
+
+async function generateCoversForItems(
+  supabase: any,
+  LOVABLE_API_KEY: string,
+  items: any[],
+  type: "subcategory" | "category"
+) {
+  const results: { id: string; name: string; status: string }[] = [];
+
+  for (const item of items) {
+    let prompt: string;
+    if (type === "category") {
+      prompt = categoryPrompts[item.name] || `Professional ${item.name} service, high quality, cinematic lighting, wide 16:9, magazine quality`;
+    } else {
+      const catName = (item as any).portfolio_categories?.name || "";
+      const promptKey = getPromptKey(item.name, catName);
+      prompt = prompts[promptKey] || `Professional photography of ${item.name}, high quality, cinematic lighting, magazine quality`;
+    }
+
+    try {
+      console.log(`Generating ${type} cover for: ${item.name}`);
+
+      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          messages: [{ role: "user", content: `Generate a wide 16:9 cover image: ${prompt}` }],
+          modalities: ["image", "text"],
+        }),
+      });
+
+      if (!aiResp.ok) {
+        const errText = await aiResp.text();
+        console.error(`AI error for ${item.name}: ${aiResp.status} ${errText}`);
+        results.push({ id: item.id, name: item.name, status: `error: ${aiResp.status}` });
+        if (aiResp.status === 429) await new Promise(r => setTimeout(r, 5000));
+        continue;
+      }
+
+      const aiData = await aiResp.json();
+      const imageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+      if (!imageUrl || !imageUrl.startsWith("data:image")) {
+        console.error(`No image returned for ${item.name}`);
+        results.push({ id: item.id, name: item.name, status: "no image returned" });
+        continue;
+      }
+
+      const base64Data = imageUrl.split(",")[1];
+      const binaryStr = atob(base64Data);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+
+      const folder = type === "category" ? "categories" : "subcategories";
+      const filePath = `covers/${folder}/ai-${item.id}.png`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from("portfolio")
+        .upload(filePath, bytes, { contentType: "image/png", upsert: true });
+
+      if (uploadErr) {
+        results.push({ id: item.id, name: item.name, status: `upload error: ${uploadErr.message}` });
+        continue;
+      }
+
+      const { data: urlData } = supabase.storage.from("portfolio").getPublicUrl(filePath);
+      const table = type === "category" ? "portfolio_categories" : "portfolio_subcategories";
+      await supabase.from(table).update({ cover_image: urlData.publicUrl }).eq("id", item.id);
+
+      results.push({ id: item.id, name: item.name, status: "ok" });
+      console.log(`✓ ${item.name}`);
+      await new Promise(r => setTimeout(r, 2000));
+    } catch (e) {
+      results.push({ id: item.id, name: item.name, status: `error: ${e.message}` });
+    }
+  }
+
+  return results;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -70,98 +162,36 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get subcategories without covers
-    const { data: subs, error: fetchErr } = await supabase
-      .from("portfolio_subcategories")
-      .select("id, name, cover_image, portfolio_categories(name)")
-      .is("cover_image", null);
+    const body = await req.json().catch(() => ({}));
+    const type: "subcategory" | "category" = body.type === "category" ? "category" : "subcategory";
 
-    if (fetchErr) throw fetchErr;
-    if (!subs || subs.length === 0) {
-      return new Response(JSON.stringify({ message: "All subcategories already have covers", generated: 0 }), {
+    let items: any[];
+    if (type === "category") {
+      const { data, error } = await supabase
+        .from("portfolio_categories")
+        .select("id, name, cover_image")
+        .is("cover_image", null);
+      if (error) throw error;
+      items = data || [];
+    } else {
+      const { data, error } = await supabase
+        .from("portfolio_subcategories")
+        .select("id, name, cover_image, portfolio_categories(name)")
+        .is("cover_image", null);
+      if (error) throw error;
+      items = data || [];
+    }
+
+    if (items.length === 0) {
+      return new Response(JSON.stringify({ message: `All ${type === "category" ? "categories" : "subcategories"} already have covers`, generated: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const results: { id: string; name: string; status: string }[] = [];
-
-    for (const sub of subs) {
-      const catName = (sub as any).portfolio_categories?.name || "";
-      const promptKey = getPromptKey(sub.name, catName);
-      const prompt = prompts[promptKey] || `Professional photography of ${sub.name}, high quality, cinematic lighting, magazine quality`;
-
-      try {
-        console.log(`Generating cover for: ${catName} > ${sub.name} (key: ${promptKey})`);
-
-        const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash-image",
-            messages: [{ role: "user", content: `Generate a wide 16:9 cover image: ${prompt}` }],
-            modalities: ["image", "text"],
-          }),
-        });
-
-        if (!aiResp.ok) {
-          const errText = await aiResp.text();
-          console.error(`AI error for ${sub.name}: ${aiResp.status} ${errText}`);
-          results.push({ id: sub.id, name: sub.name, status: `error: ${aiResp.status}` });
-          // Wait a bit on rate limit
-          if (aiResp.status === 429) await new Promise(r => setTimeout(r, 5000));
-          continue;
-        }
-
-        const aiData = await aiResp.json();
-        const imageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-        if (!imageUrl || !imageUrl.startsWith("data:image")) {
-          console.error(`No image returned for ${sub.name}`);
-          results.push({ id: sub.id, name: sub.name, status: "no image returned" });
-          continue;
-        }
-
-        // Decode base64
-        const base64Data = imageUrl.split(",")[1];
-        const binaryStr = atob(base64Data);
-        const bytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-
-        const filePath = `covers/subcategories/ai-${sub.id}.png`;
-
-        const { error: uploadErr } = await supabase.storage
-          .from("portfolio")
-          .upload(filePath, bytes, { contentType: "image/png", upsert: true });
-
-        if (uploadErr) {
-          console.error(`Upload error for ${sub.name}:`, uploadErr);
-          results.push({ id: sub.id, name: sub.name, status: `upload error: ${uploadErr.message}` });
-          continue;
-        }
-
-        const { data: urlData } = supabase.storage.from("portfolio").getPublicUrl(filePath);
-
-        await supabase
-          .from("portfolio_subcategories")
-          .update({ cover_image: urlData.publicUrl })
-          .eq("id", sub.id);
-
-        results.push({ id: sub.id, name: sub.name, status: "ok" });
-        console.log(`✓ ${catName} > ${sub.name}`);
-
-        // Small delay to avoid rate limits
-        await new Promise(r => setTimeout(r, 2000));
-      } catch (e) {
-        console.error(`Error for ${sub.name}:`, e);
-        results.push({ id: sub.id, name: sub.name, status: `error: ${e.message}` });
-      }
-    }
-
+    const results = await generateCoversForItems(supabase, LOVABLE_API_KEY, items, type);
     const generated = results.filter(r => r.status === "ok").length;
-    return new Response(JSON.stringify({ message: `Generated ${generated}/${subs.length} covers`, results }), {
+
+    return new Response(JSON.stringify({ message: `Generated ${generated}/${items.length} covers`, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
