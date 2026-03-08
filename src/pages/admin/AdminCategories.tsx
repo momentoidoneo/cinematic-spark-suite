@@ -87,15 +87,19 @@ const AdminCategories = () => {
 
   const handleSave = async () => {
     if (!form.name || !form.slug) { toast.error("Nombre y slug son obligatorios"); return; }
+    setUploading(true);
+    const coverUrl = await uploadCover();
+    const payload = { ...form, cover_image: coverUrl || null };
     if (editing) {
-      const { error } = await supabase.from("portfolio_categories").update(form).eq("id", editing.id);
-      if (error) { toast.error("Error al actualizar"); return; }
+      const { error } = await supabase.from("portfolio_categories").update(payload).eq("id", editing.id);
+      if (error) { toast.error("Error al actualizar"); setUploading(false); return; }
       toast.success("Categoría actualizada");
     } else {
-      const { error } = await supabase.from("portfolio_categories").insert(form);
-      if (error) { toast.error("Error al crear"); return; }
+      const { error } = await supabase.from("portfolio_categories").insert(payload);
+      if (error) { toast.error("Error al crear"); setUploading(false); return; }
       toast.success("Categoría creada");
     }
+    setUploading(false);
     setShowForm(false);
     fetchCategories();
   };
