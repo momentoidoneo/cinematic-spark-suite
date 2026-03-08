@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { Calendar, ArrowRight } from "lucide-react";
+import SEOHead, { breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
 
 interface BlogPost {
   id: string;
