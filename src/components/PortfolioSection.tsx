@@ -77,6 +77,7 @@ const PortfolioSection = () => {
                   <img
                     src={cat.cover_image || fallbackImages[cat.slug]}
                     alt={cat.name}
+                    title=""
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
                 ) : (
