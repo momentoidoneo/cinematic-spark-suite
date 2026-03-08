@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link, LayoutGrid, Columns, GalleryHorizontal } from "lucide-react";
+import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link, LayoutGrid, Columns, GalleryHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 type Category = { id: string; name: string };
@@ -26,6 +26,7 @@ const AdminImages = () => {
   const [mediaMode, setMediaMode] = useState<MediaMode>("image");
   const [uploadForm, setUploadForm] = useState({ subcategory_id: "", title: "", alt_text: "", video_url: "", thumbnail_url: "" });
   const fileRef = useRef<HTMLInputElement>(null);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   const fetchData = async () => {
     const [{ data: cats }, { data: subs }] = await Promise.all([
@@ -232,18 +233,18 @@ const AdminImages = () => {
 
       {/* Content Grid - rows with fixed height, respecting aspect ratio */}
       <div className="flex flex-wrap gap-3">
-        {images.map((img) => (
-          <div key={img.id} className="group relative h-48 rounded-xl overflow-hidden border border-border bg-card flex-shrink-0">
+        {images.map((img, idx) => (
+          <div key={img.id} className="group relative h-48 rounded-xl overflow-hidden border border-border bg-card flex-shrink-0 cursor-pointer" onClick={() => setLightboxIdx(idx)}>
             <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="h-full w-auto object-cover" />
             {/* Media type badge */}
             <div className={`absolute top-2 left-2 ${mediaColor(img.media_type)} text-white rounded-full p-1.5 flex items-center gap-1`}>
               {mediaIcon(img.media_type)}
             </div>
             <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <button onClick={() => toggleFeatured(img)} className={`p-2 rounded-lg ${img.is_featured ? "bg-accent text-accent-foreground" : "bg-secondary text-foreground"}`}>
+              <button onClick={(e) => { e.stopPropagation(); toggleFeatured(img); }} className={`p-2 rounded-lg ${img.is_featured ? "bg-accent text-accent-foreground" : "bg-secondary text-foreground"}`}>
                 <Star className="w-4 h-4" />
               </button>
-              <button onClick={() => handleDelete(img)} className="p-2 rounded-lg bg-destructive text-destructive-foreground">
+              <button onClick={(e) => { e.stopPropagation(); handleDelete(img); }} className="p-2 rounded-lg bg-destructive text-destructive-foreground">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -356,6 +357,37 @@ const AdminImages = () => {
                 {uploading ? "Subiendo..." : "Añadir"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightboxIdx !== null && images[lightboxIdx] && (
+        <div className="fixed inset-0 z-50 bg-background/90 flex items-center justify-center" onClick={() => setLightboxIdx(null)}>
+          <button onClick={() => setLightboxIdx(null)} className="absolute top-4 right-4 p-2 rounded-full bg-secondary text-foreground hover:bg-secondary/80 z-10">
+            <X className="w-6 h-6" />
+          </button>
+          {lightboxIdx > 0 && (
+            <button onClick={(e) => { e.stopPropagation(); setLightboxIdx(lightboxIdx - 1); }} className="absolute left-4 p-2 rounded-full bg-secondary text-foreground hover:bg-secondary/80 z-10">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          )}
+          {lightboxIdx < images.length - 1 && (
+            <button onClick={(e) => { e.stopPropagation(); setLightboxIdx(lightboxIdx + 1); }} className="absolute right-4 p-2 rounded-full bg-secondary text-foreground hover:bg-secondary/80 z-10">
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          )}
+          <div className="max-w-[90vw] max-h-[85vh] flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
+            {images[lightboxIdx].media_type === "image" ? (
+              <img src={images[lightboxIdx].image_url} alt={images[lightboxIdx].alt_text || ""} className="max-w-full max-h-[80vh] object-contain rounded-lg" />
+            ) : images[lightboxIdx].media_type === "video" ? (
+              <video src={images[lightboxIdx].video_url || images[lightboxIdx].image_url} controls className="max-w-full max-h-[80vh] rounded-lg" />
+            ) : (
+              <iframe src={images[lightboxIdx].video_url || ""} className="w-[80vw] h-[75vh] rounded-lg border-0" allowFullScreen />
+            )}
+            {images[lightboxIdx].title && (
+              <p className="text-sm text-muted-foreground">{images[lightboxIdx].title}</p>
+            )}
           </div>
         </div>
       )}
