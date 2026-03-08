@@ -5,7 +5,7 @@ import {
   Instagram, Youtube, Clock, CheckCircle2, FileText, Hash, Lightbulb,
   TrendingUp, Eye, Copy, Wand2, Globe, Music, RefreshCw, Link2,
   ArrowRightLeft, Search, Video, AlertCircle, ExternalLink, XCircle,
-  Bookmark, Play, Pause, RotateCcw, Shield, Unplug
+  Bookmark, Play, Pause, RotateCcw, Shield, Unplug, Upload, ImageIcon
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
