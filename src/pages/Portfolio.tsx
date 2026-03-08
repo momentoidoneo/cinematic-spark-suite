@@ -99,8 +99,20 @@ const Portfolio = () => {
       : "← Volver al portafolio"
     : null;
 
+  const siteUrl = getSiteUrl();
+
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={`Portafolio${selectedCat ? ` — ${selectedCat.name}` : ""} | Silvio Costa Photography`}
+        description="Portafolio profesional de fotografía, vídeo, dron y tours virtuales 360°. Descubre nuestros proyectos en España y Portugal."
+        canonical={`${siteUrl}/portafolio${categorySlug ? `/${categorySlug}` : ""}`}
+        jsonLd={breadcrumbSchema([
+          { name: "Inicio", url: siteUrl },
+          { name: "Portafolio", url: `${siteUrl}/portafolio` },
+          ...(selectedCat ? [{ name: selectedCat.name, url: `${siteUrl}/portafolio/${categorySlug}` }] : []),
+        ])}
+      />
       <Navbar />
       <div className="pt-24 pb-20 px-6 max-w-7xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
