@@ -130,11 +130,17 @@ const Navbar = () => {
                   </a>
                   {item.children && (
                     <div className="pl-4 mt-1 space-y-1">
-                      {item.children.map((c) => (
-                        <a key={c.label} href={c.href} onClick={() => setOpen(false)} className="block text-xs text-muted-foreground hover:text-foreground">
-                          {c.label}
-                        </a>
-                      ))}
+                      {item.children.map((c) =>
+                        c.isAnchor ? (
+                          <a key={c.label} href={c.href} onClick={() => setOpen(false)} className="block text-xs text-muted-foreground hover:text-foreground">
+                            {c.label}
+                          </a>
+                        ) : (
+                          <Link key={c.label} to={c.href} onClick={() => setOpen(false)} className="block text-xs text-muted-foreground hover:text-foreground">
+                            {c.label}
+                          </Link>
+                        )
+                      )}
                     </div>
                   )}
                 </div>
