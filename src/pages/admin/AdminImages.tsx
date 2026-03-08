@@ -235,7 +235,7 @@ const AdminImages = () => {
       <div className="flex flex-wrap gap-3">
         {images.map((img, idx) => (
           <div key={img.id} className="group relative h-48 rounded-xl overflow-hidden border border-border bg-card flex-shrink-0 cursor-pointer" onClick={() => setLightboxIdx(idx)}>
-            <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="h-full w-auto object-cover" />
+            <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="h-full w-auto object-cover pointer-events-none select-none" draggable={false} onContextMenu={(e) => e.preventDefault()} />
             {/* Media type badge */}
             <div className={`absolute top-2 left-2 ${mediaColor(img.media_type)} text-white rounded-full p-1.5 flex items-center gap-1`}>
               {mediaIcon(img.media_type)}
@@ -251,11 +251,6 @@ const AdminImages = () => {
             {img.is_featured && (
               <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-accent flex items-center justify-center">
                 <Star className="w-3 h-3 text-accent-foreground" />
-              </div>
-            )}
-            {img.title && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/80 to-transparent p-2">
-                <p className="text-xs text-foreground truncate">{img.title}</p>
               </div>
             )}
           </div>
@@ -377,16 +372,13 @@ const AdminImages = () => {
               <ChevronRight className="w-6 h-6" />
             </button>
           )}
-          <div className="max-w-[90vw] max-h-[85vh] flex flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
+          <div className="max-w-[90vw] max-h-[85vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
             {images[lightboxIdx].media_type === "image" ? (
-              <img src={images[lightboxIdx].image_url} alt={images[lightboxIdx].alt_text || ""} className="max-w-full max-h-[80vh] object-contain rounded-lg" />
+              <img src={images[lightboxIdx].image_url} alt={images[lightboxIdx].alt_text || ""} className="max-w-full max-h-[80vh] object-contain rounded-lg select-none pointer-events-auto" draggable={false} onContextMenu={(e) => e.preventDefault()} />
             ) : images[lightboxIdx].media_type === "video" ? (
-              <video src={images[lightboxIdx].video_url || images[lightboxIdx].image_url} controls className="max-w-full max-h-[80vh] rounded-lg" />
+              <video src={images[lightboxIdx].video_url || images[lightboxIdx].image_url} controls controlsList="nodownload" className="max-w-full max-h-[80vh] rounded-lg" onContextMenu={(e) => e.preventDefault()} />
             ) : (
               <iframe src={images[lightboxIdx].video_url || ""} className="w-[80vw] h-[75vh] rounded-lg border-0" allowFullScreen />
-            )}
-            {images[lightboxIdx].title && (
-              <p className="text-sm text-muted-foreground">{images[lightboxIdx].title}</p>
             )}
           </div>
         </div>
