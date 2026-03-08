@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_posts: {
+        Row: {
+          author_id: string
+          content: string
+          cover_image: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          published_at: string | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          content?: string
+          cover_image?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          cover_image?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      legal_texts: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_published: boolean
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      page_views: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hash: string | null
+          page_path: string
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          page_path: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          page_path?: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       portfolio_categories: {
         Row: {
           cover_image: string | null
@@ -171,6 +270,87 @@ export type Database = {
         }
         Relationships: []
       }
+      promotions: {
+        Row: {
+          code: string | null
+          cover_image: string | null
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number | null
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          starts_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          starts_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          starts_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      social_links: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          label: string | null
+          order: number
+          platform: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          order?: number
+          platform: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          order?: number
+          platform?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -186,6 +366,42 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_config: {
+        Row: {
+          api_key_name: string | null
+          auto_reply_enabled: boolean
+          business_hours_end: string | null
+          business_hours_start: string | null
+          created_at: string
+          id: string
+          phone_number: string | null
+          updated_at: string
+          welcome_message: string | null
+        }
+        Insert: {
+          api_key_name?: string | null
+          auto_reply_enabled?: boolean
+          business_hours_end?: string | null
+          business_hours_start?: string | null
+          created_at?: string
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Update: {
+          api_key_name?: string | null
+          auto_reply_enabled?: boolean
+          business_hours_end?: string | null
+          business_hours_start?: string | null
+          created_at?: string
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          welcome_message?: string | null
         }
         Relationships: []
       }
