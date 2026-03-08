@@ -9,12 +9,12 @@ import portfolioEventos from "@/assets/portfolio-eventos.jpg";
 import portfolioRenders from "@/assets/portfolio-renders.jpg";
 
 const categories = [
-  { title: "Fotografía", image: portfolioFoto },
-  { title: "Dron", image: portfolioDron },
-  { title: "Tours Virtuales", image: portfolioTour },
-  { title: "Video", image: portfolioVideo },
-  { title: "Eventos", image: portfolioEventos },
-  { title: "Renders", image: portfolioRenders },
+  { title: "Fotografía", slug: "fotografia", image: portfolioFoto },
+  { title: "Dron", slug: "dron", image: portfolioDron },
+  { title: "Tours Virtuales", slug: "tours-virtuales", image: portfolioTour },
+  { title: "Video", slug: "video", image: portfolioVideo },
+  { title: "Eventos", slug: "eventos", image: portfolioEventos },
+  { title: "Renders", slug: "renders", image: portfolioRenders },
 ];
 
 const PortfolioSection = () => {
@@ -45,17 +45,21 @@ const PortfolioSection = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.2 + i * 0.1 }}
-              className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer"
             >
-              <img
-                src={cat.image}
-                alt={cat.title}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
-              <div className="absolute bottom-6 left-6">
-                <h3 className="font-display text-2xl font-bold text-foreground">{cat.title}</h3>
-              </div>
+              <Link
+                to={`/portafolio/${cat.slug}`}
+                className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer block"
+              >
+                <img
+                  src={cat.image}
+                  alt={cat.title}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
+                <div className="absolute bottom-6 left-6">
+                  <h3 className="font-display text-2xl font-bold text-foreground">{cat.title}</h3>
+                </div>
+              </Link>
             </motion.div>
           ))}
         </div>
