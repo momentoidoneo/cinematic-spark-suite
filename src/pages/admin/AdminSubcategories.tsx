@@ -70,24 +70,47 @@ const AdminSubcategories = () => {
   const openCreate = () => {
     setEditing(null);
     setForm({ category_id: categories[0]?.id || "", name: "", description: "", icon: "", order: 0, gallery_style: "grid" });
+    setCoverFile(null); setCoverPreview(null);
     setShowForm(true);
   };
 
   const openEdit = (s: Subcategory) => {
     setEditing(s);
     setForm({ category_id: s.category_id, name: s.name, description: s.description || "", icon: s.icon || "", order: s.order, gallery_style: s.gallery_style || "grid" });
+    setCoverFile(null); setCoverPreview(s.cover_image || null);
     setShowForm(true);
+  };
+
+  const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const uploadCover = async (): Promise<string | null> => {
+    if (!coverFile) return editing?.cover_image || null;
+    const ext = coverFile.name.split(".").pop();
+    const path = `covers/subcategories/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("portfolio").upload(path, coverFile);
+    if (error) { toast.error("Error subiendo imagen"); return null; }
+    const { data } = supabase.storage.from("portfolio").getPublicUrl(path);
+    return data.publicUrl;
   };
 
   const handleSave = async () => {
     if (!form.name || !form.category_id) { toast.error("Campos obligatorios"); return; }
+    setUploading(true);
+    const coverUrl = await uploadCover();
+    const payload = { ...form, cover_image: coverUrl || null };
     if (editing) {
-      await supabase.from("portfolio_subcategories").update(form).eq("id", editing.id);
+      await supabase.from("portfolio_subcategories").update(payload).eq("id", editing.id);
       toast.success("Subcategoría actualizada");
     } else {
-      await supabase.from("portfolio_subcategories").insert(form);
+      await supabase.from("portfolio_subcategories").insert(payload);
       toast.success("Subcategoría creada");
     }
+    setUploading(false);
     setShowForm(false);
     fetchData();
   };
