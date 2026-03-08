@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 import servicioFotoHero from "@/assets/servicio-foto-hero.jpg";
-import servicioVideoHero from "@/assets/servicio-video-hero.jpg";
+import bannerVideo from "@/assets/banner-video.jpg";
 import bannerDron from "@/assets/banner-dron.jpg";
 
 const photoServices = [
