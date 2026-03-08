@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronDown, Settings } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Menu, X, ChevronDown, LogIn } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const navItems = [
   { label: "Inicio", href: "/#inicio", isAnchor: true },
