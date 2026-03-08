@@ -33,14 +33,14 @@ const HeroSection = () => {
           <span className="text-gradient-primary italic">Audiovisual Profesional</span>
         </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          
-          Elevando la imagen de tu marca a través de fotografía, video y servicios aéreos premium.
-        </motion.p>
+        
+
+
+
+
+
+
+        
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
