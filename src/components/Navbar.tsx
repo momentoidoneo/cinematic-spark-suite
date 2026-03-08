@@ -16,6 +16,7 @@ const navItems = [
     ],
   },
   { label: "Portafolio", href: "/portafolio", isAnchor: false },
+  { label: "Blog", href: "/blog", isAnchor: false },
   { label: "Contacto", href: "/#contacto", isAnchor: true },
 ];
 
