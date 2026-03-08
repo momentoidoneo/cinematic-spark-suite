@@ -42,22 +42,27 @@ const HeroSection = () => {
 
         
 
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
+          Eleva la imagen de tu marca, servicio, empresa o evento a través de fotografía, video y producción audiovisual.
+        </motion.p>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="mt-10 flex flex-col items-center gap-4">
-          
+          className="mt-8 flex flex-col items-center gap-4">
           <a
             href="#contacto"
-            className="px-8 py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold text-base hover:opacity-90 transition-opacity inline-flex items-center gap-2">Eleva la imagen de tu marca, servicio, empresa o evento a través de fotografía, video y producción audiovisual.
-
-
+            className="px-8 py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold text-base hover:opacity-90 transition-opacity">
+            Solicitar Presupuesto
           </a>
           <a
             href="#servicios"
             className="px-8 py-3.5 rounded-full border border-border text-foreground font-semibold text-base hover:bg-secondary transition-colors">
-            
             Ver Todos los Servicios
           </a>
         </motion.div>
