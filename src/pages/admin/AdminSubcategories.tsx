@@ -130,6 +130,23 @@ const AdminSubcategories = () => {
 
   const galleryLabels: Record<string, string> = { grid: "Grid", masonry: "Masonry", carousel: "Carousel" };
 
+  const missingCovers = subcategories.filter(s => !s.cover_image).length;
+
+  const handleGenerateCovers = async () => {
+    setGeneratingCovers(true);
+    toast.info("Generando portadas con IA… esto puede tardar unos minutos.");
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-covers");
+      if (error) throw error;
+      toast.success(data?.message || "Portadas generadas");
+      fetchData();
+    } catch (e: any) {
+      toast.error("Error generando portadas: " + (e.message || "desconocido"));
+    } finally {
+      setGeneratingCovers(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
