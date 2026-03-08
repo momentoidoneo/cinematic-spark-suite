@@ -136,7 +136,7 @@ const AdminSubcategories = () => {
     setGeneratingCovers(true);
     toast.info("Generando portadas con IA… esto puede tardar unos minutos.");
     try {
-      const { data, error } = await supabase.functions.invoke("generate-covers");
+      const { data, error } = await supabase.functions.invoke("generate-covers", { body: { type: "subcategory" } });
       if (error) throw error;
       toast.success(data?.message || "Portadas generadas");
       fetchData();
