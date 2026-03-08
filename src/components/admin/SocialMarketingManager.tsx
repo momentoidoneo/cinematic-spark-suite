@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Calendar, Sparkles, FolderOpen, BarChart3, Plus, Trash2, Send,
   Instagram, Youtube, Clock, CheckCircle2, FileText, Hash, Lightbulb,
-  TrendingUp, Eye, Copy, Wand2, Globe, Music
+  TrendingUp, Eye, Copy, Wand2, Globe, Music, RefreshCw, Link2,
+  ArrowRightLeft, Search, Video, AlertCircle, ExternalLink, XCircle,
+  Bookmark, Play, Pause, RotateCcw, Shield, Unplug
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,11 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import {
   useSocialContent, useSocialContentBank, useSocialAnalytics, useGenerateSocialContent,
 } from "@/hooks/useSocialMarketing";
+import {
+  usePlatformConnections, usePublishQueue, usePublishLogs, useFetchAnalytics, useRepurposeContent,
+} from "@/hooks/usePublishQueue";
+import { InstagramProspecting } from "@/components/admin/InstagramProspecting";
+import { supabase } from "@/integrations/supabase/client";
 
 const platformIcons: Record<string, React.ReactNode> = {
   instagram: <Instagram className="w-4 h-4" />,
@@ -42,12 +49,18 @@ const statusIcons: Record<string, React.ReactNode> = {
   draft: <FileText className="w-3.5 h-3.5" />,
   scheduled: <Clock className="w-3.5 h-3.5" />,
   published: <CheckCircle2 className="w-3.5 h-3.5" />,
+  pending: <Clock className="w-3.5 h-3.5" />,
+  failed: <AlertCircle className="w-3.5 h-3.5" />,
+  cancelled: <XCircle className="w-3.5 h-3.5" />,
 };
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
   scheduled: "bg-blue-500/10 text-blue-500",
   published: "bg-green-500/10 text-green-500",
+  pending: "bg-yellow-500/10 text-yellow-500",
+  failed: "bg-destructive/10 text-destructive",
+  cancelled: "bg-muted text-muted-foreground",
 };
 
 // ─── Content Calendar ──────────────────────────────
@@ -84,7 +97,7 @@ function ContentCalendar() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {["all", "instagram", "tiktok", "youtube", "facebook"].map(p => (
             <Button key={p} variant={filter === p ? "default" : "outline"} size="sm" onClick={() => setFilter(p)}>
               {p === "all" ? "Todos" : <>{platformIcons[p]} <span className="ml-1.5 capitalize">{p}</span></>}
@@ -364,6 +377,7 @@ function ContentBank() {
                     <SelectItem value="text">Texto</SelectItem>
                     <SelectItem value="template">Plantilla</SelectItem>
                     <SelectItem value="image">Imagen</SelectItem>
+                    <SelectItem value="video">Vídeo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -406,9 +420,466 @@ function ContentBank() {
   );
 }
 
+// ─── Repurposing ───────────────────────────────────
+function RepurposingTab() {
+  const repurpose = useRepurposeContent();
+  const { contents } = useSocialContent();
+  const { createContent } = useSocialContent();
+  const [selectedContentId, setSelectedContentId] = useState<string>("");
+  const [sourcePlatform, setSourcePlatform] = useState("instagram");
+  const [targetPlatform, setTargetPlatform] = useState("tiktok");
+  const [contentType, setContentType] = useState("post");
+  const [customText, setCustomText] = useState("");
+  const [result, setResult] = useState<any>(null);
+
+  const handleRepurpose = async () => {
+    const selectedContent = contents.find(c => c.id === selectedContentId);
+    const source = selectedContent
+      ? { title: selectedContent.title, caption: selectedContent.caption, hashtags: selectedContent.hashtags }
+      : customText;
+    if (!source || (typeof source === "string" && !source.trim())) return toast.error("Selecciona contenido o escribe texto");
+    try {
+      const data = await repurpose.mutateAsync({ sourceContent: source, sourcePlatform, targetPlatform, contentType });
+      setResult(data);
+      toast.success("Contenido adaptado");
+    } catch { /* handled */ }
+  };
+
+  const handleSave = () => {
+    if (!result) return;
+    createContent.mutate({
+      title: result.title || "Contenido adaptado",
+      caption: result.caption,
+      platform: targetPlatform,
+      content_type: contentType,
+      status: "draft",
+      hashtags: result.hashtags || [],
+      ai_generated: true,
+    });
+    toast.success("Guardado en calendario");
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2"><ArrowRightLeft className="w-4 h-4 text-primary" />Adaptar contenido</CardTitle>
+          <CardDescription>Transforma contenido de una plataforma a otra con IA</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div><Label>Contenido existente (opcional)</Label>
+            <Select value={selectedContentId} onValueChange={setSelectedContentId}>
+              <SelectTrigger><SelectValue placeholder="Selecciona del calendario..." /></SelectTrigger>
+              <SelectContent>
+                {contents.map(c => <SelectItem key={c.id} value={c.id}>{c.title} ({c.platform})</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div><Label>O escribe texto manualmente</Label>
+            <Textarea value={customText} onChange={e => setCustomText(e.target.value)} rows={4} placeholder="Pega aquí el caption o contenido original..." />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Plataforma origen</Label>
+              <Select value={sourcePlatform} onValueChange={setSourcePlatform}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="instagram">Instagram</SelectItem>
+                  <SelectItem value="tiktok">TikTok</SelectItem>
+                  <SelectItem value="youtube">YouTube</SelectItem>
+                  <SelectItem value="facebook">Facebook</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Plataforma destino</Label>
+              <Select value={targetPlatform} onValueChange={setTargetPlatform}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="instagram">Instagram</SelectItem>
+                  <SelectItem value="tiktok">TikTok</SelectItem>
+                  <SelectItem value="youtube">YouTube</SelectItem>
+                  <SelectItem value="facebook">Facebook</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div><Label>Formato destino</Label>
+            <Select value={contentType} onValueChange={setContentType}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="post">Post</SelectItem>
+                <SelectItem value="reel">Reel/Short</SelectItem>
+                <SelectItem value="story">Story</SelectItem>
+                <SelectItem value="video">Video</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={handleRepurpose} disabled={repurpose.isPending} className="w-full">
+            <ArrowRightLeft className="w-4 h-4 mr-1.5" />
+            {repurpose.isPending ? "Adaptando..." : "Adaptar con IA"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2"><Lightbulb className="w-4 h-4 text-yellow-500" />Resultado adaptado</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!result ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">Selecciona contenido y plataforma destino para adaptar</div>
+          ) : (
+            <ScrollArea className="h-[400px]">
+              <div className="space-y-3 pr-2">
+                {result.title && <div><Label className="text-xs text-muted-foreground">Título</Label><p className="font-medium">{result.title}</p></div>}
+                {result.hook && <div><Label className="text-xs text-muted-foreground">Hook</Label><p className="text-sm text-primary font-medium">"{result.hook}"</p></div>}
+                {result.caption && <div><Label className="text-xs text-muted-foreground">Caption</Label><p className="text-sm whitespace-pre-wrap">{result.caption}</p></div>}
+                {result.hashtags?.length > 0 && (
+                  <div><Label className="text-xs text-muted-foreground">Hashtags</Label>
+                    <div className="flex flex-wrap gap-1 mt-1">{result.hashtags.map((h: string) => <Badge key={h} variant="secondary" className="text-xs">#{h.replace("#","")}</Badge>)}</div>
+                  </div>
+                )}
+                {result.callToAction && <div><Label className="text-xs text-muted-foreground">CTA</Label><p className="text-sm">{result.callToAction}</p></div>}
+                {result.formatNotes && <div><Label className="text-xs text-muted-foreground">Notas de formato</Label><p className="text-sm">{result.formatNotes}</p></div>}
+                {result.visualSuggestions && <div><Label className="text-xs text-muted-foreground">Sugerencias visuales</Label><p className="text-sm">{result.visualSuggestions}</p></div>}
+                {result.adaptationNotes && <div><Label className="text-xs text-muted-foreground">Notas de adaptación</Label><p className="text-sm text-muted-foreground">{result.adaptationNotes}</p></div>}
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" onClick={handleSave}><Calendar className="w-3.5 h-3.5 mr-1" />Guardar en calendario</Button>
+                  <Button size="sm" variant="ghost" onClick={() => {
+                    navigator.clipboard.writeText([result.title, result.caption, result.hashtags?.map((h: string) => `#${h.replace("#","")}`).join(" ")].filter(Boolean).join("\n\n"));
+                    toast.success("Copiado");
+                  }}><Copy className="w-3.5 h-3.5 mr-1" />Copiar</Button>
+                </div>
+              </div>
+            </ScrollArea>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Publish Queue ─────────────────────────────────
+function PublishTab() {
+  const { queue, isLoading, enqueue, publish, cancel } = usePublishQueue();
+  const { logs } = usePublishLogs();
+  const { contents } = useSocialContent();
+  const [showEnqueue, setShowEnqueue] = useState(false);
+  const [selectedContentId, setSelectedContentId] = useState("");
+  const [publishPlatform, setPublishPlatform] = useState("");
+
+  const draftContents = contents.filter(c => c.status !== "published");
+
+  const handleEnqueue = () => {
+    if (!selectedContentId) return toast.error("Selecciona un contenido");
+    enqueue.mutate({ contentId: selectedContentId, platform: publishPlatform || undefined }, {
+      onSuccess: () => { setShowEnqueue(false); setSelectedContentId(""); },
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">{queue.length} items en cola</p>
+        <Dialog open={showEnqueue} onOpenChange={setShowEnqueue}>
+          <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1.5" />Añadir a cola</Button></DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Encolar publicación</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div><Label>Contenido</Label>
+                <Select value={selectedContentId} onValueChange={setSelectedContentId}>
+                  <SelectTrigger><SelectValue placeholder="Selecciona contenido..." /></SelectTrigger>
+                  <SelectContent>
+                    {draftContents.map(c => <SelectItem key={c.id} value={c.id}>{c.title} ({c.platform})</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Plataforma (opcional, por defecto la del contenido)</Label>
+                <Select value={publishPlatform} onValueChange={setPublishPlatform}>
+                  <SelectTrigger><SelectValue placeholder="Automático" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                    <SelectItem value="tiktok">TikTok</SelectItem>
+                    <SelectItem value="youtube">YouTube</SelectItem>
+                    <SelectItem value="facebook">Facebook</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleEnqueue} disabled={enqueue.isPending} className="w-full">Encolar</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {isLoading ? <div className="text-center py-8 text-muted-foreground">Cargando...</div> : queue.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground">La cola de publicación está vacía.</CardContent></Card>
+      ) : (
+        <div className="space-y-2">
+          {queue.map(item => (
+            <Card key={item.id}>
+              <CardContent className="p-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className={`p-1.5 rounded-md ${platformColors[item.platform] || "bg-muted"}`}>{platformIcons[item.platform]}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{item.title || "Sin título"}</p>
+                    <p className="text-[10px] text-muted-foreground">{item.publish_mode} • Intento {item.attempt_count}/{item.max_attempts}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge className={`text-[10px] ${statusColors[item.status] || ""}`}>
+                    {statusIcons[item.status]}<span className="ml-1">{item.status}</span>
+                  </Badge>
+                  {item.status === "pending" && (
+                    <>
+                      <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => publish.mutate(item.id)} disabled={publish.isPending}>
+                        <Send className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => cancel.mutate({ queueId: item.id })}>
+                        <XCircle className="w-3.5 h-3.5 text-destructive" />
+                      </Button>
+                    </>
+                  )}
+                  {item.platform_post_url && (
+                    <a href={item.platform_post_url} target="_blank" rel="noopener noreferrer">
+                      <Button size="icon" variant="ghost" className="h-7 w-7"><ExternalLink className="w-3.5 h-3.5" /></Button>
+                    </a>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {logs.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Últimos logs de publicación</CardTitle></CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[200px]">
+              <div className="space-y-1">
+                {logs.slice(0, 20).map(log => (
+                  <div key={log.id} className="flex items-center justify-between text-xs py-1.5 border-b border-border last:border-0">
+                    <div className="flex items-center gap-2">
+                      <span className={`p-1 rounded ${platformColors[log.platform] || ""}`}>{platformIcons[log.platform]}</span>
+                      <span>{log.action}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={log.status === "success" ? "default" : "destructive"} className="text-[10px]">{log.status}</Badge>
+                      {log.duration_ms && <span className="text-muted-foreground">{log.duration_ms}ms</span>}
+                      <span className="text-muted-foreground">{format(new Date(log.created_at), "dd/MM HH:mm")}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ─── Platform Connections ──────────────────────────
+function ConnectionsTab() {
+  const { connections, isLoading, upsertConnection, deleteConnection, verifyConnection } = usePlatformConnections();
+  const [showAdd, setShowAdd] = useState(false);
+  const [newConn, setNewConn] = useState({ platform: "instagram", account_name: "", account_id: "", access_token: "" });
+
+  const handleSave = () => {
+    if (!newConn.platform) return;
+    upsertConnection.mutate({
+      platform: newConn.platform,
+      account_name: newConn.account_name || null,
+      account_id: newConn.account_id || null,
+      access_token: newConn.access_token || null,
+      connection_status: newConn.access_token ? "connected" : "pending",
+      is_active: true,
+    }, { onSuccess: () => { setShowAdd(false); setNewConn({ platform: "instagram", account_name: "", account_id: "", access_token: "" }); } });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">{connections.length} conexiones configuradas</p>
+        <Dialog open={showAdd} onOpenChange={setShowAdd}>
+          <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1.5" />Nueva conexión</Button></DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Configurar conexión</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div><Label>Plataforma</Label>
+                <Select value={newConn.platform} onValueChange={v => setNewConn(p => ({ ...p, platform: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                    <SelectItem value="tiktok">TikTok</SelectItem>
+                    <SelectItem value="youtube">YouTube</SelectItem>
+                    <SelectItem value="facebook">Facebook</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Nombre de cuenta</Label><Input value={newConn.account_name} onChange={e => setNewConn(p => ({ ...p, account_name: e.target.value }))} placeholder="@silviocosta" /></div>
+              <div><Label>Account ID</Label><Input value={newConn.account_id} onChange={e => setNewConn(p => ({ ...p, account_id: e.target.value }))} placeholder="ID de la cuenta" /></div>
+              <div><Label>Access Token</Label><Input type="password" value={newConn.access_token} onChange={e => setNewConn(p => ({ ...p, access_token: e.target.value }))} placeholder="Token de acceso" /></div>
+              <Button onClick={handleSave} disabled={upsertConnection.isPending} className="w-full">Guardar conexión</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {isLoading ? <div className="text-center py-8 text-muted-foreground">Cargando...</div> : connections.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground">No hay conexiones configuradas. Añade tu primera plataforma.</CardContent></Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {connections.map(conn => (
+            <Card key={conn.id}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className={`p-1.5 rounded-md ${platformColors[conn.platform] || "bg-muted"}`}>{platformIcons[conn.platform]}</span>
+                    <div>
+                      <p className="font-medium text-sm capitalize">{conn.platform}</p>
+                      {conn.account_name && <p className="text-xs text-muted-foreground">{conn.account_name}</p>}
+                    </div>
+                  </div>
+                  <Badge variant={conn.connection_status === "connected" ? "default" : "secondary"} className="text-[10px]">
+                    {conn.connection_status === "connected" ? <><CheckCircle2 className="w-3 h-3 mr-1" />Conectado</> : <><Clock className="w-3 h-3 mr-1" />Pendiente</>}
+                  </Badge>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => verifyConnection.mutate(conn.platform)} disabled={verifyConnection.isPending}>
+                    <Shield className="w-3.5 h-3.5 mr-1" />Verificar
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteConnection.mutate(conn.id)}>
+                    <Unplug className="w-3.5 h-3.5 mr-1" />Desconectar
+                  </Button>
+                </div>
+                {conn.last_verified_at && <p className="text-[10px] text-muted-foreground mt-2">Verificado: {format(new Date(conn.last_verified_at), "dd/MM/yyyy HH:mm")}</p>}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Saved Prospects ───────────────────────────────
+function SavedProspectsTab() {
+  const [prospects, setProspects] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from("saved_prospects").select("*").order("created_at", { ascending: false }).then(({ data }) => {
+      setProspects(data || []);
+      setIsLoading(false);
+    });
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    await supabase.from("saved_prospects").delete().eq("id", id);
+    setProspects(p => p.filter(x => x.id !== id));
+    toast.success("Prospecto eliminado");
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">{prospects.length} prospectos guardados</p>
+      {isLoading ? <div className="text-center py-8 text-muted-foreground">Cargando...</div> : prospects.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground">No hay prospectos guardados. Usa la pestaña Prospección para encontrar leads.</CardContent></Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {prospects.map(p => (
+            <Card key={p.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-sm">@{p.username}</h4>
+                    {p.profile_title && <p className="text-xs text-muted-foreground">{p.profile_title}</p>}
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDelete(p.id)}><Trash2 className="w-3 h-3 text-destructive" /></Button>
+                </div>
+                {p.profile_description && <p className="text-xs text-muted-foreground line-clamp-2">{p.profile_description}</p>}
+                {p.generated_dms && (
+                  <div className="bg-muted/50 rounded-md p-2">
+                    <Label className="text-[10px] text-muted-foreground">DM generado</Label>
+                    <p className="text-xs line-clamp-3">{p.generated_dms}</p>
+                    <Button size="sm" variant="ghost" className="h-6 mt-1 text-xs" onClick={() => { navigator.clipboard.writeText(p.generated_dms); toast.success("DM copiado"); }}>
+                      <Copy className="w-3 h-3 mr-1" />Copiar
+                    </Button>
+                  </div>
+                )}
+                {p.profile_url && (
+                  <a href={p.profile_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                    <ExternalLink className="w-3 h-3" />Ver perfil
+                  </a>
+                )}
+                <p className="text-[10px] text-muted-foreground">{format(new Date(p.created_at), "dd/MM/yyyy HH:mm")}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Video Tab ─────────────────────────────────────
+function VideoTab() {
+  const { contents } = useSocialContent();
+  const videoContents = contents.filter(c => c.content_type === "video" || c.content_type === "reel" || c.content_type === "short");
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-sm font-medium">Contenido de vídeo</h3>
+          <p className="text-xs text-muted-foreground">Reels, Shorts y vídeos largos de todas las plataformas</p>
+        </div>
+        <Badge variant="secondary">{videoContents.length} vídeos</Badge>
+      </div>
+
+      {videoContents.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <Video className="w-10 h-10 mx-auto mb-3 opacity-30" />
+            <p>No hay contenido de vídeo todavía.</p>
+            <p className="text-xs mt-1">Crea reels, shorts o vídeos desde el Calendario o el Generador IA.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {videoContents.map(item => (
+            <Card key={item.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className={`p-1.5 rounded-md ${platformColors[item.platform]}`}>{platformIcons[item.platform]}</span>
+                  <div className="min-w-0">
+                    <h4 className="font-medium text-sm truncate">{item.title}</h4>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-[10px]">{item.content_type}</Badge>
+                      <Badge className={`text-[10px] ${statusColors[item.status]}`}>{item.status}</Badge>
+                    </div>
+                  </div>
+                </div>
+                {item.caption && <p className="text-xs text-muted-foreground line-clamp-2">{item.caption}</p>}
+                {item.video_url && (
+                  <a href={item.video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                    <Play className="w-3 h-3" />Ver vídeo
+                  </a>
+                )}
+                {item.scheduled_at && <p className="text-[10px] text-muted-foreground">{format(new Date(item.scheduled_at), "dd MMM HH:mm", { locale: es })}</p>}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Analytics Dashboard ───────────────────────────
 function AnalyticsDashboard() {
   const { analytics, isLoading, upsertAnalytics } = useSocialAnalytics();
+  const fetchAnalytics = useFetchAnalytics();
   const [showAdd, setShowAdd] = useState(false);
   const [newEntry, setNewEntry] = useState({
     platform: "instagram", metric_date: format(new Date(), "yyyy-MM-dd"),
@@ -425,6 +896,13 @@ function AnalyticsDashboard() {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button size="sm" variant="outline" onClick={() => fetchAnalytics.mutate(undefined)} disabled={fetchAnalytics.isPending}>
+          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${fetchAnalytics.isPending ? "animate-spin" : ""}`} />
+          {fetchAnalytics.isPending ? "Obteniendo..." : "Actualizar métricas"}
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         {["instagram", "tiktok", "youtube", "facebook"].map(p => {
           const latest = latestByPlatform(p);
@@ -530,20 +1008,34 @@ export function SocialMarketingManager() {
     <div className="space-y-4">
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">Marketing & Redes Sociales</h1>
-        <p className="text-sm text-muted-foreground">Gestiona tu contenido para Instagram, TikTok, YouTube y Facebook</p>
+        <p className="text-sm text-muted-foreground">Gestiona contenido, publicaciones, prospección y analíticas para todas las plataformas</p>
       </div>
 
       <Tabs defaultValue="calendar" className="w-full">
-        <TabsList className="w-full flex gap-1 h-auto p-1 overflow-x-auto">
-          <TabsTrigger value="calendar" className="text-xs gap-1.5 flex-1 min-w-0"><Calendar className="w-3.5 h-3.5 shrink-0" /><span className="truncate">Calendario</span></TabsTrigger>
-          <TabsTrigger value="ai" className="text-xs gap-1.5 flex-1 min-w-0"><Sparkles className="w-3.5 h-3.5 shrink-0" /><span className="truncate">Generador IA</span></TabsTrigger>
-          <TabsTrigger value="bank" className="text-xs gap-1.5 flex-1 min-w-0"><FolderOpen className="w-3.5 h-3.5 shrink-0" /><span className="truncate">Banco</span></TabsTrigger>
-          <TabsTrigger value="analytics" className="text-xs gap-1.5 flex-1 min-w-0"><BarChart3 className="w-3.5 h-3.5 shrink-0" /><span className="truncate">Analytics</span></TabsTrigger>
-        </TabsList>
+        <ScrollArea className="w-full">
+          <TabsList className="w-full flex gap-1 h-auto p-1">
+            <TabsTrigger value="calendar" className="text-xs gap-1 flex-shrink-0"><Calendar className="w-3.5 h-3.5" /><span className="hidden sm:inline">Calendario</span></TabsTrigger>
+            <TabsTrigger value="ai" className="text-xs gap-1 flex-shrink-0"><Sparkles className="w-3.5 h-3.5" /><span className="hidden sm:inline">IA</span></TabsTrigger>
+            <TabsTrigger value="video" className="text-xs gap-1 flex-shrink-0"><Video className="w-3.5 h-3.5" /><span className="hidden sm:inline">Vídeo</span></TabsTrigger>
+            <TabsTrigger value="repurpose" className="text-xs gap-1 flex-shrink-0"><ArrowRightLeft className="w-3.5 h-3.5" /><span className="hidden sm:inline">Repurposing</span></TabsTrigger>
+            <TabsTrigger value="bank" className="text-xs gap-1 flex-shrink-0"><FolderOpen className="w-3.5 h-3.5" /><span className="hidden sm:inline">Banco</span></TabsTrigger>
+            <TabsTrigger value="publish" className="text-xs gap-1 flex-shrink-0"><Send className="w-3.5 h-3.5" /><span className="hidden sm:inline">Publicar</span></TabsTrigger>
+            <TabsTrigger value="prospects" className="text-xs gap-1 flex-shrink-0"><Search className="w-3.5 h-3.5" /><span className="hidden sm:inline">Prospección</span></TabsTrigger>
+            <TabsTrigger value="saved" className="text-xs gap-1 flex-shrink-0"><Bookmark className="w-3.5 h-3.5" /><span className="hidden sm:inline">Guardados</span></TabsTrigger>
+            <TabsTrigger value="connections" className="text-xs gap-1 flex-shrink-0"><Link2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">Conexiones</span></TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs gap-1 flex-shrink-0"><BarChart3 className="w-3.5 h-3.5" /><span className="hidden sm:inline">Analytics</span></TabsTrigger>
+          </TabsList>
+        </ScrollArea>
 
         <TabsContent value="calendar"><ContentCalendar /></TabsContent>
         <TabsContent value="ai" forceMount className="data-[state=inactive]:hidden"><AIContentGenerator /></TabsContent>
+        <TabsContent value="video"><VideoTab /></TabsContent>
+        <TabsContent value="repurpose"><RepurposingTab /></TabsContent>
         <TabsContent value="bank"><ContentBank /></TabsContent>
+        <TabsContent value="publish"><PublishTab /></TabsContent>
+        <TabsContent value="prospects"><InstagramProspecting /></TabsContent>
+        <TabsContent value="saved"><SavedProspectsTab /></TabsContent>
+        <TabsContent value="connections"><ConnectionsTab /></TabsContent>
         <TabsContent value="analytics"><AnalyticsDashboard /></TabsContent>
       </Tabs>
     </div>
