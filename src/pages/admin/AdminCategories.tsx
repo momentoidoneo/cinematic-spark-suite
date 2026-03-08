@@ -15,7 +15,10 @@ const AdminCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
-  const [form, setForm] = useState({ name: "", slug: "", description: "", icon: "", order: 0 });
+  const [form, setForm] = useState({ name: "", slug: "", description: "", icon: "", order: 0, cover_image: "" });
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("order");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
