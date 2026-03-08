@@ -29,7 +29,7 @@ const AdminSubcategories = () => {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [generatingCovers, setGeneratingCovers] = useState(false);
+  
 
   const fetchData = async () => {
     const [{ data: cats }, { data: subs }] = await Promise.all([
