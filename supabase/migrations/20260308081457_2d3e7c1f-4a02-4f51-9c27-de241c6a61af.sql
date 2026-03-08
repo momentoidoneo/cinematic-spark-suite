@@ -1,0 +1,1 @@
+CREATE POLICY "Public can view whatsapp phone" ON public.whatsapp_config FOR SELECT TO anon USING (true);
