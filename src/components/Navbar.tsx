@@ -42,12 +42,12 @@ const Navbar = () => {
             <div key={item.label} className="relative group">
               <a
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                className="relative text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-300 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-secondary/60 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-0 after:h-[2px] after:bg-primary after:transition-all after:duration-300 hover:after:w-3/4"
                 onMouseEnter={() => item.children && setServicesOpen(true)}
                 onMouseLeave={() => item.children && setServicesOpen(false)}
               >
                 {item.label}
-                {item.children && <ChevronDown className="w-3 h-3" />}
+                {item.children && <ChevronDown className="w-3 h-3 transition-transform duration-300 group-hover:rotate-180" />}
               </a>
               {item.children && (
                 <div
@@ -91,13 +91,13 @@ const Navbar = () => {
           ))}
           <a
             href="#contacto"
-            className="px-5 py-2 text-sm font-semibold rounded-full bg-gradient-primary text-primary-foreground hover:opacity-90 transition-opacity"
+            className="px-5 py-2 text-sm font-semibold rounded-full bg-gradient-primary text-primary-foreground hover:shadow-glow hover:scale-105 transition-all duration-300"
           >
             Solicitar Presupuesto
           </a>
           <Link
             to="/login"
-            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+            className="p-2 rounded-full text-muted-foreground hover:text-primary hover:bg-secondary/60 hover:scale-110 transition-all duration-300"
             title="Admin Login"
           >
             <LogIn className="w-4 h-4" />
