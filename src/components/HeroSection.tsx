@@ -1,14 +1,16 @@
 import { motion } from "framer-motion";
-import { Camera, Plane, Globe } from "lucide-react";
+import { Camera, Plane, Globe, Video, PartyPopper, Boxes } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const services = [
-{ icon: Camera, label: "FOTOGRAFÍA" },
-{ icon: Plane, label: "SERVICIOS DRON" },
-{ icon: Globe, label: "TOUR VIRTUAL" },
-{ icon: Camera, label: "VIDEO" },
-{ icon: Camera, label: "EVENTOS" },
-{ icon: Camera, label: "RENDERS 3D" }];
+  { icon: Camera, label: "FOTOGRAFÍA", href: "/servicios/fotografia" },
+  { icon: Plane, label: "SERVICIOS DRON", href: "/servicios/video-dron" },
+  { icon: Globe, label: "TOUR VIRTUAL", href: "/servicios/tour-virtual" },
+  { icon: Video, label: "VIDEO", href: "/#video" },
+  { icon: PartyPopper, label: "EVENTOS", href: "/#servicios" },
+  { icon: Boxes, label: "RENDERS 3D", href: "/#servicios" },
+];
 
 
 const HeroSection = () => {
