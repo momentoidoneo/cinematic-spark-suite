@@ -118,7 +118,7 @@ const AdminCategories = () => {
     return sortDir === "asc" ? <ChevronUp className="w-3.5 h-3.5 text-primary" /> : <ChevronDown className="w-3.5 h-3.5 text-primary" />;
   };
 
-  const missingCovers = categories.filter(c => !c.cover_image).length;
+  
 
   return (
     <div>

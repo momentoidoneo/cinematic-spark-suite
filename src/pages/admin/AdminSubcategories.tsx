@@ -131,7 +131,7 @@ const AdminSubcategories = () => {
 
   const galleryLabels: Record<string, string> = { grid: "Grid", masonry: "Masonry", carousel: "Carousel" };
 
-  const missingCovers = subcategories.filter(s => !s.cover_image).length;
+  
 
   return (
     <div>
