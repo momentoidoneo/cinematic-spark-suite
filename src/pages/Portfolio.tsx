@@ -197,13 +197,8 @@ const Portfolio = () => {
                 className="relative aspect-square rounded-xl overflow-hidden cursor-pointer border border-border hover:border-primary/30 transition-all group"
                 onClick={() => openLightbox(i)}
               >
-                <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 {renderMediaBadge(img)}
-                {img.title && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/80 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-sm text-foreground font-medium truncate">{img.title}</p>
-                  </div>
-                )}
               </motion.div>
             ))}
             {images.length === 0 && (
