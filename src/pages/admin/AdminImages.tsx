@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link } from "lucide-react";
 import { toast } from "sonner";
