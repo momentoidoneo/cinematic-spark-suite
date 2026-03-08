@@ -897,7 +897,7 @@ function AnalyticsDashboard() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button size="sm" variant="outline" onClick={() => fetchAnalytics.mutate()} disabled={fetchAnalytics.isPending}>
+        <Button size="sm" variant="outline" onClick={() => fetchAnalytics.mutate(undefined)} disabled={fetchAnalytics.isPending}>
           <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${fetchAnalytics.isPending ? "animate-spin" : ""}`} />
           {fetchAnalytics.isPending ? "Obteniendo..." : "Actualizar métricas"}
         </Button>
