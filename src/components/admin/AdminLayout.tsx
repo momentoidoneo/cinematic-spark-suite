@@ -30,6 +30,7 @@ const AdminLayout = () => {
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">{user.email}</span>
+              <ChangePasswordDialog />
               <button
                 onClick={signOut}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
