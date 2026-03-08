@@ -6,10 +6,39 @@ import PortfolioSection from "@/components/PortfolioSection";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SEOHead, {
+  localBusinessSchema,
+  getSiteUrl,
+  breadcrumbSchema,
+  photographyServiceSchema,
+  videoDronServiceSchema,
+  tourVirtualServiceSchema,
+} from "@/components/SEOHead";
 
 const Index = () => {
+  const siteUrl = getSiteUrl();
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Silvio Costa Photography",
+    url: siteUrl,
+    description: "Fotografía profesional, vídeo, dron y tours virtuales 360° en España y Portugal.",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${siteUrl}/blog?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Silvio Costa Photography | Fotografía y Producción Audiovisual Profesional"
+        description="Fotografía profesional, vídeo corporativo, dron y tours virtuales 360° con tecnología Matterport en España y Portugal. Calidad cinematográfica para inmobiliarias, arquitectura, eventos y empresas."
+        canonical={`${siteUrl}/`}
+        jsonLd={[localBusinessSchema, websiteSchema, photographyServiceSchema, videoDronServiceSchema, tourVirtualServiceSchema]}
+      />
       <Navbar />
       <HeroSection />
       <ServicesSection />
