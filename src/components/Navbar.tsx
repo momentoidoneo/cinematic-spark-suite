@@ -84,6 +84,13 @@ const Navbar = () => {
           >
             Solicitar Presupuesto
           </a>
+          <Link
+            to="/login"
+            className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+            title="Admin Login"
+          >
+            <LogIn className="w-4 h-4" />
+          </Link>
         </div>
 
         {/* Mobile toggle */}
