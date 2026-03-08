@@ -118,7 +118,7 @@ const AdminCategories = () => {
     return sortDir === "asc" ? <ChevronUp className="w-3.5 h-3.5 text-primary" /> : <ChevronDown className="w-3.5 h-3.5 text-primary" />;
   };
 
-  const missingCovers = categories.filter(c => !c.cover_image).length;
+  
 
   return (
     <div>
@@ -127,8 +127,7 @@ const AdminCategories = () => {
         <div className="flex items-center gap-2">
           <CoverGenerator
             type="category"
-            missingCount={missingCovers}
-            totalCount={categories.length}
+            items={categories.map(c => ({ id: c.id, name: c.name, cover_image: c.cover_image }))}
             onComplete={fetchCategories}
           />
           <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
