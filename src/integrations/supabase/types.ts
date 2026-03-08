@@ -157,10 +157,13 @@ export type Database = {
           id: string
           image_url: string
           is_featured: boolean
+          media_type: string
           order: number
           subcategory_id: string
+          thumbnail_url: string | null
           title: string | null
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           alt_text?: string | null
@@ -169,10 +172,13 @@ export type Database = {
           id?: string
           image_url: string
           is_featured?: boolean
+          media_type?: string
           order?: number
           subcategory_id: string
+          thumbnail_url?: string | null
           title?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           alt_text?: string | null
@@ -181,10 +187,13 @@ export type Database = {
           id?: string
           image_url?: string
           is_featured?: boolean
+          media_type?: string
           order?: number
           subcategory_id?: string
+          thumbnail_url?: string | null
           title?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {

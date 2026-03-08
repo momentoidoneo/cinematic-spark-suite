@@ -4,11 +4,22 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import WhatsAppButton from "@/components/WhatsAppButton";
+import { X, ChevronLeft, ChevronRight, Play, Globe } from "lucide-react";
 
 type Category = { id: string; name: string; slug: string; description: string | null; cover_image: string | null };
 type Subcategory = { id: string; name: string; category_id: string; description: string | null; gallery_style: string | null };
-type PortfolioImage = { id: string; image_url: string; title: string | null; alt_text: string | null; subcategory_id: string };
+type PortfolioImage = { id: string; image_url: string; title: string | null; alt_text: string | null; subcategory_id: string; media_type: string; video_url: string | null; thumbnail_url: string | null };
+
+const getEmbedUrl = (url: string): string => {
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  // Vimeo
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  return url;
+};
 
 const Portfolio = () => {
   const { categorySlug } = useParams();
@@ -35,16 +46,80 @@ const Portfolio = () => {
 
   useEffect(() => {
     if (!selectedCat) { setSubcategories([]); setImages([]); return; }
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data: subs } = await supabase.from("portfolio_subcategories").select("*").eq("category_id", selectedCat.id).order("order");
       if (subs) setSubcategories(subs);
       const { data: imgs } = await supabase.from("portfolio_images").select("*").in("subcategory_id", (subs || []).map(s => s.id)).order("order");
-      if (imgs) setImages(imgs);
+      if (imgs) setImages(imgs as PortfolioImage[]);
     };
-    fetch();
+    fetchData();
   }, [selectedCat]);
 
   const filteredImages = selectedSub ? images.filter(i => i.subcategory_id === selectedSub) : images;
+
+  const openLightbox = (i: number) => {
+    const item = filteredImages[i];
+    if (!item) return;
+    // For iframes, open directly in lightbox
+    setLightbox(i);
+  };
+
+  const renderMediaBadge = (item: PortfolioImage) => {
+    if (item.media_type === "video") return <div className="absolute top-3 left-3 bg-blue-500/80 text-white rounded-full p-1.5"><Play className="w-4 h-4" /></div>;
+    if (item.media_type === "iframe") return <div className="absolute top-3 left-3 bg-emerald-500/80 text-white rounded-full p-1.5"><Globe className="w-4 h-4" /></div>;
+    return null;
+  };
+
+  const renderLightboxContent = () => {
+    if (lightbox === null) return null;
+    const item = filteredImages[lightbox];
+    if (!item) return null;
+
+    if (item.media_type === "iframe" && item.video_url) {
+      return (
+        <iframe
+          src={item.video_url}
+          className="w-[90vw] h-[80vh] rounded-lg border-0"
+          allowFullScreen
+          allow="xr-spatial-tracking"
+          onClick={(e) => e.stopPropagation()}
+        />
+      );
+    }
+
+    if (item.media_type === "video" && item.video_url) {
+      const embedUrl = getEmbedUrl(item.video_url);
+      const isEmbed = embedUrl !== item.video_url;
+      if (isEmbed) {
+        return (
+          <iframe
+            src={embedUrl}
+            className="w-[90vw] max-w-4xl aspect-video rounded-lg border-0"
+            allowFullScreen
+            onClick={(e) => e.stopPropagation()}
+          />
+        );
+      }
+      return (
+        <video
+          src={item.video_url}
+          controls
+          autoPlay
+          className="max-w-[90vw] max-h-[90vh] rounded-lg"
+          onClick={(e) => e.stopPropagation()}
+        />
+      );
+    }
+
+    return (
+      <img
+        src={item.image_url}
+        alt={item.alt_text || ""}
+        className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
+        onClick={(e) => e.stopPropagation()}
+      />
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,7 +135,6 @@ const Portfolio = () => {
         </motion.div>
 
         {!selectedCat ? (
-          /* Category Grid */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((cat, i) => (
               <motion.button
@@ -87,7 +161,6 @@ const Portfolio = () => {
           </div>
         ) : (
           <>
-            {/* Back + Subcategory filters */}
             <div className="mb-8">
               <button onClick={() => { setSelectedCat(null); setSelectedSub(null); }} className="text-sm text-primary hover:underline mb-4 inline-block">
                 ← Volver al portafolio
@@ -112,7 +185,6 @@ const Portfolio = () => {
               </div>
             </div>
 
-            {/* Image Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredImages.map((img, i) => (
                 <motion.div
@@ -120,15 +192,21 @@ const Portfolio = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.05 }}
-                  className="aspect-square rounded-xl overflow-hidden cursor-pointer border border-border hover:border-primary/30 transition-all"
-                  onClick={() => setLightbox(i)}
+                  className="relative aspect-square rounded-xl overflow-hidden cursor-pointer border border-border hover:border-primary/30 transition-all group"
+                  onClick={() => openLightbox(i)}
                 >
-                  <img src={img.image_url} alt={img.alt_text || ""} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                  <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  {renderMediaBadge(img)}
+                  {img.title && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/80 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-sm text-foreground font-medium truncate">{img.title}</p>
+                    </div>
+                  )}
                 </motion.div>
               ))}
               {filteredImages.length === 0 && (
                 <div className="col-span-full text-center text-muted-foreground py-16">
-                  No hay imágenes en esta categoría.
+                  No hay contenido en esta categoría.
                 </div>
               )}
             </div>
@@ -142,15 +220,11 @@ const Portfolio = () => {
           <button onClick={() => setLightbox(null)} className="absolute top-4 right-4 text-foreground hover:text-primary z-10"><X className="w-8 h-8" /></button>
           <button onClick={(e) => { e.stopPropagation(); setLightbox(Math.max(0, lightbox - 1)); }} className="absolute left-4 text-foreground hover:text-primary z-10"><ChevronLeft className="w-8 h-8" /></button>
           <button onClick={(e) => { e.stopPropagation(); setLightbox(Math.min(filteredImages.length - 1, lightbox + 1)); }} className="absolute right-4 text-foreground hover:text-primary z-10"><ChevronRight className="w-8 h-8" /></button>
-          <img
-            src={filteredImages[lightbox]?.image_url}
-            alt={filteredImages[lightbox]?.alt_text || ""}
-            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
-            onClick={(e) => e.stopPropagation()}
-          />
+          {renderLightboxContent()}
         </div>
       )}
 
+      <WhatsAppButton />
       <Footer />
     </div>
   );
