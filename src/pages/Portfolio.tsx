@@ -89,7 +89,7 @@ const Portfolio = () => {
 
   useEffect(() => {
     const fetchCats = async () => {
-      const { data } = await supabase.from("portfolio_categories").select("*").order("order");
+      const { data } = await supabase.from("portfolio_categories").select("*").eq("is_visible", true).order("order");
       if (data) {
         setCategories(data as Category[]);
         if (categorySlug) {
