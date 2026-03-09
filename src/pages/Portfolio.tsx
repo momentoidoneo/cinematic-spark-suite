@@ -269,7 +269,7 @@ const Portfolio = () => {
               className="mt-16 rounded-2xl border border-primary/20 bg-card p-10 text-center"
             >
               <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
-                ¿Te gusta lo que ves?
+                ¿Quieres más información?
               </h3>
               <p className="text-muted-foreground max-w-lg mx-auto mb-6">
                 Solicita un presupuesto sin compromiso para tu proyecto de {selectedSub.name.toLowerCase()}.
