@@ -34,6 +34,7 @@ const AdminImages = () => {
   const [uploadForm, setUploadForm] = useState({ subcategory_id: "", title: "", alt_text: "", video_url: "", thumbnail_url: "" });
   const fileRef = useRef<HTMLInputElement>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<"cards" | "grid">("cards");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const persistImageOrder = async (reordered: PortfolioImage[]) => {
