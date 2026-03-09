@@ -41,19 +41,13 @@ const MatterportSection = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="relative rounded-2xl overflow-hidden aspect-[16/10] shadow-lg"
           >
-            <img
-              src={matterportTour}
-              alt="Tour virtual Matterport"
-              title=""
-              className="w-full h-full object-cover"
+            <iframe
+              src="https://my.matterport.com/show/?m=buNhXbQW5V6"
+              title="Tour virtual Matterport 360°"
+              className="w-full h-full absolute inset-0 border-0"
+              allowFullScreen
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4">
-              <span className="px-3 py-1.5 rounded-full bg-accent/90 text-accent-foreground text-xs font-semibold">
-                Tour Virtual 360°
-              </span>
-            </div>
           </motion.div>
         </div>
 
