@@ -27,6 +27,8 @@ type Category = {
   slug: string;
   cover_image: string | null;
   order: number;
+  grid_row: number | null;
+  grid_col: number | null;
 };
 
 const PortfolioSection = () => {
@@ -37,12 +39,18 @@ const PortfolioSection = () => {
   useEffect(() => {
     supabase
       .from("portfolio_categories")
-      .select("id, name, slug, cover_image, order")
+      .select("id, name, slug, cover_image, order, grid_row, grid_col")
       .order("order")
       .then(({ data }) => {
-        if (data) setCategories(data);
+        if (data) setCategories(data as Category[]);
       });
   }, []);
+
+  // Determine if grid positions are set
+  const hasGridPositions = categories.some(c => c.grid_row != null && c.grid_col != null);
+  const maxRow = hasGridPositions
+    ? categories.reduce((max, c) => Math.max(max, c.grid_row || 0), 0)
+    : 0;
 
   return (
     <section id="portafolio" className="py-24 px-6" ref={ref}>
@@ -61,41 +69,74 @@ const PortfolioSection = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((cat, i) => (
-            <motion.div
-              key={cat.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.2 + i * 0.1 }}
-            >
-              <Link
-                to={`/portafolio/${cat.slug}`}
-                className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer block"
+        {hasGridPositions ? (
+          <div
+            className="grid gap-6"
+            style={{
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gridTemplateRows: `repeat(${maxRow}, 1fr)`,
+            }}
+          >
+            {categories
+              .filter(cat => cat.grid_row != null && cat.grid_col != null)
+              .map((cat, i) => (
+                <motion.div
+                  key={cat.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={inView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ delay: 0.2 + i * 0.1 }}
+                  style={{
+                    gridRow: cat.grid_row!,
+                    gridColumn: cat.grid_col!,
+                  }}
+                >
+                  <CategoryCard cat={cat} />
+                </motion.div>
+              ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {categories.map((cat, i) => (
+              <motion.div
+                key={cat.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ delay: 0.2 + i * 0.1 }}
               >
-                {(cat.cover_image || fallbackImages[cat.slug]) ? (
-                  <img
-                    src={cat.cover_image || fallbackImages[cat.slug]}
-                    alt={cat.name}
-                    title=""
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-secondary flex items-center justify-center">
-                    <Camera className="w-12 h-12 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
-                <div className="absolute bottom-6 left-6">
-                  <h3 className="font-display text-2xl font-bold text-foreground">{cat.name}</h3>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
+                <CategoryCard cat={cat} />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 };
+
+function CategoryCard({ cat }: { cat: Category }) {
+  return (
+    <Link
+      to={`/portafolio/${cat.slug}`}
+      className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer block"
+    >
+      {(cat.cover_image || fallbackImages[cat.slug]) ? (
+        <img
+          src={cat.cover_image || fallbackImages[cat.slug]}
+          alt={cat.name}
+          title=""
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+        />
+      ) : (
+        <div className="w-full h-full bg-secondary flex items-center justify-center">
+          <Camera className="w-12 h-12 text-muted-foreground" />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
+      <div className="absolute bottom-6 left-6">
+        <h3 className="font-display text-2xl font-bold text-foreground">{cat.name}</h3>
+      </div>
+    </Link>
+  );
+}
 
 export default PortfolioSection;

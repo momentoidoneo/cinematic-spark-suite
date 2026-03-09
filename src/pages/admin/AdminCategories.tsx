@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X, Search, SortAsc, ChevronUp, ChevronDown, Upload, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Search, Upload, ImageIcon, LayoutGrid, List } from "lucide-react";
 import { toast } from "sonner";
 import CoverGenerator from "@/components/admin/CoverGenerator";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import SortableItem from "@/components/admin/SortableItem";
 import { handleDragEnd } from "@/hooks/useDndReorder";
+import GridEditor, { GridItem } from "@/components/admin/GridEditor";
 
 type Category = {
   id: string; name: string; slug: string; description: string | null;
   cover_image: string | null; icon: string | null; order: number;
+  grid_row: number | null; grid_col: number | null;
 };
-
-type SortKey = "name" | "slug" | "order";
-type SortDir = "asc" | "desc";
 
 const AdminCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -25,30 +24,20 @@ const AdminCategories = () => {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("order");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [viewMode, setViewMode] = useState<"cards" | "grid">("cards");
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const fetchCategories = async () => {
     const { data } = await supabase.from("portfolio_categories").select("*").order("order");
-    if (data) setCategories(data);
+    if (data) setCategories(data as Category[]);
   };
 
   useEffect(() => { fetchCategories(); }, []);
 
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
-    else { setSortKey(key); setSortDir("asc"); }
-  };
-
   const filtered = categories
     .filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.slug.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      const dir = sortDir === "asc" ? 1 : -1;
-      if (sortKey === "order") return (a.order - b.order) * dir;
-      return a[sortKey].localeCompare(b[sortKey]) * dir;
-    });
+    .sort((a, b) => a.order - b.order);
 
   const persistOrder = async (reordered: Category[]) => {
     await Promise.all(reordered.map(c => supabase.from("portfolio_categories").update({ order: c.order }).eq("id", c.id)));
@@ -60,6 +49,11 @@ const AdminCategories = () => {
       const map = new Map(updated.map(u => [u.id, u.order]));
       setCategories(prev => prev.map(c => map.has(c.id) ? { ...c, order: map.get(c.id)! } : c));
     }, persistOrder);
+  };
+
+  const onGridUpdatePosition = async (itemId: string, row: number | null, col: number | null) => {
+    await supabase.from("portfolio_categories").update({ grid_row: row, grid_col: col }).eq("id", itemId);
+    setCategories(prev => prev.map(c => c.id === itemId ? { ...c, grid_row: row, grid_col: col } : c));
   };
 
   const openCreate = () => {
@@ -119,16 +113,22 @@ const AdminCategories = () => {
     fetchCategories();
   };
 
-  const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col) return <SortAsc className="w-3.5 h-3.5 opacity-30" />;
-    return sortDir === "asc" ? <ChevronUp className="w-3.5 h-3.5 text-primary" /> : <ChevronDown className="w-3.5 h-3.5 text-primary" />;
-  };
+  const gridItems: GridItem[] = filtered.map(c => ({ ...c, name: c.name }));
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Categorías del Portafolio</h1>
         <div className="flex items-center gap-2">
+          {/* View mode toggle */}
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            <button onClick={() => setViewMode("cards")} className={`p-2 transition-colors ${viewMode === "cards" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`} title="Vista tarjetas">
+              <List className="w-4 h-4" />
+            </button>
+            <button onClick={() => setViewMode("grid")} className={`p-2 transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`} title="Vista cuadrícula libre">
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
           <CoverGenerator
             type="category"
             items={categories.map(c => ({ id: c.id, name: c.name, cover_image: c.cover_image }))}
@@ -151,42 +151,49 @@ const AdminCategories = () => {
         />
       </div>
 
-      {/* Drag & drop grid */}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <SortableContext items={filtered.map(c => c.id)} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((cat) => (
-              <SortableItem key={cat.id} id={cat.id}>
-                <div className="rounded-xl border border-border bg-card overflow-hidden group">
-                  <div className="aspect-[4/3] bg-secondary relative overflow-hidden">
-                    {cat.cover_image ? (
-                      <img src={cat.cover_image} alt={cat.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
+      {viewMode === "grid" ? (
+        <GridEditor
+          items={gridItems}
+          onUpdatePosition={onGridUpdatePosition}
+        />
+      ) : (
+        <>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={filtered.map(c => c.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtered.map((cat) => (
+                  <SortableItem key={cat.id} id={cat.id}>
+                    <div className="rounded-xl border border-border bg-card overflow-hidden group">
+                      <div className="aspect-[4/3] bg-secondary relative overflow-hidden">
+                        {cat.cover_image ? (
+                          <img src={cat.cover_image} alt={cat.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-background/90 to-transparent p-4">
+                          <h3 className="font-display text-lg font-bold text-foreground">{cat.name}</h3>
+                          <code className="text-xs text-muted-foreground">{cat.slug}</code>
+                        </div>
                       </div>
-                    )}
-                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-background/90 to-transparent p-4">
-                      <h3 className="font-display text-lg font-bold text-foreground">{cat.name}</h3>
-                      <code className="text-xs text-muted-foreground">{cat.slug}</code>
+                      <div className="p-3 flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground truncate max-w-[60%]">{cat.description || "Sin descripción"}</span>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => openEdit(cat)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
+                          <button onClick={() => handleDelete(cat.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-3 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground truncate max-w-[60%]">{cat.description || "Sin descripción"}</span>
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => openEdit(cat)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
-                      <button onClick={() => handleDelete(cat.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  </div>
-                </div>
-              </SortableItem>
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-
-      {filtered.length === 0 && (
-        <div className="text-center text-muted-foreground py-12">{search ? "Sin resultados" : "No hay categorías creadas aún"}</div>
+                  </SortableItem>
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+          {filtered.length === 0 && (
+            <div className="text-center text-muted-foreground py-12">{search ? "Sin resultados" : "No hay categorías creadas aún"}</div>
+          )}
+        </>
       )}
 
       {showForm && (

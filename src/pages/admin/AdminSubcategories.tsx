@@ -1,23 +1,22 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X, Search, ChevronUp, ChevronDown, SortAsc, Eye, Upload, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Search, Eye, Upload, ImageIcon, LayoutGrid, List } from "lucide-react";
 import { toast } from "sonner";
 import CoverGenerator from "@/components/admin/CoverGenerator";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import SortableItem from "@/components/admin/SortableItem";
 import { handleDragEnd } from "@/hooks/useDndReorder";
+import GridEditor, { GridItem } from "@/components/admin/GridEditor";
 
 type Category = { id: string; name: string };
 type Subcategory = {
   id: string; category_id: string; name: string; description: string | null;
   cover_image: string | null; icon: string | null; order: number; gallery_style: string | null;
+  grid_row: number | null; grid_col: number | null;
   portfolio_categories?: Category;
 };
-
-type SortKey = "name" | "category" | "order" | "gallery_style";
-type SortDir = "asc" | "desc";
 
 const AdminSubcategories = () => {
   const navigate = useNavigate();
@@ -25,14 +24,13 @@ const AdminSubcategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [filterCat, setFilterCat] = useState("");
   const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("order");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Subcategory | null>(null);
   const [form, setForm] = useState({ category_id: "", name: "", description: "", icon: "", order: 0, gallery_style: "grid" });
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [viewMode, setViewMode] = useState<"cards" | "grid">("cards");
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -47,21 +45,10 @@ const AdminSubcategories = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
-    else { setSortKey(key); setSortDir("asc"); }
-  };
-
   const filtered = subcategories
     .filter(s => !filterCat || s.category_id === filterCat)
     .filter(s => !search || s.name.toLowerCase().includes(search.toLowerCase()) || (s.portfolio_categories?.name || "").toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      const dir = sortDir === "asc" ? 1 : -1;
-      if (sortKey === "order") return (a.order - b.order) * dir;
-      if (sortKey === "category") return ((a.portfolio_categories?.name || "").localeCompare(b.portfolio_categories?.name || "")) * dir;
-      if (sortKey === "gallery_style") return ((a.gallery_style || "").localeCompare(b.gallery_style || "")) * dir;
-      return a.name.localeCompare(b.name) * dir;
-    });
+    .sort((a, b) => a.order - b.order);
 
   const persistOrder = async (reordered: Subcategory[]) => {
     await Promise.all(reordered.map(s => supabase.from("portfolio_subcategories").update({ order: s.order }).eq("id", s.id)));
@@ -73,6 +60,11 @@ const AdminSubcategories = () => {
       const map = new Map(updated.map(u => [u.id, u.order]));
       setSubcategories(prev => prev.map(s => map.has(s.id) ? { ...s, order: map.get(s.id)! } : s));
     }, persistOrder);
+  };
+
+  const onGridUpdatePosition = async (itemId: string, row: number | null, col: number | null) => {
+    await supabase.from("portfolio_subcategories").update({ grid_row: row, grid_col: col }).eq("id", itemId);
+    setSubcategories(prev => prev.map(s => s.id === itemId ? { ...s, grid_row: row, grid_col: col } : s));
   };
 
   const openCreate = () => {
@@ -132,11 +124,21 @@ const AdminSubcategories = () => {
 
   const galleryLabels: Record<string, string> = { grid: "Grid", masonry: "Masonry", carousel: "Carousel" };
 
+  const gridItems: GridItem[] = filtered.map(s => ({ ...s, name: s.name }));
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Subcategorías</h1>
         <div className="flex items-center gap-2">
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            <button onClick={() => setViewMode("cards")} className={`p-2 transition-colors ${viewMode === "cards" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`} title="Vista tarjetas">
+              <List className="w-4 h-4" />
+            </button>
+            <button onClick={() => setViewMode("grid")} className={`p-2 transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`} title="Vista cuadrícula libre">
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
           <CoverGenerator
             type="subcategory"
             items={subcategories.map(s => ({ id: s.id, name: s.name, cover_image: s.cover_image, categoryName: s.portfolio_categories?.name }))}
@@ -165,45 +167,55 @@ const AdminSubcategories = () => {
         </div>
       </div>
 
-      {/* Drag & drop grid */}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <SortableContext items={filtered.map(s => s.id)} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((s) => (
-              <SortableItem key={s.id} id={s.id}>
-                <div className="rounded-xl border border-border bg-card overflow-hidden group cursor-pointer" onClick={() => navigate(`/admin/images?subcategory=${s.id}`)}>
-                  <div className="aspect-[4/3] bg-secondary relative overflow-hidden">
-                    {s.cover_image ? (
-                      <img src={s.cover_image} alt={s.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
+      {viewMode === "grid" ? (
+        <GridEditor
+          items={gridItems}
+          onUpdatePosition={onGridUpdatePosition}
+          renderBadge={(item) => (
+            <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px]">{(item as any).portfolio_categories?.name}</span>
+          )}
+        />
+      ) : (
+        <>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={filtered.map(s => s.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtered.map((s) => (
+                  <SortableItem key={s.id} id={s.id}>
+                    <div className="rounded-xl border border-border bg-card overflow-hidden group cursor-pointer" onClick={() => navigate(`/admin/images?subcategory=${s.id}`)}>
+                      <div className="aspect-[4/3] bg-secondary relative overflow-hidden">
+                        {s.cover_image ? (
+                          <img src={s.cover_image} alt={s.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-background/90 to-transparent p-4">
+                          <h3 className="font-display text-lg font-bold text-foreground">{s.name}</h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs">{s.portfolio_categories?.name}</span>
+                            <span className="px-2 py-0.5 rounded-full bg-secondary text-muted-foreground text-xs">{galleryLabels[s.gallery_style || "grid"]}</span>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-background/90 to-transparent p-4">
-                      <h3 className="font-display text-lg font-bold text-foreground">{s.name}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs">{s.portfolio_categories?.name}</span>
-                        <span className="px-2 py-0.5 rounded-full bg-secondary text-muted-foreground text-xs">{galleryLabels[s.gallery_style || "grid"]}</span>
+                      <div className="p-3 flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground truncate max-w-[60%] flex items-center gap-1">{s.description || "Sin descripción"} <Eye className="w-3 h-3 shrink-0" /></span>
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => openEdit(s)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
+                          <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="p-3 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground truncate max-w-[60%] flex items-center gap-1">{s.description || "Sin descripción"} <Eye className="w-3 h-3 shrink-0" /></span>
-                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => openEdit(s)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
-                      <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  </div>
-                </div>
-              </SortableItem>
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-
-      {filtered.length === 0 && (
-        <div className="text-center text-muted-foreground py-12">{search || filterCat ? "Sin resultados" : "No hay subcategorías"}</div>
+                  </SortableItem>
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+          {filtered.length === 0 && (
+            <div className="text-center text-muted-foreground py-12">{search || filterCat ? "Sin resultados" : "No hay subcategorías"}</div>
+          )}
+        </>
       )}
 
       {showForm && (

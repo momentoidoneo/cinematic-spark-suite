@@ -148,6 +148,8 @@ export type Database = {
           cover_image: string | null
           created_at: string
           description: string | null
+          grid_col: number | null
+          grid_row: number | null
           icon: string | null
           id: string
           name: string
@@ -159,6 +161,8 @@ export type Database = {
           cover_image?: string | null
           created_at?: string
           description?: string | null
+          grid_col?: number | null
+          grid_row?: number | null
           icon?: string | null
           id?: string
           name: string
@@ -170,6 +174,8 @@ export type Database = {
           cover_image?: string | null
           created_at?: string
           description?: string | null
+          grid_col?: number | null
+          grid_row?: number | null
           icon?: string | null
           id?: string
           name?: string
@@ -184,6 +190,8 @@ export type Database = {
           alt_text: string | null
           created_at: string
           description: string | null
+          grid_col: number | null
+          grid_row: number | null
           id: string
           image_url: string
           is_featured: boolean
@@ -199,6 +207,8 @@ export type Database = {
           alt_text?: string | null
           created_at?: string
           description?: string | null
+          grid_col?: number | null
+          grid_row?: number | null
           id?: string
           image_url: string
           is_featured?: boolean
@@ -214,6 +224,8 @@ export type Database = {
           alt_text?: string | null
           created_at?: string
           description?: string | null
+          grid_col?: number | null
+          grid_row?: number | null
           id?: string
           image_url?: string
           is_featured?: boolean
@@ -242,6 +254,8 @@ export type Database = {
           created_at: string
           description: string | null
           gallery_style: string | null
+          grid_col: number | null
+          grid_row: number | null
           icon: string | null
           id: string
           name: string
@@ -254,6 +268,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           gallery_style?: string | null
+          grid_col?: number | null
+          grid_row?: number | null
           icon?: string | null
           id?: string
           name: string
@@ -266,6 +282,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           gallery_style?: string | null
+          grid_col?: number | null
+          grid_row?: number | null
           icon?: string | null
           id?: string
           name?: string
