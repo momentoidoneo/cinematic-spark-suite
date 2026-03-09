@@ -9,7 +9,7 @@ import { X, ChevronLeft, ChevronRight, Play, Globe } from "lucide-react";
 import SEOHead, { breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
 
 type Category = { id: string; name: string; slug: string; description: string | null; cover_image: string | null; grid_row: number | null; grid_col: number | null };
-type Subcategory = { id: string; name: string; category_id: string; description: string | null; gallery_style: string | null; cover_image: string | null; grid_row: number | null; grid_col: number | null };
+type Subcategory = { id: string; name: string; slug: string; category_id: string; description: string | null; gallery_style: string | null; cover_image: string | null; grid_row: number | null; grid_col: number | null };
 type PortfolioImage = { id: string; image_url: string; title: string | null; alt_text: string | null; subcategory_id: string; media_type: string; video_url: string | null; thumbnail_url: string | null; grid_row: number | null; grid_col: number | null };
 
 const getEmbedUrl = (url: string): string => {
