@@ -38,6 +38,66 @@ const AdminImages = () => {
   const [viewMode, setViewMode] = useState<"cards" | "grid">("cards");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
+  // Optimizer state
+  const [optimizing, setOptimizing] = useState(false);
+  const [optProgress, setOptProgress] = useState(0);
+  const [optTotal, setOptTotal] = useState(0);
+  const [optSaved, setOptSaved] = useState(0);
+
+  const extractStoragePath = (url: string): { bucket: string; path: string } | null => {
+    try {
+      const u = new URL(url);
+      const portfolioMatch = u.pathname.split("/portfolio/");
+      if (portfolioMatch[1]) return { bucket: "portfolio", path: decodeURIComponent(portfolioMatch[1]) };
+      const socialMatch = u.pathname.split("/social-media-assets/");
+      if (socialMatch[1]) return { bucket: "social-media-assets", path: decodeURIComponent(socialMatch[1]) };
+    } catch {}
+    return null;
+  };
+
+  const optimizeGalleryImages = async () => {
+    const imageItems = images.filter(img => img.media_type === "image");
+    if (imageItems.length === 0) { toast.error("No hay imágenes para optimizar"); return; }
+
+    const filesToOptimize = imageItems
+      .map(img => extractStoragePath(img.image_url))
+      .filter(Boolean) as { bucket: string; path: string }[];
+
+    if (filesToOptimize.length === 0) { toast.error("No se encontraron rutas de almacenamiento"); return; }
+
+    setOptimizing(true);
+    setOptProgress(0);
+    setOptTotal(filesToOptimize.length);
+    setOptSaved(0);
+
+    const BATCH = 3;
+    let processed = 0;
+    let totalSaved = 0;
+
+    for (let i = 0; i < filesToOptimize.length; i += BATCH) {
+      const batch = filesToOptimize.slice(i, i + BATCH);
+      try {
+        const { data, error } = await supabase.functions.invoke("optimize-images", {
+          body: { action: "optimize", files: batch },
+        });
+        if (!error && data?.results) {
+          for (const r of data.results) {
+            if (r.status === "optimized" && r.original_size && r.optimized_size) {
+              totalSaved += r.original_size - r.optimized_size;
+            }
+          }
+        }
+      } catch {}
+      processed += batch.length;
+      setOptProgress(processed);
+      setOptSaved(totalSaved);
+    }
+
+    setOptimizing(false);
+    const formatSize = (b: number) => b < 1024 * 1024 ? (b / 1024).toFixed(1) + " KB" : (b / (1024 * 1024)).toFixed(1) + " MB";
+    toast.success(`Optimización completada. Ahorro: ${formatSize(totalSaved)}`);
+  };
+
   const persistImageOrder = async (reordered: PortfolioImage[]) => {
     await Promise.all(reordered.map(img => supabase.from("portfolio_images").update({ order: img.order }).eq("id", img.id)));
     toast.success("Orden actualizado");
