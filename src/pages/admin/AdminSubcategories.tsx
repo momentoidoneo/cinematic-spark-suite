@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X, Search, Eye, Upload, ImageIcon, LayoutGrid, List } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Search, Eye, EyeOff, Upload, ImageIcon, LayoutGrid, List } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import CoverGenerator from "@/components/admin/CoverGenerator";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
