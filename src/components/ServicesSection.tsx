@@ -58,7 +58,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   renders: Boxes,
 };
 
-const ServiceCard = ({ name, catSlug, index, coverImage, coverPosition }: { name: string; catSlug: string; index: number; coverImage: string | null; coverPosition: string }) => {
+const ServiceCard = ({ name, catSlug, subSlug, index, coverImage, coverPosition }: { name: string; catSlug: string; subSlug: string; index: number; coverImage: string | null; coverPosition: string }) => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
 
