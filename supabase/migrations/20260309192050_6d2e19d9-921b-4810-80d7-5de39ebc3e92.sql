@@ -1,0 +1,1 @@
+ALTER TABLE public.portfolio_subcategories ADD COLUMN link_enabled boolean NOT NULL DEFAULT true;
