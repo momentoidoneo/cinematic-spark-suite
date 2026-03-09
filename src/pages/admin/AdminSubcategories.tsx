@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X, ArrowUp, ArrowDown, Search, ChevronUp, ChevronDown, SortAsc, Eye, Upload, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Search, ChevronUp, ChevronDown, SortAsc, Eye, Upload, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import CoverGenerator from "@/components/admin/CoverGenerator";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
+import SortableItem from "@/components/admin/SortableItem";
+import { handleDragEnd } from "@/hooks/useDndReorder";
 
 type Category = { id: string; name: string };
 type Subcategory = {
@@ -29,7 +33,8 @@ const AdminSubcategories = () => {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const fetchData = async () => {
     const [{ data: cats }, { data: subs }] = await Promise.all([
@@ -58,15 +63,16 @@ const AdminSubcategories = () => {
       return a.name.localeCompare(b.name) * dir;
     });
 
-  const moveOrder = async (sub: Subcategory, direction: "up" | "down") => {
-    const idx = filtered.findIndex(s => s.id === sub.id);
-    const swapWith = direction === "up" ? filtered[idx - 1] : filtered[idx + 1];
-    if (!swapWith) return;
-    await Promise.all([
-      supabase.from("portfolio_subcategories").update({ order: swapWith.order }).eq("id", sub.id),
-      supabase.from("portfolio_subcategories").update({ order: sub.order }).eq("id", swapWith.id),
-    ]);
-    fetchData();
+  const persistOrder = async (reordered: Subcategory[]) => {
+    await Promise.all(reordered.map(s => supabase.from("portfolio_subcategories").update({ order: s.order }).eq("id", s.id)));
+    toast.success("Orden actualizado");
+  };
+
+  const onDragEnd = (event: DragEndEvent) => {
+    handleDragEnd(event, filtered, (updated) => {
+      const map = new Map(updated.map(u => [u.id, u.order]));
+      setSubcategories(prev => prev.map(s => map.has(s.id) ? { ...s, order: map.get(s.id)! } : s));
+    }, persistOrder);
   };
 
   const openCreate = () => {
@@ -124,14 +130,7 @@ const AdminSubcategories = () => {
     fetchData();
   };
 
-  const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col) return <SortAsc className="w-3.5 h-3.5 opacity-30" />;
-    return sortDir === "asc" ? <ChevronUp className="w-3.5 h-3.5 text-primary" /> : <ChevronDown className="w-3.5 h-3.5 text-primary" />;
-  };
-
   const galleryLabels: Record<string, string> = { grid: "Grid", masonry: "Masonry", carousel: "Carousel" };
-
-  
 
   return (
     <div>
@@ -166,56 +165,46 @@ const AdminSubcategories = () => {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-secondary/50">
-            <tr>
-              <th className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none" onClick={() => toggleSort("name")}>
-                <span className="flex items-center gap-1">Nombre <SortIcon col="name" /></span>
-              </th>
-              <th className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none" onClick={() => toggleSort("category")}>
-                <span className="flex items-center gap-1">Categoría <SortIcon col="category" /></span>
-              </th>
-              <th className="text-left px-4 py-3 text-muted-foreground font-medium">Descripción</th>
-              <th className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none" onClick={() => toggleSort("gallery_style")}>
-                <span className="flex items-center gap-1">Estilo <SortIcon col="gallery_style" /></span>
-              </th>
-              <th className="text-left px-4 py-3 text-muted-foreground font-medium cursor-pointer select-none" onClick={() => toggleSort("order")}>
-                <span className="flex items-center gap-1">Orden <SortIcon col="order" /></span>
-              </th>
-              <th className="text-right px-4 py-3 text-muted-foreground font-medium">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((s, idx) => (
-              <tr key={s.id} className="border-t border-border hover:bg-secondary/20 cursor-pointer" onClick={() => navigate(`/admin/images?subcategory=${s.id}`)}>
-                <td className="px-4 py-3 text-foreground font-medium flex items-center gap-2">{s.name} <Eye className="w-3.5 h-3.5 text-muted-foreground" /></td>
-                <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">{(s as any).portfolio_categories?.name}</span></td>
-                <td className="px-4 py-3 text-muted-foreground truncate max-w-[200px]">{s.description || "—"}</td>
-                <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full bg-secondary text-muted-foreground text-xs">{galleryLabels[s.gallery_style || "grid"] || s.gallery_style}</span></td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-1">
-                    <span className="text-muted-foreground w-6 text-center">{s.order}</span>
-                    <button onClick={() => moveOrder(s, "up")} disabled={idx === 0} className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-30">
-                      <ArrowUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button onClick={() => moveOrder(s, "down")} disabled={idx === filtered.length - 1} className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-30">
-                      <ArrowDown className="w-3.5 h-3.5" />
-                    </button>
+      {/* Drag & drop grid */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={filtered.map(s => s.id)} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((s) => (
+              <SortableItem key={s.id} id={s.id}>
+                <div className="rounded-xl border border-border bg-card overflow-hidden group cursor-pointer" onClick={() => navigate(`/admin/images?subcategory=${s.id}`)}>
+                  <div className="aspect-[4/3] bg-secondary relative overflow-hidden">
+                    {s.cover_image ? (
+                      <img src={s.cover_image} alt={s.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-background/90 to-transparent p-4">
+                      <h3 className="font-display text-lg font-bold text-foreground">{s.name}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs">{s.portfolio_categories?.name}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-secondary text-muted-foreground text-xs">{galleryLabels[s.gallery_style || "grid"]}</span>
+                      </div>
+                    </div>
                   </div>
-                </td>
-                <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                  <button onClick={() => openEdit(s)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
-                  <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive ml-1"><Trash2 className="w-4 h-4" /></button>
-                </td>
-              </tr>
+                  <div className="p-3 flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground truncate max-w-[60%] flex items-center gap-1">{s.description || "Sin descripción"} <Eye className="w-3 h-3 shrink-0" /></span>
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => openEdit(s)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
+                      <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                </div>
+              </SortableItem>
             ))}
-            {filtered.length === 0 && (
-              <tr><td colSpan={6} className="text-center text-muted-foreground py-8">{search || filterCat ? "Sin resultados" : "No hay subcategorías"}</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {filtered.length === 0 && (
+        <div className="text-center text-muted-foreground py-12">{search || filterCat ? "Sin resultados" : "No hay subcategorías"}</div>
+      )}
 
       {showForm && (
         <div className="fixed inset-0 z-50 bg-background/80 flex items-center justify-center p-4">
