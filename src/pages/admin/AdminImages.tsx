@@ -70,7 +70,7 @@ const AdminImages = () => {
     setOptTotal(filesToOptimize.length);
     setOptSaved(0);
 
-    const BATCH = 3;
+    const BATCH = 1;
     let processed = 0;
     let totalSaved = 0;
 
