@@ -14,7 +14,7 @@ import portfolioEventos from "@/assets/portfolio-eventos.jpg";
 import portfolioRenders from "@/assets/portfolio-renders.jpg";
 
 type Category = { id: string; name: string; slug: string };
-type Subcategory = { id: string; name: string; category_id: string; cover_image: string | null; cover_position: string };
+type Subcategory = { id: string; name: string; slug: string; category_id: string; cover_image: string | null; cover_position: string };
 
 const categoryBanners: Record<string, { image: string; title: string; subtitle: string }> = {
   fotografia: {
@@ -58,7 +58,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   renders: Boxes,
 };
 
-const ServiceCard = ({ name, catSlug, index, coverImage, coverPosition }: { name: string; catSlug: string; index: number; coverImage: string | null; coverPosition: string }) => {
+const ServiceCard = ({ name, catSlug, subSlug, index, coverImage, coverPosition }: { name: string; catSlug: string; subSlug: string; index: number; coverImage: string | null; coverPosition: string }) => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
 
@@ -70,7 +70,7 @@ const ServiceCard = ({ name, catSlug, index, coverImage, coverPosition }: { name
       transition={{ duration: 0.4, delay: index * 0.05 }}
     >
       <Link
-        to={`/portafolio/${catSlug}`}
+        to={`/portafolio/${catSlug}/${subSlug}`}
         className="group rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-glow transition-all block h-full overflow-hidden"
       >
         <div className="relative w-full h-32 sm:h-36 overflow-hidden">
@@ -132,7 +132,7 @@ const ServicesSection = () => {
   useEffect(() => {
     Promise.all([
       supabase.from("portfolio_categories").select("id, name, slug").eq("is_visible", true).order("order"),
-      supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image, cover_position").eq("is_visible", true).order("order"),
+      supabase.from("portfolio_subcategories").select("id, name, slug, category_id, cover_image, cover_position").eq("is_visible", true).order("order"),
     ]).then(([catRes, subRes]) => {
       if (catRes.data) setCategories(catRes.data as Category[]);
       if (subRes.data) setSubcategories(subRes.data as Subcategory[]);
@@ -181,7 +181,7 @@ const ServicesSection = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {subs.map((sub, i) => (
-                  <ServiceCard key={sub.id} name={sub.name} catSlug={cat.slug} index={i} coverImage={sub.cover_image} coverPosition={sub.cover_position} />
+                  <ServiceCard key={sub.id} name={sub.name} catSlug={cat.slug} subSlug={sub.slug || sub.id} index={i} coverImage={sub.cover_image} coverPosition={sub.cover_position} />
                 ))}
               </div>
             </div>

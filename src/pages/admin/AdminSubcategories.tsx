@@ -27,7 +27,7 @@ const AdminSubcategories = () => {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Subcategory | null>(null);
-  const [form, setForm] = useState({ category_id: "", name: "", description: "", icon: "", order: 0, gallery_style: "grid", cover_position: "center" });
+  const [form, setForm] = useState({ category_id: "", name: "", slug: "", description: "", icon: "", order: 0, gallery_style: "grid", cover_position: "center" });
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -70,14 +70,14 @@ const AdminSubcategories = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ category_id: categories[0]?.id || "", name: "", description: "", icon: "", order: 0, gallery_style: "grid", cover_position: "center" });
+    setForm({ category_id: categories[0]?.id || "", name: "", slug: "", description: "", icon: "", order: 0, gallery_style: "grid", cover_position: "center" });
     setCoverFile(null); setCoverPreview(null);
     setShowForm(true);
   };
 
   const openEdit = (s: Subcategory) => {
     setEditing(s);
-    setForm({ category_id: s.category_id, name: s.name, description: s.description || "", icon: s.icon || "", order: s.order, gallery_style: s.gallery_style || "grid", cover_position: s.cover_position || "center" });
+    setForm({ category_id: s.category_id, name: s.name, slug: (s as any).slug || "", description: s.description || "", icon: s.icon || "", order: s.order, gallery_style: s.gallery_style || "grid", cover_position: s.cover_position || "center" });
     setCoverFile(null); setCoverPreview(s.cover_image || null);
     setShowForm(true);
   };
