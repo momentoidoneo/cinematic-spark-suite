@@ -61,12 +61,9 @@ Deno.serve(async (req) => {
       const allFiles: { bucket: string; path: string; size: number }[] = [];
 
       for (const b of buckets) {
-        const paths = await listAllFiles(supabase, b);
-        for (const p of paths) {
-          // Get file metadata for size
-          const { data } = await supabase.storage.from(b).download(p);
-          const size = data ? (await data.arrayBuffer()).byteLength : 0;
-          allFiles.push({ bucket: b, path: p, size });
+        const files = await listAllFiles(supabase, b);
+        for (const f of files) {
+          allFiles.push({ bucket: b, path: f.path, size: f.size });
         }
       }
 
