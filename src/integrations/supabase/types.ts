@@ -152,6 +152,7 @@ export type Database = {
           grid_row: number | null
           icon: string | null
           id: string
+          is_visible: boolean
           name: string
           order: number
           slug: string
@@ -165,6 +166,7 @@ export type Database = {
           grid_row?: number | null
           icon?: string | null
           id?: string
+          is_visible?: boolean
           name: string
           order?: number
           slug: string
@@ -178,6 +180,7 @@ export type Database = {
           grid_row?: number | null
           icon?: string | null
           id?: string
+          is_visible?: boolean
           name?: string
           order?: number
           slug?: string
@@ -259,6 +262,7 @@ export type Database = {
           grid_row: number | null
           icon: string | null
           id: string
+          is_visible: boolean
           name: string
           order: number
           updated_at: string
@@ -274,6 +278,7 @@ export type Database = {
           grid_row?: number | null
           icon?: string | null
           id?: string
+          is_visible?: boolean
           name: string
           order?: number
           updated_at?: string
@@ -289,6 +294,7 @@ export type Database = {
           grid_row?: number | null
           icon?: string | null
           id?: string
+          is_visible?: boolean
           name?: string
           order?: number
           updated_at?: string

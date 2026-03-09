@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X, Search, Upload, ImageIcon, LayoutGrid, List } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Search, Upload, ImageIcon, LayoutGrid, List, EyeOff, Eye } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import CoverGenerator from "@/components/admin/CoverGenerator";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -12,7 +13,7 @@ import GridEditor, { GridItem } from "@/components/admin/GridEditor";
 type Category = {
   id: string; name: string; slug: string; description: string | null;
   cover_image: string | null; icon: string | null; order: number;
-  grid_row: number | null; grid_col: number | null;
+  grid_row: number | null; grid_col: number | null; is_visible: boolean;
 };
 
 const AdminCategories = () => {
@@ -113,6 +114,13 @@ const AdminCategories = () => {
     fetchCategories();
   };
 
+  const toggleVisibility = async (id: string, visible: boolean) => {
+    const { error } = await supabase.from("portfolio_categories").update({ is_visible: visible }).eq("id", id);
+    if (error) { toast.error("Error al actualizar"); return; }
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, is_visible: visible } : c));
+    toast.success(visible ? "Categoría visible" : "Categoría oculta");
+  };
+
   const gridItems: GridItem[] = filtered.map(c => ({ ...c, name: c.name }));
 
   return (
@@ -178,8 +186,12 @@ const AdminCategories = () => {
                         </div>
                       </div>
                       <div className="p-3 flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground truncate max-w-[60%]">{cat.description || "Sin descripción"}</span>
+                        <span className="text-xs text-muted-foreground truncate max-w-[40%]">{cat.description || "Sin descripción"}</span>
                         <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 mr-1" onClick={(e) => e.stopPropagation()}>
+                            {cat.is_visible ? <Eye className="w-3.5 h-3.5 text-muted-foreground" /> : <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />}
+                            <Switch checked={cat.is_visible} onCheckedChange={(v) => toggleVisibility(cat.id, v)} />
+                          </div>
                           <button onClick={() => openEdit(cat)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
                           <button onClick={() => handleDelete(cat.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
                         </div>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, ImageIcon, Save, ExternalLink, Pencil, Check, X } from "lucide-react";
+import { Upload, ImageIcon, Save, ExternalLink, Pencil, Check, X, EyeOff, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 type Category = {
   id: string;
@@ -9,6 +10,7 @@ type Category = {
   slug: string;
   cover_image: string | null;
   order: number;
+  is_visible: boolean;
 };
 
 type Subcategory = {
@@ -18,6 +20,7 @@ type Subcategory = {
   cover_image: string | null;
   cover_position: string;
   order: number;
+  is_visible: boolean;
 };
 
 type SiteSetting = {
@@ -58,15 +61,15 @@ const AdminLanding = () => {
     const load = async () => {
       const [{ data: settings }, { data: cats }, { data: subs }] = await Promise.all([
         supabase.from("site_settings").select("*").eq("key", "hero_bg").maybeSingle(),
-        supabase.from("portfolio_categories").select("id, name, slug, cover_image, order").order("order"),
-        supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image, cover_position, order").order("order"),
+        supabase.from("portfolio_categories").select("id, name, slug, cover_image, order, is_visible").order("order"),
+        supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image, cover_position, order, is_visible").order("order"),
       ]);
       if (settings) {
         setHeroSetting(settings as SiteSetting);
         setHeroPreview(settings.value);
       }
-      if (cats) setCategories(cats);
-      if (subs) setSubcategories(subs);
+      if (cats) setCategories(cats as Category[]);
+      if (subs) setSubcategories(subs as Subcategory[]);
     };
     load();
   }, []);
@@ -132,10 +135,23 @@ const AdminLanding = () => {
     toast.success("Botón actualizado");
   };
 
+  const toggleCatVisibility = async (catId: string, visible: boolean) => {
+    const { error } = await supabase.from("portfolio_categories").update({ is_visible: visible }).eq("id", catId);
+    if (error) { toast.error("Error al actualizar"); return; }
+    setCategories((prev) => prev.map((c) => (c.id === catId ? { ...c, is_visible: visible } : c)));
+    toast.success(visible ? "Categoría visible" : "Categoría oculta");
+  };
+
+  const toggleSubVisibility = async (subId: string, visible: boolean) => {
+    const { error } = await supabase.from("portfolio_subcategories").update({ is_visible: visible }).eq("id", subId);
+    if (error) { toast.error("Error al actualizar"); return; }
+    setSubcategories((prev) => prev.map((s) => (s.id === subId ? { ...s, is_visible: visible } : s)));
+    toast.success(visible ? "Botón visible" : "Botón oculto");
+  };
+
   const handleSaveAll = async () => {
     setSaving(true);
 
-    // Upload hero
     if (heroFile) {
       const url = await uploadFile(heroFile, "landing");
       if (url && heroSetting) {
@@ -145,7 +161,6 @@ const AdminLanding = () => {
       }
     }
 
-    // Upload category covers
     for (const [catId, file] of Object.entries(catFiles)) {
       const url = await uploadFile(file, "covers/categories");
       if (url) {
@@ -155,7 +170,6 @@ const AdminLanding = () => {
     }
     setCatFiles({});
 
-    // Upload subcategory covers
     for (const [subId, file] of Object.entries(subFiles)) {
       const url = await uploadFile(file, "covers/subcategories");
       if (url) {
@@ -223,13 +237,13 @@ const AdminLanding = () => {
       <div className="rounded-xl border border-border bg-card p-6 mb-6">
         <h2 className="font-display text-lg font-bold text-foreground mb-4">Imágenes del Portafolio</h2>
         <p className="text-sm text-muted-foreground mb-4">
-          Estas imágenes aparecen como tarjetas en la sección de portafolio de la landing page.
+          Estas imágenes aparecen como tarjetas en la sección de portafolio de la landing page. Oculta categorías para que no aparezcan en la web.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((cat) => {
             const preview = catPreviews[cat.id] || cat.cover_image;
             return (
-              <div key={cat.id} className="rounded-lg border border-border overflow-hidden bg-secondary/30">
+              <div key={cat.id} className={`rounded-lg border overflow-hidden bg-secondary/30 transition-opacity ${!cat.is_visible ? "opacity-50 border-border/50" : "border-border"}`}>
                 <div className="aspect-[4/3] relative">
                   {preview ? (
                     <img src={preview} alt={cat.name} className="w-full h-full object-cover" />
@@ -239,15 +253,23 @@ const AdminLanding = () => {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-                  <div className="absolute bottom-3 left-3">
+                  <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
                     <span className="font-display font-bold text-foreground">{cat.name}</span>
+                    {!cat.is_visible && <EyeOff className="w-4 h-4 text-muted-foreground" />}
                   </div>
                 </div>
-                <div className="p-3">
-                  <label className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground cursor-pointer hover:bg-secondary/80 transition-colors">
+                <div className="p-3 flex items-center gap-2">
+                  <label className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground cursor-pointer hover:bg-secondary/80 transition-colors">
                     <Upload className="w-4 h-4" /> {preview ? "Cambiar" : "Subir imagen"}
                     <input type="file" accept="image/*" onChange={(e) => handleCatFile(cat.id, e)} className="hidden" />
                   </label>
+                  <div className="flex items-center gap-1.5">
+                    {cat.is_visible ? <Eye className="w-3.5 h-3.5 text-muted-foreground" /> : <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />}
+                    <Switch
+                      checked={cat.is_visible}
+                      onCheckedChange={(checked) => toggleCatVisibility(cat.id, checked)}
+                    />
+                  </div>
                 </div>
               </div>
             );
@@ -259,7 +281,7 @@ const AdminLanding = () => {
       <div className="rounded-xl border border-border bg-card p-6">
         <h2 className="font-display text-lg font-bold text-foreground mb-2">Botones de Servicios</h2>
         <p className="text-sm text-muted-foreground mb-6">
-          Estos son los botones que aparecen en la landing agrupados por categoría. Puedes editar nombre, imagen y posición del encuadre.
+          Estos son los botones que aparecen en la landing agrupados por categoría. Puedes editar nombre, imagen, posición del encuadre y visibilidad.
         </p>
 
         {categories.map((cat) => {
@@ -271,6 +293,7 @@ const AdminLanding = () => {
               <h3 className="font-display text-base font-semibold text-foreground mb-3 flex items-center gap-2">
                 <div className="w-1 h-5 bg-primary rounded-full" />
                 {cat.name}
+                {!cat.is_visible && <span className="text-xs text-muted-foreground font-normal">(categoría oculta)</span>}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {subs.map((sub) => {
@@ -278,7 +301,7 @@ const AdminLanding = () => {
                   const isEditing = editingSubId === sub.id;
 
                   return (
-                    <div key={sub.id} className="rounded-lg border border-border overflow-hidden bg-secondary/30">
+                    <div key={sub.id} className={`rounded-lg border overflow-hidden bg-secondary/30 transition-opacity ${!sub.is_visible ? "opacity-50 border-border/50" : "border-border"}`}>
                       {/* Preview */}
                       <div className="aspect-[4/3] relative">
                         {preview ? (
@@ -304,7 +327,10 @@ const AdminLanding = () => {
                               autoFocus
                             />
                           ) : (
-                            <span className="font-display font-bold text-foreground text-sm">{sub.name}</span>
+                            <div className="flex items-end justify-between">
+                              <span className="font-display font-bold text-foreground text-sm">{sub.name}</span>
+                              {!sub.is_visible && <EyeOff className="w-4 h-4 text-muted-foreground" />}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -328,11 +354,18 @@ const AdminLanding = () => {
                           </div>
                         )}
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
                           <label className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground cursor-pointer hover:bg-secondary/80 transition-colors">
                             <Upload className="w-4 h-4" /> {preview ? "Cambiar" : "Subir"}
                             <input type="file" accept="image/*" onChange={(e) => handleSubFile(sub.id, e)} className="hidden" />
                           </label>
+
+                          <div className="flex items-center gap-1">
+                            <Switch
+                              checked={sub.is_visible}
+                              onCheckedChange={(checked) => toggleSubVisibility(sub.id, checked)}
+                            />
+                          </div>
 
                           {isEditing ? (
                             <>

@@ -89,7 +89,7 @@ const Portfolio = () => {
 
   useEffect(() => {
     const fetchCats = async () => {
-      const { data } = await supabase.from("portfolio_categories").select("*").order("order");
+      const { data } = await supabase.from("portfolio_categories").select("*").eq("is_visible", true).order("order");
       if (data) {
         setCategories(data as Category[]);
         if (categorySlug) {
@@ -104,7 +104,7 @@ const Portfolio = () => {
   useEffect(() => {
     if (!selectedCat) { setSubcategories([]); setImages([]); return; }
     const fetchSubs = async () => {
-      const { data: subs } = await supabase.from("portfolio_subcategories").select("*").eq("category_id", selectedCat.id).order("order");
+      const { data: subs } = await supabase.from("portfolio_subcategories").select("*").eq("category_id", selectedCat.id).eq("is_visible", true).order("order");
       if (subs) setSubcategories(subs as Subcategory[]);
     };
     fetchSubs();

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X, Search, Eye, Upload, ImageIcon, LayoutGrid, List } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Search, Eye, EyeOff, Upload, ImageIcon, LayoutGrid, List } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import CoverGenerator from "@/components/admin/CoverGenerator";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -14,7 +15,7 @@ type Category = { id: string; name: string };
 type Subcategory = {
   id: string; category_id: string; name: string; description: string | null;
   cover_image: string | null; cover_position: string; icon: string | null; order: number; gallery_style: string | null;
-  grid_row: number | null; grid_col: number | null;
+  grid_row: number | null; grid_col: number | null; is_visible: boolean;
   portfolio_categories?: Category;
 };
 
@@ -122,6 +123,13 @@ const AdminSubcategories = () => {
     fetchData();
   };
 
+  const toggleVisibility = async (id: string, visible: boolean) => {
+    const { error } = await supabase.from("portfolio_subcategories").update({ is_visible: visible }).eq("id", id);
+    if (error) { toast.error("Error al actualizar"); return; }
+    setSubcategories(prev => prev.map(s => s.id === id ? { ...s, is_visible: visible } : s));
+    toast.success(visible ? "Subcategoría visible" : "Subcategoría oculta");
+  };
+
   const galleryLabels: Record<string, string> = { grid: "Grid", masonry: "Masonry", carousel: "Carousel" };
 
   const gridItems: GridItem[] = filtered.map(s => ({ ...s, name: s.name }));
@@ -200,8 +208,12 @@ const AdminSubcategories = () => {
                         </div>
                       </div>
                       <div className="p-3 flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground truncate max-w-[60%] flex items-center gap-1">{s.description || "Sin descripción"} <Eye className="w-3 h-3 shrink-0" /></span>
+                        <span className="text-xs text-muted-foreground truncate max-w-[40%] flex items-center gap-1">{s.description || "Sin descripción"}</span>
                         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-1 mr-1">
+                            {s.is_visible ? <Eye className="w-3.5 h-3.5 text-muted-foreground" /> : <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />}
+                            <Switch checked={s.is_visible} onCheckedChange={(v) => toggleVisibility(s.id, v)} />
+                          </div>
                           <button onClick={() => openEdit(s)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
                           <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
                         </div>
