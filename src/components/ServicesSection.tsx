@@ -58,7 +58,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   renders: Boxes,
 };
 
-const ServiceCard = ({ name, catSlug, index }: { name: string; catSlug: string; index: number }) => {
+const ServiceCard = ({ name, catSlug, index, coverImage }: { name: string; catSlug: string; index: number; coverImage: string | null }) => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
 
@@ -71,14 +71,27 @@ const ServiceCard = ({ name, catSlug, index }: { name: string; catSlug: string; 
     >
       <Link
         to={`/portafolio/${catSlug}`}
-        className="group rounded-xl bg-card border border-border/50 p-6 hover:border-primary/30 hover:shadow-glow transition-all block h-full"
+        className="group rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-glow transition-all block h-full overflow-hidden"
       >
-        <h4 className="font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-          {name}
-        </h4>
-        <span className="text-xs text-primary mt-2 inline-block opacity-0 group-hover:opacity-100 transition-opacity">
-          Ver portafolio →
-        </span>
+        {coverImage && (
+          <div className="relative w-full h-32 sm:h-36 overflow-hidden">
+            <img
+              src={coverImage}
+              alt={name}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+          </div>
+        )}
+        <div className="p-5">
+          <h4 className="font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+            {name}
+          </h4>
+          <span className="text-xs text-primary mt-2 inline-block opacity-0 group-hover:opacity-100 transition-opacity">
+            Ver portafolio →
+          </span>
+        </div>
       </Link>
     </motion.div>
   );
