@@ -15,31 +15,31 @@ async function listAllFiles(
   supabase: ReturnType<typeof createClient>,
   bucket: string,
   folder = ""
-): Promise<string[]> {
-  const paths: string[] = [];
+): Promise<{ path: string; size: number }[]> {
+  const results: { path: string; size: number }[] = [];
   const { data, error } = await supabase.storage
     .from(bucket)
     .list(folder, { limit: 1000 });
 
-  if (error || !data) return paths;
+  if (error || !data) return results;
 
   for (const item of data) {
     if (item.name === ".emptyFolderPlaceholder") continue;
     const fullPath = folder ? `${folder}/${item.name}` : item.name;
 
-    if (item.id) {
-      // It's a file
+    if (item.metadata && item.id) {
+      // It's a file with metadata
       if (IMAGE_EXTENSIONS.test(item.name)) {
-        paths.push(fullPath);
+        results.push({ path: fullPath, size: (item.metadata as any)?.size || 0 });
       }
-    } else {
+    } else if (!item.id) {
       // It's a folder – recurse
       const nested = await listAllFiles(supabase, bucket, fullPath);
-      paths.push(...nested);
+      results.push(...nested);
     }
   }
 
-  return paths;
+  return results;
 }
 
 Deno.serve(async (req) => {
