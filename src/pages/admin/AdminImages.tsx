@@ -32,6 +32,16 @@ const AdminImages = () => {
   const [uploadForm, setUploadForm] = useState({ subcategory_id: "", title: "", alt_text: "", video_url: "", thumbnail_url: "" });
   const fileRef = useRef<HTMLInputElement>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const persistImageOrder = async (reordered: PortfolioImage[]) => {
+    await Promise.all(reordered.map(img => supabase.from("portfolio_images").update({ order: img.order }).eq("id", img.id)));
+    toast.success("Orden actualizado");
+  };
+
+  const onImageDragEnd = (event: DragEndEvent) => {
+    handleDragEnd(event, images, (updated) => setImages(updated), persistImageOrder);
+  };
 
   const fetchData = async () => {
     const [{ data: cats }, { data: subs }] = await Promise.all([
