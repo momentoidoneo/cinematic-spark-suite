@@ -16,6 +16,7 @@ type PortfolioImage = {
   id: string; subcategory_id: string; title: string | null; description: string | null;
   image_url: string; alt_text: string | null; order: number; is_featured: boolean;
   media_type: string; video_url: string | null; thumbnail_url: string | null;
+  grid_row: number | null; grid_col: number | null;
 };
 
 type MediaMode = "image" | "video" | "iframe";
