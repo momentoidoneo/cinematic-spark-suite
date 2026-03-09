@@ -265,6 +265,7 @@ export type Database = {
           is_visible: boolean
           name: string
           order: number
+          slug: string
           updated_at: string
         }
         Insert: {
@@ -281,6 +282,7 @@ export type Database = {
           is_visible?: boolean
           name: string
           order?: number
+          slug: string
           updated_at?: string
         }
         Update: {
@@ -297,6 +299,7 @@ export type Database = {
           is_visible?: boolean
           name?: string
           order?: number
+          slug?: string
           updated_at?: string
         }
         Relationships: [
