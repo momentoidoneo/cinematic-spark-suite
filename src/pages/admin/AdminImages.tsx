@@ -205,6 +205,15 @@ const AdminImages = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Galería de Contenidos</h1>
         <div className="flex items-center gap-2">
+          {/* View mode toggle */}
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            <button onClick={() => setViewMode("cards")} className={`p-2 transition-colors ${viewMode === "cards" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`} title="Vista tarjetas">
+              <List className="w-4 h-4" />
+            </button>
+            <button onClick={() => setViewMode("grid")} className={`p-2 transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`} title="Vista cuadrícula libre">
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
           {filterSub && (() => {
             const currentSub = subcategories.find(s => s.id === filterSub);
             const cat = currentSub ? categories.find(c => c.id === currentSub.category_id) : null;
