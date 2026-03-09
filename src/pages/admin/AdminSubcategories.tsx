@@ -15,7 +15,7 @@ type Category = { id: string; name: string };
 type Subcategory = {
   id: string; category_id: string; name: string; description: string | null;
   cover_image: string | null; cover_position: string; icon: string | null; order: number; gallery_style: string | null;
-  grid_row: number | null; grid_col: number | null;
+  grid_row: number | null; grid_col: number | null; is_visible: boolean;
   portfolio_categories?: Category;
 };
 
