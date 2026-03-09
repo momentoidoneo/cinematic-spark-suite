@@ -46,6 +46,11 @@ const AdminImages = () => {
     handleDragEnd(event, images, (updated) => setImages(updated), persistImageOrder);
   };
 
+  const onGridUpdatePosition = async (itemId: string, row: number | null, col: number | null) => {
+    await supabase.from("portfolio_images").update({ grid_row: row, grid_col: col }).eq("id", itemId);
+    setImages(prev => prev.map(img => img.id === itemId ? { ...img, grid_row: row, grid_col: col } : img));
+  };
+
   const fetchData = async () => {
     const [{ data: cats }, { data: subs }] = await Promise.all([
       supabase.from("portfolio_categories").select("id, name").order("order"),
