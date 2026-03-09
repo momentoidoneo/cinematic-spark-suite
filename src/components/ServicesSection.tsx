@@ -70,7 +70,7 @@ const ServiceCard = ({ name, catSlug, subSlug, index, coverImage, coverPosition 
       transition={{ duration: 0.4, delay: index * 0.05 }}
     >
       <Link
-        to={`/portafolio/${catSlug}`}
+        to={`/portafolio/${catSlug}/${subSlug}`}
         className="group rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-glow transition-all block h-full overflow-hidden"
       >
         <div className="relative w-full h-32 sm:h-36 overflow-hidden">
