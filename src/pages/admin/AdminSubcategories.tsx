@@ -185,7 +185,7 @@ const AdminSubcategories = () => {
                     <div className="rounded-xl border border-border bg-card overflow-hidden group cursor-pointer" onClick={() => navigate(`/admin/images?subcategory=${s.id}`)}>
                       <div className="aspect-[4/3] bg-secondary relative overflow-hidden">
                         {s.cover_image ? (
-                          <img src={s.cover_image} alt={s.name} className="w-full h-full object-cover" />
+                          <img src={s.cover_image} alt={s.name} className="w-full h-full object-cover" style={{ objectPosition: s.cover_position || 'center' }} />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
