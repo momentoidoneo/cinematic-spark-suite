@@ -123,6 +123,13 @@ const AdminSubcategories = () => {
     fetchData();
   };
 
+  const toggleVisibility = async (id: string, visible: boolean) => {
+    const { error } = await supabase.from("portfolio_subcategories").update({ is_visible: visible }).eq("id", id);
+    if (error) { toast.error("Error al actualizar"); return; }
+    setSubcategories(prev => prev.map(s => s.id === id ? { ...s, is_visible: visible } : s));
+    toast.success(visible ? "Subcategoría visible" : "Subcategoría oculta");
+  };
+
   const galleryLabels: Record<string, string> = { grid: "Grid", masonry: "Masonry", carousel: "Carousel" };
 
   const gridItems: GridItem[] = filtered.map(s => ({ ...s, name: s.name }));
