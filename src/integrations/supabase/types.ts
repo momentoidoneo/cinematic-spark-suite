@@ -251,6 +251,7 @@ export type Database = {
         Row: {
           category_id: string
           cover_image: string | null
+          cover_position: string
           created_at: string
           description: string | null
           gallery_style: string | null
@@ -265,6 +266,7 @@ export type Database = {
         Insert: {
           category_id: string
           cover_image?: string | null
+          cover_position?: string
           created_at?: string
           description?: string | null
           gallery_style?: string | null
@@ -279,6 +281,7 @@ export type Database = {
         Update: {
           category_id?: string
           cover_image?: string | null
+          cover_position?: string
           created_at?: string
           description?: string | null
           gallery_style?: string | null
