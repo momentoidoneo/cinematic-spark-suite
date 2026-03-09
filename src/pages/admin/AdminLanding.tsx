@@ -368,6 +368,20 @@ const AdminLanding = () => {
                             />
                           </div>
 
+                          <button
+                            onClick={async () => {
+                              const newVal = !sub.link_enabled;
+                              const { error } = await supabase.from("portfolio_subcategories").update({ link_enabled: newVal }).eq("id", sub.id);
+                              if (error) { toast.error("Error al actualizar"); return; }
+                              setSubcategories(prev => prev.map(s => s.id === sub.id ? { ...s, link_enabled: newVal } : s));
+                              toast.success(newVal ? "Link activado" : "Link desactivado");
+                            }}
+                            className={`p-2 rounded-lg border transition-colors ${sub.link_enabled ? "bg-primary/10 border-primary/30 text-primary" : "bg-secondary border-border text-muted-foreground"}`}
+                            title={sub.link_enabled ? "Link activado – clic para desactivar" : "Link desactivado – clic para activar"}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </button>
+
                           {isEditing ? (
                             <>
                               <button
