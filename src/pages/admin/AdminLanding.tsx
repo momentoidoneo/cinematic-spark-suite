@@ -63,7 +63,7 @@ const AdminLanding = () => {
       const [{ data: settings }, { data: cats }, { data: subs }] = await Promise.all([
         supabase.from("site_settings").select("*").eq("key", "hero_bg").maybeSingle(),
         supabase.from("portfolio_categories").select("id, name, slug, cover_image, order, is_visible").order("order"),
-        supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image, cover_position, order, is_visible").order("order"),
+        supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image, cover_position, order, is_visible, link_enabled").order("order"),
       ]);
       if (settings) {
         setHeroSetting(settings as SiteSetting);
