@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, ImageIcon, Save, ExternalLink } from "lucide-react";
+import { Upload, ImageIcon, Save, ExternalLink, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 type Category = {
@@ -11,6 +11,15 @@ type Category = {
   order: number;
 };
 
+type Subcategory = {
+  id: string;
+  name: string;
+  category_id: string;
+  cover_image: string | null;
+  cover_position: string;
+  order: number;
+};
+
 type SiteSetting = {
   id: string;
   key: string;
@@ -18,26 +27,46 @@ type SiteSetting = {
   label: string | null;
 };
 
+const POSITION_OPTIONS = [
+  { value: "center", label: "Centro" },
+  { value: "top", label: "Arriba" },
+  { value: "bottom", label: "Abajo" },
+  { value: "left", label: "Izquierda" },
+  { value: "right", label: "Derecha" },
+  { value: "top left", label: "Arriba Izq." },
+  { value: "top right", label: "Arriba Der." },
+  { value: "bottom left", label: "Abajo Izq." },
+  { value: "bottom right", label: "Abajo Der." },
+];
+
 const AdminLanding = () => {
   const [heroSetting, setHeroSetting] = useState<SiteSetting | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [heroFile, setHeroFile] = useState<File | null>(null);
   const [heroPreview, setHeroPreview] = useState<string | null>(null);
   const [catFiles, setCatFiles] = useState<Record<string, File>>({});
   const [catPreviews, setCatPreviews] = useState<Record<string, string>>({});
+  const [subFiles, setSubFiles] = useState<Record<string, File>>({});
+  const [subPreviews, setSubPreviews] = useState<Record<string, string>>({});
+  const [editingSubId, setEditingSubId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPosition, setEditPosition] = useState("center");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const load = async () => {
-      const [{ data: settings }, { data: cats }] = await Promise.all([
+      const [{ data: settings }, { data: cats }, { data: subs }] = await Promise.all([
         supabase.from("site_settings").select("*").eq("key", "hero_bg").maybeSingle(),
         supabase.from("portfolio_categories").select("id, name, slug, cover_image, order").order("order"),
+        supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image, cover_position, order").order("order"),
       ]);
       if (settings) {
         setHeroSetting(settings as SiteSetting);
         setHeroPreview(settings.value);
       }
       if (cats) setCategories(cats);
+      if (subs) setSubcategories(subs);
     };
     load();
   }, []);
@@ -56,6 +85,13 @@ const AdminLanding = () => {
     setCatPreviews((prev) => ({ ...prev, [catId]: URL.createObjectURL(file) }));
   };
 
+  const handleSubFile = (subId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubFiles((prev) => ({ ...prev, [subId]: file }));
+    setSubPreviews((prev) => ({ ...prev, [subId]: URL.createObjectURL(file) }));
+  };
+
   const uploadFile = async (file: File, folder: string): Promise<string | null> => {
     const ext = file.name.split(".").pop();
     const path = `${folder}/${Date.now()}.${ext}`;
@@ -66,6 +102,34 @@ const AdminLanding = () => {
     }
     const { data } = supabase.storage.from("portfolio").getPublicUrl(path);
     return data.publicUrl;
+  };
+
+  const startEditSub = (sub: Subcategory) => {
+    setEditingSubId(sub.id);
+    setEditName(sub.name);
+    setEditPosition(sub.cover_position || "center");
+  };
+
+  const cancelEditSub = () => {
+    setEditingSubId(null);
+    setEditName("");
+    setEditPosition("center");
+  };
+
+  const saveSubEdit = async (subId: string) => {
+    const { error } = await supabase
+      .from("portfolio_subcategories")
+      .update({ name: editName, cover_position: editPosition })
+      .eq("id", subId);
+    if (error) {
+      toast.error("Error al actualizar");
+      return;
+    }
+    setSubcategories((prev) =>
+      prev.map((s) => (s.id === subId ? { ...s, name: editName, cover_position: editPosition } : s))
+    );
+    setEditingSubId(null);
+    toast.success("Botón actualizado");
   };
 
   const handleSaveAll = async () => {
@@ -91,18 +155,28 @@ const AdminLanding = () => {
     }
     setCatFiles({});
 
+    // Upload subcategory covers
+    for (const [subId, file] of Object.entries(subFiles)) {
+      const url = await uploadFile(file, "covers/subcategories");
+      if (url) {
+        await supabase.from("portfolio_subcategories").update({ cover_image: url }).eq("id", subId);
+        setSubcategories((prev) => prev.map((s) => (s.id === subId ? { ...s, cover_image: url } : s)));
+      }
+    }
+    setSubFiles({});
+
     setSaving(false);
     toast.success("Imágenes de la landing actualizadas");
   };
 
-  const hasChanges = heroFile || Object.keys(catFiles).length > 0;
+  const hasChanges = heroFile || Object.keys(catFiles).length > 0 || Object.keys(subFiles).length > 0;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Imágenes de la Landing</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gestiona las imágenes que aparecen en la página principal</p>
+          <p className="text-sm text-muted-foreground mt-1">Gestiona las imágenes y botones que aparecen en la página principal</p>
         </div>
         <div className="flex gap-2">
           <a href="/" target="_blank" className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-secondary transition-colors">
@@ -146,7 +220,7 @@ const AdminLanding = () => {
       </div>
 
       {/* Portfolio Category Images */}
-      <div className="rounded-xl border border-border bg-card p-6">
+      <div className="rounded-xl border border-border bg-card p-6 mb-6">
         <h2 className="font-display text-lg font-bold text-foreground mb-4">Imágenes del Portafolio</h2>
         <p className="text-sm text-muted-foreground mb-4">
           Estas imágenes aparecen como tarjetas en la sección de portafolio de la landing page.
@@ -179,6 +253,122 @@ const AdminLanding = () => {
             );
           })}
         </div>
+      </div>
+
+      {/* Subcategory Buttons (Service Cards) */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h2 className="font-display text-lg font-bold text-foreground mb-2">Botones de Servicios</h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          Estos son los botones que aparecen en la landing agrupados por categoría. Puedes editar nombre, imagen y posición del encuadre.
+        </p>
+
+        {categories.map((cat) => {
+          const subs = subcategories.filter((s) => s.category_id === cat.id);
+          if (subs.length === 0) return null;
+
+          return (
+            <div key={cat.id} className="mb-8 last:mb-0">
+              <h3 className="font-display text-base font-semibold text-foreground mb-3 flex items-center gap-2">
+                <div className="w-1 h-5 bg-primary rounded-full" />
+                {cat.name}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {subs.map((sub) => {
+                  const preview = subPreviews[sub.id] || sub.cover_image;
+                  const isEditing = editingSubId === sub.id;
+
+                  return (
+                    <div key={sub.id} className="rounded-lg border border-border overflow-hidden bg-secondary/30">
+                      {/* Preview */}
+                      <div className="aspect-[4/3] relative">
+                        {preview ? (
+                          <img
+                            src={preview}
+                            alt={sub.name}
+                            className="w-full h-full object-cover"
+                            style={{ objectPosition: isEditing ? editPosition : sub.cover_position }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-secondary">
+                            <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+                        <div className="absolute bottom-3 left-3 right-3">
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              className="w-full px-2 py-1 rounded bg-background/90 border border-border text-sm font-bold text-foreground"
+                              autoFocus
+                            />
+                          ) : (
+                            <span className="font-display font-bold text-foreground text-sm">{sub.name}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Controls */}
+                      <div className="p-3 space-y-2">
+                        {isEditing && (
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1 block">Posición del encuadre</label>
+                            <select
+                              value={editPosition}
+                              onChange={(e) => setEditPosition(e.target.value)}
+                              className="w-full px-2 py-1.5 rounded-lg bg-background border border-border text-sm text-foreground"
+                            >
+                              {POSITION_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          <label className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-foreground cursor-pointer hover:bg-secondary/80 transition-colors">
+                            <Upload className="w-4 h-4" /> {preview ? "Cambiar" : "Subir"}
+                            <input type="file" accept="image/*" onChange={(e) => handleSubFile(sub.id, e)} className="hidden" />
+                          </label>
+
+                          {isEditing ? (
+                            <>
+                              <button
+                                onClick={() => saveSubEdit(sub.id)}
+                                className="p-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                                title="Guardar"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={cancelEditSub}
+                                className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                                title="Cancelar"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => startEditSub(sub)}
+                              className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                              title="Editar nombre y posición"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
