@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link, LayoutGrid, Columns, GalleryHorizontal, ChevronLeft, ChevronRight, List } from "lucide-react";
+import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link, LayoutGrid, Columns, GalleryHorizontal, ChevronLeft, ChevronRight, List, Zap, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import GalleryGenerator from "@/components/admin/GalleryGenerator";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -9,6 +9,7 @@ import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import SortableItem from "@/components/admin/SortableItem";
 import { handleDragEnd } from "@/hooks/useDndReorder";
 import GridEditor, { GridItem } from "@/components/admin/GridEditor";
+import { Progress } from "@/components/ui/progress";
 
 type Category = { id: string; name: string };
 type Subcategory = { id: string; category_id: string; name: string; gallery_style: string | null };
@@ -36,6 +37,66 @@ const AdminImages = () => {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "grid">("cards");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  // Optimizer state
+  const [optimizing, setOptimizing] = useState(false);
+  const [optProgress, setOptProgress] = useState(0);
+  const [optTotal, setOptTotal] = useState(0);
+  const [optSaved, setOptSaved] = useState(0);
+
+  const extractStoragePath = (url: string): { bucket: string; path: string } | null => {
+    try {
+      const u = new URL(url);
+      const portfolioMatch = u.pathname.split("/portfolio/");
+      if (portfolioMatch[1]) return { bucket: "portfolio", path: decodeURIComponent(portfolioMatch[1]) };
+      const socialMatch = u.pathname.split("/social-media-assets/");
+      if (socialMatch[1]) return { bucket: "social-media-assets", path: decodeURIComponent(socialMatch[1]) };
+    } catch {}
+    return null;
+  };
+
+  const optimizeGalleryImages = async () => {
+    const imageItems = images.filter(img => img.media_type === "image");
+    if (imageItems.length === 0) { toast.error("No hay imágenes para optimizar"); return; }
+
+    const filesToOptimize = imageItems
+      .map(img => extractStoragePath(img.image_url))
+      .filter(Boolean) as { bucket: string; path: string }[];
+
+    if (filesToOptimize.length === 0) { toast.error("No se encontraron rutas de almacenamiento"); return; }
+
+    setOptimizing(true);
+    setOptProgress(0);
+    setOptTotal(filesToOptimize.length);
+    setOptSaved(0);
+
+    const BATCH = 3;
+    let processed = 0;
+    let totalSaved = 0;
+
+    for (let i = 0; i < filesToOptimize.length; i += BATCH) {
+      const batch = filesToOptimize.slice(i, i + BATCH);
+      try {
+        const { data, error } = await supabase.functions.invoke("optimize-images", {
+          body: { action: "optimize", files: batch },
+        });
+        if (!error && data?.results) {
+          for (const r of data.results) {
+            if (r.status === "optimized" && r.original_size && r.optimized_size) {
+              totalSaved += r.original_size - r.optimized_size;
+            }
+          }
+        }
+      } catch {}
+      processed += batch.length;
+      setOptProgress(processed);
+      setOptSaved(totalSaved);
+    }
+
+    setOptimizing(false);
+    const formatSize = (b: number) => b < 1024 * 1024 ? (b / 1024).toFixed(1) + " KB" : (b / (1024 * 1024)).toFixed(1) + " MB";
+    toast.success(`Optimización completada. Ahorro: ${formatSize(totalSaved)}`);
+  };
 
   const persistImageOrder = async (reordered: PortfolioImage[]) => {
     await Promise.all(reordered.map(img => supabase.from("portfolio_images").update({ order: img.order }).eq("id", img.id)));
@@ -226,11 +287,40 @@ const AdminImages = () => {
               />
             ) : null;
           })()}
+          {images.length > 0 && (
+            <button
+              onClick={optimizeGalleryImages}
+              disabled={optimizing}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/30 bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors disabled:opacity-50"
+              title="Optimizar imágenes a máx. 1920px"
+            >
+              {optimizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              {optimizing ? `${optProgress}/${optTotal}` : "Optimizar"}
+            </button>
+          )}
           <button onClick={() => { setShowUpload(true); setMediaMode("image"); setUploadForm({ subcategory_id: filterSub || subcategories[0]?.id || "", title: "", alt_text: "", video_url: "", thumbnail_url: "" }); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
             <Upload className="w-4 h-4" /> Añadir Contenido
           </button>
         </div>
       </div>
+
+      {/* Optimization progress bar */}
+      {optimizing && (
+        <div className="mb-4 p-3 rounded-xl bg-secondary/50 border border-border space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Optimizando imágenes...
+            </span>
+            <span className="text-foreground font-medium">{optProgress} / {optTotal}</span>
+          </div>
+          <Progress value={(optProgress / optTotal) * 100} className="h-2" />
+          {optSaved > 0 && (
+            <p className="text-xs text-primary">
+              Ahorro: {optSaved < 1024 * 1024 ? (optSaved / 1024).toFixed(1) + " KB" : (optSaved / (1024 * 1024)).toFixed(1) + " MB"}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-6">
