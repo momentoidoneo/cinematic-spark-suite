@@ -27,7 +27,7 @@ const AdminSubcategories = () => {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Subcategory | null>(null);
-  const [form, setForm] = useState({ category_id: "", name: "", description: "", icon: "", order: 0, gallery_style: "grid", cover_position: "center" });
+  const [form, setForm] = useState({ category_id: "", name: "", slug: "", description: "", icon: "", order: 0, gallery_style: "grid", cover_position: "center" });
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
