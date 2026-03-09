@@ -114,6 +114,13 @@ const AdminCategories = () => {
     fetchCategories();
   };
 
+  const toggleVisibility = async (id: string, visible: boolean) => {
+    const { error } = await supabase.from("portfolio_categories").update({ is_visible: visible }).eq("id", id);
+    if (error) { toast.error("Error al actualizar"); return; }
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, is_visible: visible } : c));
+    toast.success(visible ? "Categoría visible" : "Categoría oculta");
+  };
+
   const gridItems: GridItem[] = filtered.map(c => ({ ...c, name: c.name }));
 
   return (
