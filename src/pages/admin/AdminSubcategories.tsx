@@ -256,6 +256,38 @@ const AdminSubcategories = () => {
                   </label>
                 </div>
               </div>
+              {coverPreview && (
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Encuadre de imagen</label>
+                  <div className="flex items-start gap-4">
+                    <div className="relative w-28 h-20 rounded-lg overflow-hidden border border-border shrink-0">
+                      <img src={coverPreview} alt="Preview" className="w-full h-full object-cover" style={{ objectPosition: form.cover_position }} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-1">
+                      {[
+                        { label: "↖", value: "top left" },
+                        { label: "↑", value: "top center" },
+                        { label: "↗", value: "top right" },
+                        { label: "←", value: "center left" },
+                        { label: "•", value: "center" },
+                        { label: "→", value: "center right" },
+                        { label: "↙", value: "bottom left" },
+                        { label: "↓", value: "bottom center" },
+                        { label: "↘", value: "bottom right" },
+                      ].map(pos => (
+                        <button
+                          key={pos.value}
+                          type="button"
+                          onClick={() => setForm({ ...form, cover_position: pos.value })}
+                          className={`w-8 h-8 rounded text-xs font-bold transition-colors ${form.cover_position === pos.value ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"}`}
+                        >
+                          {pos.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label className="text-sm font-medium text-foreground mb-1 block">Estilo galería</label>
