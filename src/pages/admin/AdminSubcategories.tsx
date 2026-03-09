@@ -70,7 +70,7 @@ const AdminSubcategories = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ category_id: categories[0]?.id || "", name: "", description: "", icon: "", order: 0, gallery_style: "grid", cover_position: "center" });
+    setForm({ category_id: categories[0]?.id || "", name: "", slug: "", description: "", icon: "", order: 0, gallery_style: "grid", cover_position: "center" });
     setCoverFile(null); setCoverPreview(null);
     setShowForm(true);
   };

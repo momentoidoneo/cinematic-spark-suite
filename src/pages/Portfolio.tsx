@@ -79,7 +79,7 @@ function FreeGrid<T extends { id: string; grid_row: number | null; grid_col: num
 }
 
 const Portfolio = () => {
-  const { categorySlug } = useParams();
+  const { categorySlug, subcategorySlug } = useParams();
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [images, setImages] = useState<PortfolioImage[]>([]);
