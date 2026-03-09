@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,7 +7,7 @@ const corsHeaders = {
 };
 
 const MAX_WIDTH = 1920;
-const JPEG_QUALITY = 80;
+const QUALITY = 80;
 const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|webp|bmp|tiff)$/i;
 
 async function listAllFiles(
@@ -28,12 +27,10 @@ async function listAllFiles(
     const fullPath = folder ? `${folder}/${item.name}` : item.name;
 
     if (item.metadata && item.id) {
-      // It's a file with metadata
       if (IMAGE_EXTENSIONS.test(item.name)) {
         results.push({ path: fullPath, size: (item.metadata as any)?.size || 0 });
       }
     } else if (!item.id) {
-      // It's a folder – recurse
       const nested = await listAllFiles(supabase, bucket, fullPath);
       results.push(...nested);
     }
@@ -53,16 +50,14 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Action: list – return all image files in the bucket
+    // Action: list
     if (action === "list") {
-      const buckets = bucket
-        ? [bucket]
-        : ["portfolio", "social-media-assets"];
+      const buckets = bucket ? [bucket] : ["portfolio", "social-media-assets"];
       const allFiles: { bucket: string; path: string; size: number }[] = [];
 
       for (const b of buckets) {
-        const files = await listAllFiles(supabase, b);
-        for (const f of files) {
+        const found = await listAllFiles(supabase, b);
+        for (const f of found) {
           allFiles.push({ bucket: b, path: f.path, size: f.size });
         }
       }
@@ -72,7 +67,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Action: optimize – process a batch of files
+    // Action: optimize – use Supabase Storage transform endpoint
     if (action === "optimize") {
       const results: {
         path: string;
@@ -83,54 +78,63 @@ Deno.serve(async (req) => {
         error?: string;
       }[] = [];
 
+      // Process ONE file at a time to avoid memory issues
       for (const file of files) {
         try {
-          const { data, error } = await supabase.storage
+          // Download original to get its size
+          const { data: origData, error: dlError } = await supabase.storage
             .from(file.bucket)
             .download(file.path);
 
-          if (error || !data) {
+          if (dlError || !origData) {
+            results.push({ path: file.path, bucket: file.bucket, status: "error", error: dlError?.message || "Download failed" });
+            continue;
+          }
+
+          const originalBytes = await origData.arrayBuffer();
+          const originalSize = originalBytes.byteLength;
+
+          // Use Supabase Storage render/transform endpoint for resizing
+          const transformUrl = `${supabaseUrl}/storage/v1/render/image/public/${file.bucket}/${file.path}?width=${MAX_WIDTH}&quality=${QUALITY}&resize=contain`;
+
+          const transformRes = await fetch(transformUrl, {
+            headers: { Authorization: `Bearer ${serviceKey}` },
+          });
+
+          if (!transformRes.ok) {
+            // Transform API not available – try serving original with just quality reduction
+            // Fall back: re-upload original (no optimization possible without transform API)
+            const altUrl = `${supabaseUrl}/storage/v1/object/public/${file.bucket}/${file.path}`;
             results.push({
               path: file.path,
               bucket: file.bucket,
-              status: "error",
-              error: error?.message || "No data",
+              status: "skipped",
+              original_size: originalSize,
+              optimized_size: originalSize,
+              error: "Transform API unavailable",
             });
             continue;
           }
 
-          const buffer = new Uint8Array(await data.arrayBuffer());
-          const originalSize = buffer.length;
+          const optimizedBuffer = await transformRes.arrayBuffer();
+          const optimizedSize = optimizedBuffer.byteLength;
 
-          // Decode
-          const img = await Image.decode(buffer);
-
-          // Resize if wider than MAX_WIDTH
-          let resized = false;
-          if (img.width > MAX_WIDTH) {
-            const ratio = MAX_WIDTH / img.width;
-            img.resize(MAX_WIDTH, Math.round(img.height * ratio));
-            resized = true;
-          }
-
-          // Encode as JPEG
-          const optimized = await img.encodeJPEG(JPEG_QUALITY);
-
-          // Only replace if smaller or was resized
-          if (optimized.length < originalSize || resized) {
-            const { error: uploadError } = await supabase.storage
+          // Only replace if actually smaller
+          if (optimizedSize < originalSize) {
+            const contentType = transformRes.headers.get("content-type") || "image/jpeg";
+            const { error: upError } = await supabase.storage
               .from(file.bucket)
-              .update(file.path, optimized, {
-                contentType: "image/jpeg",
+              .update(file.path, new Uint8Array(optimizedBuffer), {
+                contentType,
                 upsert: true,
               });
 
-            if (uploadError) {
-              // Try upload with upsert if update fails
+            if (upError) {
+              // Try upload with upsert
               await supabase.storage
                 .from(file.bucket)
-                .upload(file.path, optimized, {
-                  contentType: "image/jpeg",
+                .upload(file.path, new Uint8Array(optimizedBuffer), {
+                  contentType,
                   upsert: true,
                 });
             }
@@ -140,7 +144,7 @@ Deno.serve(async (req) => {
               bucket: file.bucket,
               status: "optimized",
               original_size: originalSize,
-              optimized_size: optimized.length,
+              optimized_size: optimizedSize,
             });
           } else {
             results.push({
@@ -152,12 +156,7 @@ Deno.serve(async (req) => {
             });
           }
         } catch (e) {
-          results.push({
-            path: file.path,
-            bucket: file.bucket,
-            status: "error",
-            error: e.message,
-          });
+          results.push({ path: file.path, bucket: file.bucket, status: "error", error: e.message });
         }
       }
 
