@@ -180,7 +180,7 @@ const ServicesSection = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {subs.map((sub, i) => (
-                  <ServiceCard key={sub.id} name={sub.name} catSlug={cat.slug} index={i} coverImage={sub.cover_image} />
+                  <ServiceCard key={sub.id} name={sub.name} catSlug={cat.slug} index={i} coverImage={sub.cover_image} coverPosition={sub.cover_position} />
                 ))}
               </div>
             </div>
