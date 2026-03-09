@@ -131,7 +131,7 @@ const ServicesSection = () => {
   useEffect(() => {
     Promise.all([
       supabase.from("portfolio_categories").select("id, name, slug").order("order"),
-      supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image").order("order"),
+      supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image, cover_position").order("order"),
     ]).then(([catRes, subRes]) => {
       if (catRes.data) setCategories(catRes.data as Category[]);
       if (subRes.data) setSubcategories(subRes.data as Subcategory[]);
