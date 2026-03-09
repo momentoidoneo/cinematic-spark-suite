@@ -14,7 +14,7 @@ import portfolioEventos from "@/assets/portfolio-eventos.jpg";
 import portfolioRenders from "@/assets/portfolio-renders.jpg";
 
 type Category = { id: string; name: string; slug: string };
-type Subcategory = { id: string; name: string; category_id: string };
+type Subcategory = { id: string; name: string; category_id: string; cover_image: string | null };
 
 const categoryBanners: Record<string, { image: string; title: string; subtitle: string }> = {
   fotografia: {
@@ -58,7 +58,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   renders: Boxes,
 };
 
-const ServiceCard = ({ name, catSlug, index }: { name: string; catSlug: string; index: number }) => {
+const ServiceCard = ({ name, catSlug, index, coverImage }: { name: string; catSlug: string; index: number; coverImage: string | null }) => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
 
@@ -71,14 +71,27 @@ const ServiceCard = ({ name, catSlug, index }: { name: string; catSlug: string; 
     >
       <Link
         to={`/portafolio/${catSlug}`}
-        className="group rounded-xl bg-card border border-border/50 p-6 hover:border-primary/30 hover:shadow-glow transition-all block h-full"
+        className="group rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-glow transition-all block h-full overflow-hidden"
       >
-        <h4 className="font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-          {name}
-        </h4>
-        <span className="text-xs text-primary mt-2 inline-block opacity-0 group-hover:opacity-100 transition-opacity">
-          Ver portafolio →
-        </span>
+        {coverImage && (
+          <div className="relative w-full h-32 sm:h-36 overflow-hidden">
+            <img
+              src={coverImage}
+              alt={name}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+          </div>
+        )}
+        <div className="p-5">
+          <h4 className="font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+            {name}
+          </h4>
+          <span className="text-xs text-primary mt-2 inline-block opacity-0 group-hover:opacity-100 transition-opacity">
+            Ver portafolio →
+          </span>
+        </div>
       </Link>
     </motion.div>
   );
@@ -117,7 +130,7 @@ const ServicesSection = () => {
   useEffect(() => {
     Promise.all([
       supabase.from("portfolio_categories").select("id, name, slug").order("order"),
-      supabase.from("portfolio_subcategories").select("id, name, category_id").order("order"),
+      supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image").order("order"),
     ]).then(([catRes, subRes]) => {
       if (catRes.data) setCategories(catRes.data as Category[]);
       if (subRes.data) setSubcategories(subRes.data as Subcategory[]);
@@ -166,7 +179,7 @@ const ServicesSection = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {subs.map((sub, i) => (
-                  <ServiceCard key={sub.id} name={sub.name} catSlug={cat.slug} index={i} />
+                  <ServiceCard key={sub.id} name={sub.name} catSlug={cat.slug} index={i} coverImage={sub.cover_image} />
                 ))}
               </div>
             </div>
