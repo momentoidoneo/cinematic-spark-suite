@@ -14,7 +14,7 @@ import portfolioEventos from "@/assets/portfolio-eventos.jpg";
 import portfolioRenders from "@/assets/portfolio-renders.jpg";
 
 type Category = { id: string; name: string; slug: string };
-type Subcategory = { id: string; name: string; category_id: string; cover_image: string | null };
+type Subcategory = { id: string; name: string; category_id: string; cover_image: string | null; cover_position: string };
 
 const categoryBanners: Record<string, { image: string; title: string; subtitle: string }> = {
   fotografia: {
@@ -58,7 +58,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   renders: Boxes,
 };
 
-const ServiceCard = ({ name, catSlug, index, coverImage }: { name: string; catSlug: string; index: number; coverImage: string | null }) => {
+const ServiceCard = ({ name, catSlug, index, coverImage, coverPosition }: { name: string; catSlug: string; index: number; coverImage: string | null; coverPosition: string }) => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
 
@@ -79,6 +79,7 @@ const ServiceCard = ({ name, catSlug, index, coverImage }: { name: string; catSl
               src={coverImage}
               alt={name}
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              style={{ objectPosition: coverPosition || 'center' }}
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
@@ -130,7 +131,7 @@ const ServicesSection = () => {
   useEffect(() => {
     Promise.all([
       supabase.from("portfolio_categories").select("id, name, slug").order("order"),
-      supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image").order("order"),
+      supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image, cover_position").order("order"),
     ]).then(([catRes, subRes]) => {
       if (catRes.data) setCategories(catRes.data as Category[]);
       if (subRes.data) setSubcategories(subRes.data as Subcategory[]);
@@ -179,7 +180,7 @@ const ServicesSection = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {subs.map((sub, i) => (
-                  <ServiceCard key={sub.id} name={sub.name} catSlug={cat.slug} index={i} coverImage={sub.cover_image} />
+                  <ServiceCard key={sub.id} name={sub.name} catSlug={cat.slug} index={i} coverImage={sub.cover_image} coverPosition={sub.cover_position} />
                 ))}
               </div>
             </div>

@@ -13,7 +13,7 @@ import GridEditor, { GridItem } from "@/components/admin/GridEditor";
 type Category = { id: string; name: string };
 type Subcategory = {
   id: string; category_id: string; name: string; description: string | null;
-  cover_image: string | null; icon: string | null; order: number; gallery_style: string | null;
+  cover_image: string | null; cover_position: string; icon: string | null; order: number; gallery_style: string | null;
   grid_row: number | null; grid_col: number | null;
   portfolio_categories?: Category;
 };
@@ -26,7 +26,7 @@ const AdminSubcategories = () => {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Subcategory | null>(null);
-  const [form, setForm] = useState({ category_id: "", name: "", description: "", icon: "", order: 0, gallery_style: "grid" });
+  const [form, setForm] = useState({ category_id: "", name: "", description: "", icon: "", order: 0, gallery_style: "grid", cover_position: "center" });
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -69,14 +69,14 @@ const AdminSubcategories = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ category_id: categories[0]?.id || "", name: "", description: "", icon: "", order: 0, gallery_style: "grid" });
+    setForm({ category_id: categories[0]?.id || "", name: "", description: "", icon: "", order: 0, gallery_style: "grid", cover_position: "center" });
     setCoverFile(null); setCoverPreview(null);
     setShowForm(true);
   };
 
   const openEdit = (s: Subcategory) => {
     setEditing(s);
-    setForm({ category_id: s.category_id, name: s.name, description: s.description || "", icon: s.icon || "", order: s.order, gallery_style: s.gallery_style || "grid" });
+    setForm({ category_id: s.category_id, name: s.name, description: s.description || "", icon: s.icon || "", order: s.order, gallery_style: s.gallery_style || "grid", cover_position: s.cover_position || "center" });
     setCoverFile(null); setCoverPreview(s.cover_image || null);
     setShowForm(true);
   };
@@ -185,7 +185,7 @@ const AdminSubcategories = () => {
                     <div className="rounded-xl border border-border bg-card overflow-hidden group cursor-pointer" onClick={() => navigate(`/admin/images?subcategory=${s.id}`)}>
                       <div className="aspect-[4/3] bg-secondary relative overflow-hidden">
                         {s.cover_image ? (
-                          <img src={s.cover_image} alt={s.name} className="w-full h-full object-cover" />
+                          <img src={s.cover_image} alt={s.name} className="w-full h-full object-cover" style={{ objectPosition: s.cover_position || 'center' }} />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
@@ -256,6 +256,38 @@ const AdminSubcategories = () => {
                   </label>
                 </div>
               </div>
+              {coverPreview && (
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Encuadre de imagen</label>
+                  <div className="flex items-start gap-4">
+                    <div className="relative w-28 h-20 rounded-lg overflow-hidden border border-border shrink-0">
+                      <img src={coverPreview} alt="Preview" className="w-full h-full object-cover" style={{ objectPosition: form.cover_position }} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-1">
+                      {[
+                        { label: "↖", value: "top left" },
+                        { label: "↑", value: "top center" },
+                        { label: "↗", value: "top right" },
+                        { label: "←", value: "center left" },
+                        { label: "•", value: "center" },
+                        { label: "→", value: "center right" },
+                        { label: "↙", value: "bottom left" },
+                        { label: "↓", value: "bottom center" },
+                        { label: "↘", value: "bottom right" },
+                      ].map(pos => (
+                        <button
+                          key={pos.value}
+                          type="button"
+                          onClick={() => setForm({ ...form, cover_position: pos.value })}
+                          className={`w-8 h-8 rounded text-xs font-bold transition-colors ${form.cover_position === pos.value ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"}`}
+                        >
+                          {pos.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label className="text-sm font-medium text-foreground mb-1 block">Estilo galería</label>

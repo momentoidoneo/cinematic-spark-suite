@@ -1,0 +1,1 @@
+ALTER TABLE public.portfolio_subcategories ADD COLUMN cover_position text DEFAULT 'center' NOT NULL;
