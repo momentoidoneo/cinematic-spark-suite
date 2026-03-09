@@ -14,7 +14,7 @@ import portfolioEventos from "@/assets/portfolio-eventos.jpg";
 import portfolioRenders from "@/assets/portfolio-renders.jpg";
 
 type Category = { id: string; name: string; slug: string };
-type Subcategory = { id: string; name: string; category_id: string; cover_image: string | null; cover_position: string };
+type Subcategory = { id: string; name: string; slug: string; category_id: string; cover_image: string | null; cover_position: string };
 
 const categoryBanners: Record<string, { image: string; title: string; subtitle: string }> = {
   fotografia: {
