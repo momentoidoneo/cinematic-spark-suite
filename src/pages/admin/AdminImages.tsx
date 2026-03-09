@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link, LayoutGrid, Columns, GalleryHorizontal, ChevronLeft, ChevronRight, List } from "lucide-react";
+import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link, LayoutGrid, Columns, GalleryHorizontal, ChevronLeft, ChevronRight, List, Zap, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import GalleryGenerator from "@/components/admin/GalleryGenerator";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -9,6 +9,7 @@ import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import SortableItem from "@/components/admin/SortableItem";
 import { handleDragEnd } from "@/hooks/useDndReorder";
 import GridEditor, { GridItem } from "@/components/admin/GridEditor";
+import { Progress } from "@/components/ui/progress";
 
 type Category = { id: string; name: string };
 type Subcategory = { id: string; category_id: string; name: string; gallery_style: string | null };
