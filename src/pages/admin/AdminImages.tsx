@@ -8,6 +8,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEn
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import SortableItem from "@/components/admin/SortableItem";
 import { handleDragEnd } from "@/hooks/useDndReorder";
+import GridEditor, { GridItem } from "@/components/admin/GridEditor";
 
 type Category = { id: string; name: string };
 type Subcategory = { id: string; category_id: string; name: string; gallery_style: string | null };
