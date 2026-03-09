@@ -83,7 +83,7 @@ const ServiceCard = ({ name, catSlug, index, coverImage, coverPosition }: { name
               loading="lazy"
             />
           )}
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-card/90 via-card/50 to-transparent px-4 pb-3 pt-6 flex items-end justify-center">
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-card via-card/70 to-transparent px-4 pb-2 pt-10 flex items-end justify-center">
             <div className="text-center">
               <h4 className="font-display text-lg sm:text-xl font-semibold text-foreground group-hover:text-primary transition-colors leading-tight">
                 {name}
