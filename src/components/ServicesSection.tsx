@@ -58,7 +58,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   renders: Boxes,
 };
 
-const ServiceCard = ({ name, catSlug, index, coverImage }: { name: string; catSlug: string; index: number; coverImage: string | null }) => {
+const ServiceCard = ({ name, catSlug, index, coverImage, coverPosition }: { name: string; catSlug: string; index: number; coverImage: string | null; coverPosition: string }) => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
 
@@ -79,6 +79,7 @@ const ServiceCard = ({ name, catSlug, index, coverImage }: { name: string; catSl
               src={coverImage}
               alt={name}
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              style={{ objectPosition: coverPosition || 'center' }}
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
