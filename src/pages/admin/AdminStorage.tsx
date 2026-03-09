@@ -102,7 +102,7 @@ const AdminStorage = () => {
     setOptimizeResults([]);
     setSavedBytes(0);
 
-    const BATCH_SIZE = 3;
+    const BATCH_SIZE = 1;
     const total = scannedFiles.length;
     setOptimizeTotal(total);
     let processed = 0;
