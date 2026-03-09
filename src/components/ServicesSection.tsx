@@ -83,13 +83,15 @@ const ServiceCard = ({ name, catSlug, index, coverImage, coverPosition }: { name
               loading="lazy"
             />
           )}
-          <div className="absolute bottom-0 inset-x-0 p-4 bg-card/50 backdrop-blur-sm">
-            <h4 className="font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-              {name}
-            </h4>
-            <span className="text-xs text-primary mt-1 inline-block opacity-0 group-hover:opacity-100 transition-opacity">
-              Ver portafolio →
-            </span>
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-card/60 via-card/30 to-transparent px-4 py-2 flex items-end justify-center">
+            <div className="text-center">
+              <h4 className="font-display text-base font-semibold text-foreground group-hover:text-primary transition-colors leading-tight">
+                {name}
+              </h4>
+              <span className="text-xs text-primary mt-0.5 inline-block opacity-0 group-hover:opacity-100 transition-opacity">
+                Ver portafolio →
+              </span>
+            </div>
           </div>
         </div>
       </Link>
