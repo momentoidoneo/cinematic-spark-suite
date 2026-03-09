@@ -73,8 +73,8 @@ const ServiceCard = ({ name, catSlug, index, coverImage, coverPosition }: { name
         to={`/portafolio/${catSlug}`}
         className="group rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-glow transition-all block h-full overflow-hidden"
       >
-        {coverImage && (
-          <div className="relative w-full h-32 sm:h-36 overflow-hidden">
+        <div className="relative w-full h-32 sm:h-36 overflow-hidden">
+          {coverImage && (
             <img
               src={coverImage}
               alt={name}
@@ -82,16 +82,15 @@ const ServiceCard = ({ name, catSlug, index, coverImage, coverPosition }: { name
               style={{ objectPosition: coverPosition || 'center' }}
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+          )}
+          <div className="absolute bottom-0 inset-x-0 p-4 bg-card/50 backdrop-blur-sm">
+            <h4 className="font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+              {name}
+            </h4>
+            <span className="text-xs text-primary mt-1 inline-block opacity-0 group-hover:opacity-100 transition-opacity">
+              Ver portafolio →
+            </span>
           </div>
-        )}
-        <div className="p-5 bg-card/50">
-          <h4 className="font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-            {name}
-          </h4>
-          <span className="text-xs text-primary mt-2 inline-block opacity-0 group-hover:opacity-100 transition-opacity">
-            Ver portafolio →
-          </span>
         </div>
       </Link>
     </motion.div>
