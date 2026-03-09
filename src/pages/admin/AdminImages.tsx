@@ -287,11 +287,40 @@ const AdminImages = () => {
               />
             ) : null;
           })()}
+          {images.length > 0 && (
+            <button
+              onClick={optimizeGalleryImages}
+              disabled={optimizing}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/30 bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors disabled:opacity-50"
+              title="Optimizar imágenes a máx. 1920px"
+            >
+              {optimizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              {optimizing ? `${optProgress}/${optTotal}` : "Optimizar"}
+            </button>
+          )}
           <button onClick={() => { setShowUpload(true); setMediaMode("image"); setUploadForm({ subcategory_id: filterSub || subcategories[0]?.id || "", title: "", alt_text: "", video_url: "", thumbnail_url: "" }); }} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
             <Upload className="w-4 h-4" /> Añadir Contenido
           </button>
         </div>
       </div>
+
+      {/* Optimization progress bar */}
+      {optimizing && (
+        <div className="mb-4 p-3 rounded-xl bg-secondary/50 border border-border space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Optimizando imágenes...
+            </span>
+            <span className="text-foreground font-medium">{optProgress} / {optTotal}</span>
+          </div>
+          <Progress value={(optProgress / optTotal) * 100} className="h-2" />
+          {optSaved > 0 && (
+            <p className="text-xs text-primary">
+              Ahorro: {optSaved < 1024 * 1024 ? (optSaved / 1024).toFixed(1) + " KB" : (optSaved / (1024 * 1024)).toFixed(1) + " MB"}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-6">
