@@ -242,23 +242,47 @@ const Portfolio = () => {
 
         {/* Step 3: Gallery */}
         {selectedSub && (
-          <FreeGrid
-            items={images}
-            columns={4}
-            emptyMessage="No hay contenido en esta subcategoría."
-            renderItem={(img, i) => (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.05 }}
-                className="relative aspect-square rounded-xl overflow-hidden cursor-pointer border border-border hover:border-primary/30 transition-all group"
-                onClick={() => openLightbox(i)}
+          <>
+            <FreeGrid
+              items={images}
+              columns={4}
+              emptyMessage="No hay contenido en esta subcategoría."
+              renderItem={(img, i) => (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="relative aspect-square rounded-xl overflow-hidden cursor-pointer border border-border hover:border-primary/30 transition-all group"
+                  onClick={() => openLightbox(i)}
+                >
+                  <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  {renderMediaBadge(img)}
+                </motion.div>
+              )}
+            />
+
+            {/* CTA */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-16 rounded-2xl border border-primary/20 bg-card p-10 text-center"
+            >
+              <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
+                ¿Te gusta lo que ves?
+              </h3>
+              <p className="text-muted-foreground max-w-lg mx-auto mb-6">
+                Solicita un presupuesto sin compromiso para tu proyecto de {selectedSub.name.toLowerCase()}.
+              </p>
+              <a
+                href="#contacto"
+                onClick={(e) => { e.preventDefault(); window.location.href = "/#contacto"; }}
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3 rounded-full font-semibold hover:opacity-90 transition-opacity"
               >
-                <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                {renderMediaBadge(img)}
-              </motion.div>
-            )}
-          />
+                Solicitar presupuesto
+              </a>
+            </motion.div>
+          </>
         )}
       </div>
 
