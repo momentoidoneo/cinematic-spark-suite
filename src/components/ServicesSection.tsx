@@ -82,7 +82,7 @@ const ServiceCard = ({ name, catSlug, index, coverImage, coverPosition }: { name
               style={{ objectPosition: coverPosition || 'center' }}
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card/50 via-card/15 to-transparent" />
           </div>
         )}
         <div className="p-5">
