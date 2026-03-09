@@ -4,7 +4,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 export function handleDragEnd<T extends { id: string; order: number }>(
   event: DragEndEvent,
   items: T[],
-  setItems: React.Dispatch<React.SetStateAction<T[]>>,
+  setItems: (reordered: T[]) => void,
   persistOrder: (reordered: T[]) => Promise<void>
 ) {
   const { active, over } = event;

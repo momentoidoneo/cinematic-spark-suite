@@ -57,10 +57,8 @@ const AdminCategories = () => {
 
   const onDragEnd = (event: DragEndEvent) => {
     handleDragEnd(event, filtered, (updated) => {
-      setCategories(prev => {
-        const map = new Map(updated.map(u => [u.id, u.order]));
-        return prev.map(c => map.has(c.id) ? { ...c, order: map.get(c.id)! } : c);
-      });
+      const map = new Map(updated.map(u => [u.id, u.order]));
+      setCategories(prev => prev.map(c => map.has(c.id) ? { ...c, order: map.get(c.id)! } : c));
     }, persistOrder);
   };
 

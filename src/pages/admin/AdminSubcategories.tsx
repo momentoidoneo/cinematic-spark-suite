@@ -70,10 +70,8 @@ const AdminSubcategories = () => {
 
   const onDragEnd = (event: DragEndEvent) => {
     handleDragEnd(event, filtered, (updated) => {
-      setSubcategories(prev => {
-        const map = new Map(updated.map(u => [u.id, u.order]));
-        return prev.map(s => map.has(s.id) ? { ...s, order: map.get(s.id)! } : s);
-      });
+      const map = new Map(updated.map(u => [u.id, u.order]));
+      setSubcategories(prev => prev.map(s => map.has(s.id) ? { ...s, order: map.get(s.id)! } : s));
     }, persistOrder);
   };
 
