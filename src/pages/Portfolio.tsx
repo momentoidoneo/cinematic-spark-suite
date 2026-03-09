@@ -8,9 +8,9 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import { X, ChevronLeft, ChevronRight, Play, Globe } from "lucide-react";
 import SEOHead, { breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
 
-type Category = { id: string; name: string; slug: string; description: string | null; cover_image: string | null };
-type Subcategory = { id: string; name: string; category_id: string; description: string | null; gallery_style: string | null; cover_image: string | null };
-type PortfolioImage = { id: string; image_url: string; title: string | null; alt_text: string | null; subcategory_id: string; media_type: string; video_url: string | null; thumbnail_url: string | null };
+type Category = { id: string; name: string; slug: string; description: string | null; cover_image: string | null; grid_row: number | null; grid_col: number | null };
+type Subcategory = { id: string; name: string; category_id: string; description: string | null; gallery_style: string | null; cover_image: string | null; grid_row: number | null; grid_col: number | null };
+type PortfolioImage = { id: string; image_url: string; title: string | null; alt_text: string | null; subcategory_id: string; media_type: string; video_url: string | null; thumbnail_url: string | null; grid_row: number | null; grid_col: number | null };
 
 const getEmbedUrl = (url: string): string => {
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
@@ -19,6 +19,64 @@ const getEmbedUrl = (url: string): string => {
   if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
   return url;
 };
+
+// Helper: render items in a free grid if positions are set, otherwise auto grid
+function FreeGrid<T extends { id: string; grid_row: number | null; grid_col: number | null }>({
+  items,
+  columns,
+  renderItem,
+  emptyMessage,
+}: {
+  items: T[];
+  columns: number;
+  renderItem: (item: T, index: number) => React.ReactNode;
+  emptyMessage: string;
+}) {
+  const hasGridPositions = items.some(i => i.grid_row != null && i.grid_col != null);
+
+  if (items.length === 0) {
+    return <div className="col-span-full text-center text-muted-foreground py-16">{emptyMessage}</div>;
+  }
+
+  if (hasGridPositions) {
+    const placed = items.filter(i => i.grid_row != null && i.grid_col != null);
+    const unplaced = items.filter(i => i.grid_row == null || i.grid_col == null);
+    const maxRow = placed.reduce((max, i) => Math.max(max, i.grid_row!), 0);
+
+    return (
+      <>
+        <div
+          className="grid gap-6"
+          style={{
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            gridTemplateRows: `repeat(${maxRow}, 1fr)`,
+          }}
+        >
+          {placed.map((item, i) => (
+            <div key={item.id} style={{ gridRow: item.grid_row!, gridColumn: item.grid_col! }}>
+              {renderItem(item, i)}
+            </div>
+          ))}
+        </div>
+        {unplaced.length > 0 && (
+          <div className={`grid gap-6 mt-6`} style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+            {unplaced.map((item, i) => (
+              <div key={item.id}>{renderItem(item, placed.length + i)}</div>
+            ))}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <div className={`grid gap-6`} style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+      {items.map((item, i) => (
+        <div key={item.id}>{renderItem(item, i)}</div>
+      ))}
+    </div>
+  );
+}
 
 const Portfolio = () => {
   const { categorySlug } = useParams();
@@ -33,10 +91,10 @@ const Portfolio = () => {
     const fetchCats = async () => {
       const { data } = await supabase.from("portfolio_categories").select("*").order("order");
       if (data) {
-        setCategories(data);
+        setCategories(data as Category[]);
         if (categorySlug) {
           const found = data.find(c => c.slug === categorySlug);
-          if (found) setSelectedCat(found);
+          if (found) setSelectedCat(found as Category);
         }
       }
     };
@@ -86,7 +144,6 @@ const Portfolio = () => {
     return <img src={item.image_url} alt={item.alt_text || ""} className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />;
   };
 
-  // Breadcrumb navigation
   const handleBack = () => {
     if (selectedSub) { setSelectedSub(null); }
     else if (selectedCat) { setSelectedCat(null); setSelectedSub(null); }
@@ -135,15 +192,17 @@ const Portfolio = () => {
 
         {/* Step 1: Categories */}
         {!selectedCat && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 [&>*:last-child:nth-child(3n+1)]:col-start-2 [&>*:last-child:nth-child(3n+1)]:lg:col-start-2">
-            {categories.map((cat, i) => (
+          <FreeGrid
+            items={categories}
+            columns={3}
+            emptyMessage="No hay categorías en el portafolio aún."
+            renderItem={(cat, i) => (
               <motion.button
-                key={cat.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 onClick={() => setSelectedCat(cat)}
-                className="group relative aspect-[4/3] rounded-2xl overflow-hidden text-left border border-border bg-card hover:border-primary/30 transition-all"
+                className="group relative aspect-[4/3] rounded-2xl overflow-hidden text-left border border-border bg-card hover:border-primary/30 transition-all w-full"
               >
                 {cat.cover_image && <img src={cat.cover_image} alt={cat.name} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
@@ -152,24 +211,23 @@ const Portfolio = () => {
                   {cat.description && <p className="text-sm text-muted-foreground mt-1">{cat.description}</p>}
                 </div>
               </motion.button>
-            ))}
-            {categories.length === 0 && (
-              <div className="col-span-full text-center text-muted-foreground py-16">No hay categorías en el portafolio aún.</div>
             )}
-          </div>
+          />
         )}
 
         {/* Step 2: Subcategories */}
         {selectedCat && !selectedSub && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 [&>*:last-child:nth-child(3n+1)]:lg:col-start-2 [&>*:last-child:nth-child(3n+2)]:sm:col-start-1 [&>*:last-child:nth-child(3n+1)]:sm:col-start-1">
-            {subcategories.map((sub, i) => (
+          <FreeGrid
+            items={subcategories}
+            columns={3}
+            emptyMessage="No hay subcategorías en esta categoría."
+            renderItem={(sub, i) => (
               <motion.button
-                key={sub.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 onClick={() => setSelectedSub(sub)}
-                className="group relative aspect-[4/3] rounded-2xl overflow-hidden text-left border border-border bg-card hover:border-primary/30 transition-all"
+                className="group relative aspect-[4/3] rounded-2xl overflow-hidden text-left border border-border bg-card hover:border-primary/30 transition-all w-full"
               >
                 {sub.cover_image && <img src={sub.cover_image} alt={sub.name} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
@@ -178,19 +236,18 @@ const Portfolio = () => {
                   {sub.description && <p className="text-sm text-muted-foreground mt-1">{sub.description}</p>}
                 </div>
               </motion.button>
-            ))}
-            {subcategories.length === 0 && (
-              <div className="col-span-full text-center text-muted-foreground py-16">No hay subcategorías en esta categoría.</div>
             )}
-          </div>
+          />
         )}
 
-        {/* Step 3: Gallery (single subcategory) */}
+        {/* Step 3: Gallery */}
         {selectedSub && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {images.map((img, i) => (
+          <FreeGrid
+            items={images}
+            columns={4}
+            emptyMessage="No hay contenido en esta subcategoría."
+            renderItem={(img, i) => (
               <motion.div
-                key={img.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: i * 0.05 }}
@@ -200,11 +257,8 @@ const Portfolio = () => {
                 <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 {renderMediaBadge(img)}
               </motion.div>
-            ))}
-            {images.length === 0 && (
-              <div className="col-span-full text-center text-muted-foreground py-16">No hay contenido en esta subcategoría.</div>
             )}
-          </div>
+          />
         )}
       </div>
 
