@@ -263,6 +263,7 @@ export type Database = {
           icon: string | null
           id: string
           is_visible: boolean
+          link_enabled: boolean
           name: string
           order: number
           slug: string
@@ -280,6 +281,7 @@ export type Database = {
           icon?: string | null
           id?: string
           is_visible?: boolean
+          link_enabled?: boolean
           name: string
           order?: number
           slug: string
@@ -297,6 +299,7 @@ export type Database = {
           icon?: string | null
           id?: string
           is_visible?: boolean
+          link_enabled?: boolean
           name?: string
           order?: number
           slug?: string

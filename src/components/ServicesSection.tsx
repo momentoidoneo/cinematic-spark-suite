@@ -14,7 +14,7 @@ import portfolioEventos from "@/assets/portfolio-eventos.jpg";
 import portfolioRenders from "@/assets/portfolio-renders.jpg";
 
 type Category = { id: string; name: string; slug: string };
-type Subcategory = { id: string; name: string; slug: string; category_id: string; cover_image: string | null; cover_position: string };
+type Subcategory = { id: string; name: string; slug: string; category_id: string; cover_image: string | null; cover_position: string; link_enabled: boolean };
 
 const categoryBanners: Record<string, { image: string; title: string; subtitle: string }> = {
   fotografia: {
@@ -58,9 +58,35 @@ const categoryIcons: Record<string, React.ElementType> = {
   renders: Boxes,
 };
 
-const ServiceCard = ({ name, catSlug, subSlug, index, coverImage, coverPosition }: { name: string; catSlug: string; subSlug: string; index: number; coverImage: string | null; coverPosition: string }) => {
+const ServiceCard = ({ name, catSlug, subSlug, index, coverImage, coverPosition, linkEnabled }: { name: string; catSlug: string; subSlug: string; index: number; coverImage: string | null; coverPosition: string; linkEnabled: boolean }) => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
+
+  const content = (
+    <div className="relative w-full h-32 sm:h-36 overflow-hidden">
+      {coverImage && (
+        <img
+          src={coverImage}
+          alt={name}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          style={{ objectPosition: coverPosition || 'center' }}
+          loading="lazy"
+        />
+      )}
+      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-card via-card/70 to-transparent px-4 pb-1 pt-12 flex items-end justify-center">
+        <div className="text-center">
+          <h4 className="font-display text-xl sm:text-2xl font-semibold text-foreground group-hover:text-primary transition-colors leading-tight">
+            {name}
+          </h4>
+          {linkEnabled && (
+            <span className="text-xs text-primary mt-1 inline-block opacity-0 group-hover:opacity-100 transition-opacity">
+              Ver portafolio →
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <motion.div
@@ -69,32 +95,18 @@ const ServiceCard = ({ name, catSlug, subSlug, index, coverImage, coverPosition 
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.4, delay: index * 0.05 }}
     >
-      <Link
-        to={`/portafolio/${catSlug}/${subSlug}`}
-        className="group rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-glow transition-all block h-full overflow-hidden"
-      >
-        <div className="relative w-full h-32 sm:h-36 overflow-hidden">
-          {coverImage && (
-            <img
-              src={coverImage}
-              alt={name}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              style={{ objectPosition: coverPosition || 'center' }}
-              loading="lazy"
-            />
-          )}
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-card via-card/70 to-transparent px-4 pb-1 pt-12 flex items-end justify-center">
-            <div className="text-center">
-              <h4 className="font-display text-xl sm:text-2xl font-semibold text-foreground group-hover:text-primary transition-colors leading-tight">
-                {name}
-              </h4>
-              <span className="text-xs text-primary mt-1 inline-block opacity-0 group-hover:opacity-100 transition-opacity">
-                Ver portafolio →
-              </span>
-            </div>
-          </div>
+      {linkEnabled ? (
+        <Link
+          to={`/portafolio/${catSlug}/${subSlug}`}
+          className="group rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-glow transition-all block h-full overflow-hidden"
+        >
+          {content}
+        </Link>
+      ) : (
+        <div className="group rounded-xl bg-card border border-border/50 block h-full overflow-hidden">
+          {content}
         </div>
-      </Link>
+      )}
     </motion.div>
   );
 };
@@ -132,7 +144,7 @@ const ServicesSection = () => {
   useEffect(() => {
     Promise.all([
       supabase.from("portfolio_categories").select("id, name, slug").eq("is_visible", true).order("order"),
-      supabase.from("portfolio_subcategories").select("id, name, slug, category_id, cover_image, cover_position").eq("is_visible", true).order("order"),
+      supabase.from("portfolio_subcategories").select("id, name, slug, category_id, cover_image, cover_position, link_enabled").eq("is_visible", true).order("order"),
     ]).then(([catRes, subRes]) => {
       if (catRes.data) setCategories(catRes.data as Category[]);
       if (subRes.data) setSubcategories(subRes.data as Subcategory[]);
@@ -181,7 +193,7 @@ const ServicesSection = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {subs.map((sub, i) => (
-                  <ServiceCard key={sub.id} name={sub.name} catSlug={cat.slug} subSlug={sub.slug || sub.id} index={i} coverImage={sub.cover_image} coverPosition={sub.cover_position} />
+                  <ServiceCard key={sub.id} name={sub.name} catSlug={cat.slug} subSlug={sub.slug || sub.id} index={i} coverImage={sub.cover_image} coverPosition={sub.cover_position} linkEnabled={sub.link_enabled} />
                 ))}
               </div>
             </div>

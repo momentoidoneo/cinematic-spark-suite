@@ -21,6 +21,7 @@ type Subcategory = {
   cover_position: string;
   order: number;
   is_visible: boolean;
+  link_enabled: boolean;
 };
 
 type SiteSetting = {
@@ -62,7 +63,7 @@ const AdminLanding = () => {
       const [{ data: settings }, { data: cats }, { data: subs }] = await Promise.all([
         supabase.from("site_settings").select("*").eq("key", "hero_bg").maybeSingle(),
         supabase.from("portfolio_categories").select("id, name, slug, cover_image, order, is_visible").order("order"),
-        supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image, cover_position, order, is_visible").order("order"),
+        supabase.from("portfolio_subcategories").select("id, name, category_id, cover_image, cover_position, order, is_visible, link_enabled").order("order"),
       ]);
       if (settings) {
         setHeroSetting(settings as SiteSetting);
@@ -366,6 +367,20 @@ const AdminLanding = () => {
                               onCheckedChange={(checked) => toggleSubVisibility(sub.id, checked)}
                             />
                           </div>
+
+                          <button
+                            onClick={async () => {
+                              const newVal = !sub.link_enabled;
+                              const { error } = await supabase.from("portfolio_subcategories").update({ link_enabled: newVal }).eq("id", sub.id);
+                              if (error) { toast.error("Error al actualizar"); return; }
+                              setSubcategories(prev => prev.map(s => s.id === sub.id ? { ...s, link_enabled: newVal } : s));
+                              toast.success(newVal ? "Link activado" : "Link desactivado");
+                            }}
+                            className={`p-2 rounded-lg border transition-colors ${sub.link_enabled ? "bg-primary/10 border-primary/30 text-primary" : "bg-secondary border-border text-muted-foreground"}`}
+                            title={sub.link_enabled ? "Link activado – clic para desactivar" : "Link desactivado – clic para activar"}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </button>
 
                           {isEditing ? (
                             <>
