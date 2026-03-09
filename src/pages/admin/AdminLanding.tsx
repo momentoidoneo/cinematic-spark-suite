@@ -21,6 +21,7 @@ type Subcategory = {
   cover_position: string;
   order: number;
   is_visible: boolean;
+  link_enabled: boolean;
 };
 
 type SiteSetting = {
