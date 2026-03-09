@@ -208,8 +208,12 @@ const AdminSubcategories = () => {
                         </div>
                       </div>
                       <div className="p-3 flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground truncate max-w-[60%] flex items-center gap-1">{s.description || "Sin descripción"} <Eye className="w-3 h-3 shrink-0" /></span>
+                        <span className="text-xs text-muted-foreground truncate max-w-[40%] flex items-center gap-1">{s.description || "Sin descripción"}</span>
                         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-1 mr-1">
+                            {s.is_visible ? <Eye className="w-3.5 h-3.5 text-muted-foreground" /> : <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />}
+                            <Switch checked={s.is_visible} onCheckedChange={(v) => toggleVisibility(s.id, v)} />
+                          </div>
                           <button onClick={() => openEdit(s)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"><Pencil className="w-4 h-4" /></button>
                           <button onClick={() => handleDelete(s.id)} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
                         </div>

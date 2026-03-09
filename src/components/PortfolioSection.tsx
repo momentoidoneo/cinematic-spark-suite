@@ -40,6 +40,7 @@ const PortfolioSection = () => {
     supabase
       .from("portfolio_categories")
       .select("id, name, slug, cover_image, order, grid_row, grid_col")
+      .eq("is_visible", true)
       .order("order")
       .then(({ data }) => {
         if (data) setCategories(data as Category[]);

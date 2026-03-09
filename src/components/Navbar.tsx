@@ -37,6 +37,7 @@ const Navbar = () => {
     supabase
       .from("portfolio_categories")
       .select("name, slug")
+      .eq("is_visible", true)
       .order("order")
       .then(({ data }) => {
         if (data && data.length > 0) {
