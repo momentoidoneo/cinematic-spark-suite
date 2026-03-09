@@ -13,7 +13,7 @@ import GridEditor, { GridItem } from "@/components/admin/GridEditor";
 type Category = {
   id: string; name: string; slug: string; description: string | null;
   cover_image: string | null; icon: string | null; order: number;
-  grid_row: number | null; grid_col: number | null;
+  grid_row: number | null; grid_col: number | null; is_visible: boolean;
 };
 
 const AdminCategories = () => {
