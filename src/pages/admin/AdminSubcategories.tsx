@@ -77,7 +77,7 @@ const AdminSubcategories = () => {
 
   const openEdit = (s: Subcategory) => {
     setEditing(s);
-    setForm({ category_id: s.category_id, name: s.name, description: s.description || "", icon: s.icon || "", order: s.order, gallery_style: s.gallery_style || "grid", cover_position: s.cover_position || "center" });
+    setForm({ category_id: s.category_id, name: s.name, slug: (s as any).slug || "", description: s.description || "", icon: s.icon || "", order: s.order, gallery_style: s.gallery_style || "grid", cover_position: s.cover_position || "center" });
     setCoverFile(null); setCoverPreview(s.cover_image || null);
     setShowForm(true);
   };
