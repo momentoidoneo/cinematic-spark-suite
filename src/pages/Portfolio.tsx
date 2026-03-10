@@ -258,11 +258,24 @@ const Portfolio = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.05 }}
-                  className="relative aspect-square rounded-xl overflow-hidden cursor-pointer border border-border hover:border-primary/30 transition-all group"
-                  onClick={() => openLightbox(i)}
+                  className={`relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/30 transition-all group ${img.media_type !== "iframe" ? "cursor-pointer" : ""}`}
+                  onClick={() => img.media_type !== "iframe" && openLightbox(i)}
                 >
-                  <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  {renderMediaBadge(img)}
+                  {img.media_type === "iframe" && img.video_url ? (
+                    <iframe
+                      src={img.video_url}
+                      className="w-full h-full absolute inset-0 border-0"
+                      allowFullScreen
+                      allow="xr-spatial-tracking"
+                      loading="lazy"
+                      title={img.alt_text || img.title || "Tour virtual 360°"}
+                    />
+                  ) : (
+                    <>
+                      <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      {renderMediaBadge(img)}
+                    </>
+                  )}
                 </motion.div>
               )}
             />
