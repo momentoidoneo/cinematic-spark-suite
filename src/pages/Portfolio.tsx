@@ -86,6 +86,7 @@ const Portfolio = () => {
   const [selectedCat, setSelectedCat] = useState<Category | null>(null);
   const [selectedSub, setSelectedSub] = useState<Subcategory | null>(null);
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [fullscreenIframe, setFullscreenIframe] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCats = async () => {
