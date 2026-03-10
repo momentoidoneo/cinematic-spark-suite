@@ -3,7 +3,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import ChangePasswordDialog from "@/components/admin/ChangePasswordDialog";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { LogOut, ExternalLink } from "lucide-react";
+import { LogOut, ExternalLink, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const AdminLayout = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -23,12 +30,16 @@ const AdminLayout = () => {
       <div className="min-h-screen flex w-full bg-background">
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-card/50">
+          <header className="h-14 border-b border-border flex items-center justify-between px-3 md:px-4 bg-card/50">
             <div className="flex items-center gap-2">
               <SidebarTrigger />
-              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Panel de Administración</span>
+              <span className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider truncate">
+                Panel Admin
+              </span>
             </div>
-            <div className="flex items-center gap-4">
+
+            {/* Desktop actions */}
+            <div className="hidden md:flex items-center gap-4">
               <a
                 href="/"
                 target="_blank"
@@ -48,8 +59,52 @@ const AdminLayout = () => {
                 Cerrar Sesión
               </button>
             </div>
+
+            {/* Mobile actions dropdown */}
+            <div className="flex md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-3 py-2">
+                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <a
+                      href="/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Ver Landing
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => {
+                    // Trigger the change password dialog programmatically
+                    const btn = document.querySelector('[data-change-password-trigger]') as HTMLButtonElement;
+                    btn?.click();
+                  }}>
+                    Cambiar Contraseña
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={signOut} className="text-destructive focus:text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Cerrar Sesión
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {/* Hidden trigger for ChangePasswordDialog on mobile */}
+              <div className="hidden">
+                <ChangePasswordDialog triggerProps={{ "data-change-password-trigger": true } as any} />
+              </div>
+            </div>
           </header>
-          <main className="flex-1 p-6 overflow-auto">
+          <main className="flex-1 p-3 md:p-6 overflow-auto">
             <Outlet />
           </main>
         </div>
