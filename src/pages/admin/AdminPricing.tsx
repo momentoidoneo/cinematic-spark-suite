@@ -101,6 +101,7 @@ const AdminPricing = () => {
       features: planForm.features.filter(f => f.trim()),
       is_highlighted: planForm.is_highlighted,
       is_visible: planForm.is_visible,
+      show_from: planForm.show_from,
     };
 
     if (editingPlan) {
