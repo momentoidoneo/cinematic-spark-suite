@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { BarChart3, Eye, Save, ExternalLink } from "lucide-react";
+import { BarChart3, Eye, Save, ExternalLink, Tags } from "lucide-react";
 
 interface TrackingConfig {
   google_tag_manager_id: string;
