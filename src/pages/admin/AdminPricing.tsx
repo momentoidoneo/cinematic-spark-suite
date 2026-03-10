@@ -350,6 +350,10 @@ const AdminPricing = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <Switch checked={planForm.show_from} onCheckedChange={v => setPlanForm(f => ({ ...f, show_from: v }))} />
+              <Label>Mostrar "desde" antes del precio</Label>
+            </div>
+            <div className="flex items-center gap-3">
               <Switch checked={planForm.is_visible} onCheckedChange={v => setPlanForm(f => ({ ...f, is_visible: v }))} />
               <Label>Visible en la web</Label>
             </div>
