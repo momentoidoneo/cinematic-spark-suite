@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import FloatingCTA from "@/components/FloatingCTA";
 import { motion } from "framer-motion";
 import SEOHead, { tourVirtualServiceSchema, breadcrumbSchema, faqPageSchema, getSiteUrl } from "@/components/SEOHead";
 import {
@@ -95,7 +96,28 @@ const ServicioTourVirtual = () => {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Inline CTA after hero */}
+      <section className="px-6 pb-8">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl bg-card border border-primary/20 p-6 md:p-8"
+          >
+            <div>
+              <h2 className="font-display text-lg md:text-xl font-bold text-foreground mb-1">¿Necesitas un presupuesto?</h2>
+              <p className="text-sm text-muted-foreground">Te respondemos en menos de 24h con una propuesta personalizada.</p>
+            </div>
+            <a
+              href="/#contacto"
+              className="shrink-0 inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-gradient-primary text-primary-foreground hover:shadow-glow hover:scale-105 transition-all"
+            >
+              Solicitar Presupuesto <ArrowRight className="w-4 h-4" />
+            </a>
+          </motion.div>
+        </div>
+      </section>
       <section className="py-12 px-6">
         <div className="max-w-5xl mx-auto">
           <motion.div
@@ -336,6 +358,7 @@ const ServicioTourVirtual = () => {
 
       <Footer />
       <WhatsAppButton />
+      <FloatingCTA />
     </div>
   );
 };
