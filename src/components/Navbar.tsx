@@ -30,6 +30,7 @@ const staticNavItems: NavItem[] = [
     children: [],
   },
   { label: "Blog", href: "/blog", isAnchor: false },
+  { label: "Precios", href: "/precios", isAnchor: false },
   { label: "Contacto", href: "/#contacto", isAnchor: true },
 ];
 
