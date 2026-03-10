@@ -76,6 +76,14 @@ const ServiceBlock = ({ title, subtitle, items }: { title: string; subtitle: str
   </div>
 );
 
+const videoDronFAQs = [
+  { question: "¿Necesitáis permisos especiales para volar drones?", answer: "Sí, todos nuestros pilotos están certificados por AESA y cumplen con la normativa europea UE 2019/947. Gestionamos todos los permisos necesarios según la zona de operación, incluyendo notificaciones a ENAIRE cuando es requerido." },
+  { question: "¿Qué calidad tienen los vídeos aéreos con dron?", answer: "Grabamos en resolución 4K con drones DJI profesionales equipados con cámaras estabilizadas en 3 ejes. El resultado son tomas fluidas y nítidas, incluso en condiciones de viento moderado." },
+  { question: "¿Se puede hacer streaming en directo de un evento?", answer: "Sí, ofrecemos retransmisión profesional en directo con calidad broadcast, múltiples cámaras, grafismo en tiempo real y conexión estable garantizada para plataformas como YouTube, Vimeo o privadas." },
+  { question: "¿Cuánto cuesta un vídeo corporativo?", answer: "El precio depende de la duración, complejidad y necesidades de producción. Ofrecemos presupuestos personalizados sin compromiso. Contacta con nosotros para recibir una propuesta detallada." },
+  { question: "¿Cuánto tiempo tarda la producción de un vídeo?", answer: "La producción estándar de un vídeo corporativo es de 1 a 2 semanas. Para proyectos más complejos o con postproducción avanzada, el plazo puede ser de 2 a 4 semanas." },
+];
+
 const ServicioVideoDron = () => {
   const siteUrl = getSiteUrl();
 
@@ -92,6 +100,7 @@ const ServicioVideoDron = () => {
             { name: "Servicios", url: `${siteUrl}/#servicios` },
             { name: "Vídeo y Dron", url: `${siteUrl}/servicios/video-dron` },
           ]),
+          faqPageSchema(videoDronFAQs),
         ]}
       />
       <Navbar />
