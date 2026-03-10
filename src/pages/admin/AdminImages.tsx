@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link, LayoutGrid, Columns, GalleryHorizontal, ChevronLeft, ChevronRight, List, Zap, Loader2 } from "lucide-react";
+import { Plus, Trash2, X, Upload, Star, Video, Image, Globe, Link, LayoutGrid, Columns, GalleryHorizontal, ChevronLeft, ChevronRight, List, Zap, Loader2, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 import GalleryGenerator from "@/components/admin/GalleryGenerator";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
