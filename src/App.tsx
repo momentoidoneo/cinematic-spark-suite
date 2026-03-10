@@ -35,7 +35,9 @@ import AdminTracking from "./pages/admin/AdminTracking";
 import AdminMigration from "./pages/admin/AdminMigration";
 import AdminMessages from "./pages/admin/AdminMessages";
 import Legal from "./pages/Legal";
+import Precios from "./pages/Precios";
 import TrackingScripts from "./components/TrackingScripts";
+import AdminPricing from "./pages/admin/AdminPricing";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +63,7 @@ const App = () => (
             <Route path="/servicios/tour-virtual" element={<ServicioTourVirtual />} />
             <Route path="/servicios/eventos" element={<ServicioEventos />} />
             <Route path="/servicios/renders" element={<ServicioRenders />} />
+            <Route path="/precios" element={<Precios />} />
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="categories" element={<AdminCategories />} />
@@ -80,6 +83,7 @@ const App = () => (
               <Route path="tracking" element={<AdminTracking />} />
               <Route path="migration" element={<AdminMigration />} />
               <Route path="messages" element={<AdminMessages />} />
+              <Route path="pricing" element={<AdminPricing />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

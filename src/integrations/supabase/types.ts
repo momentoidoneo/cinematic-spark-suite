@@ -315,6 +315,87 @@ export type Database = {
           },
         ]
       }
+      pricing_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: string[] | null
+          id: string
+          is_highlighted: boolean
+          is_visible: boolean
+          name: string
+          order: number
+          price: number | null
+          price_suffix: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          is_highlighted?: boolean
+          is_visible?: boolean
+          name: string
+          order?: number
+          price?: number | null
+          price_suffix?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          is_highlighted?: boolean
+          is_visible?: boolean
+          name?: string
+          order?: number
+          price?: number | null
+          price_suffix?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pricing_services: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_visible: boolean
+          name: string
+          order: number
+          price: number | null
+          price_suffix: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_visible?: boolean
+          name: string
+          order?: number
+          price?: number | null
+          price_suffix?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_visible?: boolean
+          name?: string
+          order?: number
+          price?: number | null
+          price_suffix?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
