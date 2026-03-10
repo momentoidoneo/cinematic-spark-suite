@@ -13,6 +13,8 @@ import BlogPostPage from "./pages/BlogPost";
 import ServicioFotografia from "./pages/ServicioFotografia";
 import ServicioVideoDron from "./pages/ServicioVideoDron";
 import ServicioTourVirtual from "./pages/ServicioTourVirtual";
+import ServicioEventos from "./pages/ServicioEventos";
+import ServicioRenders from "./pages/ServicioRenders";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCategories from "./pages/admin/AdminCategories";
@@ -56,6 +58,8 @@ const App = () => (
             <Route path="/servicios/fotografia" element={<ServicioFotografia />} />
             <Route path="/servicios/video-dron" element={<ServicioVideoDron />} />
             <Route path="/servicios/tour-virtual" element={<ServicioTourVirtual />} />
+            <Route path="/servicios/eventos" element={<ServicioEventos />} />
+            <Route path="/servicios/renders" element={<ServicioRenders />} />
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="categories" element={<AdminCategories />} />
