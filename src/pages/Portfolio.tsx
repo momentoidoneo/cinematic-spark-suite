@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import { X, ChevronLeft, ChevronRight, Play, Globe } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Play, Globe, Maximize2 } from "lucide-react";
 import SEOHead, { breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
 
 type Category = { id: string; name: string; slug: string; description: string | null; cover_image: string | null; grid_row: number | null; grid_col: number | null };
