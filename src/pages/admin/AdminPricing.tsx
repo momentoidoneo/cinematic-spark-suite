@@ -22,6 +22,7 @@ interface Plan {
   features: string[];
   is_highlighted: boolean;
   is_visible: boolean;
+  show_from: boolean;
   order: number;
 }
 
@@ -33,11 +34,12 @@ interface PricingService {
   price_suffix: string | null;
   category: string | null;
   is_visible: boolean;
+  show_from: boolean;
   order: number;
 }
 
-const emptyPlan = { name: "", description: "", price: "", price_suffix: "/proyecto", features: [""], is_highlighted: false, is_visible: true };
-const emptyService = { name: "", description: "", price: "", price_suffix: "", category: "", is_visible: true };
+const emptyPlan = { name: "", description: "", price: "", price_suffix: "/proyecto", features: [""], is_highlighted: false, is_visible: true, show_from: false };
+const emptyService = { name: "", description: "", price: "", price_suffix: "", category: "", is_visible: true, show_from: false };
 
 const AdminPricing = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -84,6 +86,7 @@ const AdminPricing = () => {
       features: p.features.length ? p.features : [""],
       is_highlighted: p.is_highlighted,
       is_visible: p.is_visible,
+      show_from: p.show_from,
     });
     setPlanOpen(true);
   };
@@ -98,6 +101,7 @@ const AdminPricing = () => {
       features: planForm.features.filter(f => f.trim()),
       is_highlighted: planForm.is_highlighted,
       is_visible: planForm.is_visible,
+      show_from: planForm.show_from,
     };
 
     if (editingPlan) {
@@ -141,6 +145,7 @@ const AdminPricing = () => {
       price_suffix: s.price_suffix || "",
       category: s.category || "",
       is_visible: s.is_visible,
+      show_from: s.show_from,
     });
     setServiceOpen(true);
   };
@@ -154,6 +159,7 @@ const AdminPricing = () => {
       price_suffix: serviceForm.price_suffix || null,
       category: serviceForm.category.trim() || null,
       is_visible: serviceForm.is_visible,
+      show_from: serviceForm.show_from,
     };
 
     if (editingService) {
@@ -240,6 +246,7 @@ const AdminPricing = () => {
                   <CardContent className="space-y-2">
                     {p.price != null && (
                       <p className="text-2xl font-bold text-primary">
+                        {p.show_from && <span className="text-sm font-normal text-muted-foreground">desde </span>}
                         {p.price}€ <span className="text-sm font-normal text-muted-foreground">{p.price_suffix}</span>
                       </p>
                     )}
@@ -343,6 +350,10 @@ const AdminPricing = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <Switch checked={planForm.show_from} onCheckedChange={v => setPlanForm(f => ({ ...f, show_from: v }))} />
+              <Label>Mostrar "desde" antes del precio</Label>
+            </div>
+            <div className="flex items-center gap-3">
               <Switch checked={planForm.is_visible} onCheckedChange={v => setPlanForm(f => ({ ...f, is_visible: v }))} />
               <Label>Visible en la web</Label>
             </div>
@@ -387,6 +398,10 @@ const AdminPricing = () => {
               </datalist>
             </div>
             <div className="flex items-center gap-3">
+              <Switch checked={serviceForm.show_from} onCheckedChange={v => setServiceForm(f => ({ ...f, show_from: v }))} />
+              <Label>Mostrar "desde" antes del precio</Label>
+            </div>
+            <div className="flex items-center gap-3">
               <Switch checked={serviceForm.is_visible} onCheckedChange={v => setServiceForm(f => ({ ...f, is_visible: v }))} />
               <Label>Visible en la web</Label>
             </div>
@@ -415,6 +430,7 @@ const ServiceRow = ({ s, onEdit, onDelete, onToggle }: {
       </div>
       {s.price != null && (
         <p className="text-lg font-bold text-primary whitespace-nowrap">
+          {s.show_from && <span className="text-xs font-normal text-muted-foreground">desde </span>}
           {s.price}€ <span className="text-xs font-normal text-muted-foreground">{s.price_suffix}</span>
         </p>
       )}

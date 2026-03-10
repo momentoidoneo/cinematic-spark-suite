@@ -17,6 +17,7 @@ interface Plan {
   price_suffix: string | null;
   features: string[];
   is_highlighted: boolean;
+  show_from: boolean;
   order: number;
 }
 
@@ -27,6 +28,7 @@ interface PricingService {
   price: number | null;
   price_suffix: string | null;
   category: string | null;
+  show_from: boolean;
   order: number;
 }
 
@@ -118,6 +120,7 @@ const Precios = () => {
                         {plan.description && <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>}
                         {plan.price != null && (
                           <div className="mb-6">
+                            {plan.show_from && <span className="text-sm text-muted-foreground">desde </span>}
                             <span className="text-4xl font-bold text-primary">{plan.price}€</span>
                             {plan.price_suffix && <span className="text-muted-foreground ml-1">{plan.price_suffix}</span>}
                           </div>
@@ -170,6 +173,7 @@ const Precios = () => {
                               </div>
                               {s.price != null && (
                                 <p className="text-lg font-bold text-primary whitespace-nowrap">
+                                  {s.show_from && <span className="text-xs font-normal text-muted-foreground">desde </span>}
                                   {s.price}€ <span className="text-xs font-normal text-muted-foreground">{s.price_suffix}</span>
                                 </p>
                               )}
@@ -192,6 +196,7 @@ const Precios = () => {
                               </div>
                               {s.price != null && (
                                 <p className="text-lg font-bold text-primary whitespace-nowrap">
+                                  {s.show_from && <span className="text-xs font-normal text-muted-foreground">desde </span>}
                                   {s.price}€ <span className="text-xs font-normal text-muted-foreground">{s.price_suffix}</span>
                                 </p>
                               )}
