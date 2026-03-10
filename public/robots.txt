@@ -43,4 +43,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /login
 
-Sitemap: https://cinematic-spark-suite.lovable.app/sitemap.xml
+Sitemap: https://silviocosta.net/sitemap.xml

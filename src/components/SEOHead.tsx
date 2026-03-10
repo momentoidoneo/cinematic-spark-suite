@@ -10,7 +10,7 @@ interface SEOHeadProps {
   jsonLd?: Record<string, any> | Record<string, any>[];
 }
 
-const SITE_URL = "https://cinematic-spark-suite.lovable.app";
+const SITE_URL = "https://silviocosta.net";
 const DEFAULT_OG_IMAGE = "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/2f67c332-ce35-47a8-9573-d3eca9b22ea6/id-preview-66eb4a07--fe5fb065-a82f-4e14-9e41-abf41661d2fd.lovable.app-1772959367452.png";
 
 export function getSiteUrl() {
