@@ -19,7 +19,7 @@ const HeroSection = () => {
     <section id="inicio" className="relative min-h-screen flex flex-col justify-center overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
-        <img src={heroBg} alt="Estudio profesional" className="w-full h-full object-cover" />
+        <img src={heroBg} alt="Estudio de fotografía y producción audiovisual profesional Silvio Costa" className="w-full h-full object-cover" loading="eager" />
         <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />
         <div className="absolute inset-0 bg-background/50" />
       </div>
