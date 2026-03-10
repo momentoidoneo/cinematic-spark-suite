@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, BarChart3, Image, FolderOpen, Layers, HardDrive,
-  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft
+  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,7 +31,8 @@ const marketingItems = [
   { title: "Blog", url: "/admin/blog", icon: FileText },
 ];
 
-const whatsappItems = [
+const communicationItems = [
+  { title: "Mensajes Contacto", url: "/admin/messages", icon: Mail },
   { title: "Chats WhatsApp", url: "/admin/whatsapp-chats", icon: MessageCircle },
   { title: "Config. WhatsApp", url: "/admin/whatsapp-config", icon: Settings },
 ];
@@ -141,7 +142,7 @@ const AdminSidebar = () => {
         <SidebarSeparator />
         <MenuGroup label="Marketing" items={marketingItems} collapsed={collapsed} />
         <SidebarSeparator />
-        <MenuGroup label="WhatsApp" items={whatsappItems} collapsed={collapsed} />
+        <MenuGroup label="Comunicación" items={communicationItems} collapsed={collapsed} />
         <SidebarSeparator />
         <MenuGroup label="Configuración" items={settingsItems} collapsed={collapsed} />
       </SidebarContent>

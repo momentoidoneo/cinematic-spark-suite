@@ -33,6 +33,7 @@ import AdminApiKeys from "./pages/admin/AdminApiKeys";
 import AdminLanding from "./pages/admin/AdminLanding";
 import AdminTracking from "./pages/admin/AdminTracking";
 import AdminMigration from "./pages/admin/AdminMigration";
+import AdminMessages from "./pages/admin/AdminMessages";
 import Legal from "./pages/Legal";
 import TrackingScripts from "./components/TrackingScripts";
 
@@ -78,6 +79,7 @@ const App = () => (
               <Route path="landing" element={<AdminLanding />} />
               <Route path="tracking" element={<AdminTracking />} />
               <Route path="migration" element={<AdminMigration />} />
+              <Route path="messages" element={<AdminMessages />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
