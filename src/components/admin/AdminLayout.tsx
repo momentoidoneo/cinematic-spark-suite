@@ -31,7 +31,7 @@ const AdminLayout = () => {
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 border-b border-border flex items-center justify-between px-3 md:px-4 bg-card/50">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <SidebarTrigger />
               <span className="text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider truncate">
                 Panel Admin
@@ -61,7 +61,8 @@ const AdminLayout = () => {
             </div>
 
             {/* Mobile actions dropdown */}
-            <div className="flex md:hidden">
+            <div className="flex md:hidden items-center gap-2">
+              <ChangePasswordDialog />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
@@ -84,13 +85,6 @@ const AdminLayout = () => {
                       Ver Landing
                     </a>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => {
-                    // Trigger the change password dialog programmatically
-                    const btn = document.querySelector('[data-change-password-trigger]') as HTMLButtonElement;
-                    btn?.click();
-                  }}>
-                    Cambiar Contraseña
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={signOut} className="text-destructive focus:text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />
@@ -98,10 +92,6 @@ const AdminLayout = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {/* Hidden trigger for ChangePasswordDialog on mobile */}
-              <div className="hidden">
-                <ChangePasswordDialog triggerProps={{ "data-change-password-trigger": true } as any} />
-              </div>
             </div>
           </header>
           <main className="flex-1 p-3 md:p-6 overflow-auto">
