@@ -327,6 +327,7 @@ export type Database = {
           order: number
           price: number | null
           price_suffix: string | null
+          show_from: boolean
           updated_at: string
         }
         Insert: {
@@ -340,6 +341,7 @@ export type Database = {
           order?: number
           price?: number | null
           price_suffix?: string | null
+          show_from?: boolean
           updated_at?: string
         }
         Update: {
@@ -353,6 +355,7 @@ export type Database = {
           order?: number
           price?: number | null
           price_suffix?: string | null
+          show_from?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -368,6 +371,7 @@ export type Database = {
           order: number
           price: number | null
           price_suffix: string | null
+          show_from: boolean
           updated_at: string
         }
         Insert: {
@@ -380,6 +384,7 @@ export type Database = {
           order?: number
           price?: number | null
           price_suffix?: string | null
+          show_from?: boolean
           updated_at?: string
         }
         Update: {
@@ -392,6 +397,7 @@ export type Database = {
           order?: number
           price?: number | null
           price_suffix?: string | null
+          show_from?: boolean
           updated_at?: string
         }
         Relationships: []
