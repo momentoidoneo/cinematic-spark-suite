@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import { X, ChevronLeft, ChevronRight, Play, Globe } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Play, Globe, Maximize2 } from "lucide-react";
 import SEOHead, { breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
 
 type Category = { id: string; name: string; slug: string; description: string | null; cover_image: string | null; grid_row: number | null; grid_col: number | null };
@@ -86,6 +86,7 @@ const Portfolio = () => {
   const [selectedCat, setSelectedCat] = useState<Category | null>(null);
   const [selectedSub, setSelectedSub] = useState<Subcategory | null>(null);
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [fullscreenIframe, setFullscreenIframe] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCats = async () => {
@@ -262,14 +263,23 @@ const Portfolio = () => {
                   onClick={() => img.media_type !== "iframe" && openLightbox(i)}
                 >
                   {img.media_type === "iframe" && img.video_url ? (
-                    <iframe
-                      src={img.video_url}
-                      className="w-full h-full absolute inset-0 border-0"
-                      allowFullScreen
-                      allow="xr-spatial-tracking"
-                      loading="lazy"
-                      title={img.alt_text || img.title || "Tour virtual 360°"}
-                    />
+                    <>
+                      <iframe
+                        src={img.video_url}
+                        className="w-full h-full absolute inset-0 border-0"
+                        allowFullScreen
+                        allow="xr-spatial-tracking"
+                        loading="lazy"
+                        title={img.alt_text || img.title || "Tour virtual 360°"}
+                      />
+                      <button
+                        onClick={() => setFullscreenIframe(img.video_url!)}
+                        className="absolute top-3 right-3 z-10 bg-background/80 backdrop-blur-sm text-foreground rounded-full p-2 hover:bg-background transition-colors"
+                        title="Ver en pantalla completa"
+                      >
+                        <Maximize2 className="w-4 h-4" />
+                      </button>
+                    </>
                   ) : (
                     <>
                       <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -304,6 +314,24 @@ const Portfolio = () => {
           </>
         )}
       </div>
+
+      {/* Fullscreen iframe */}
+      {fullscreenIframe && (
+        <div className="fixed inset-0 z-50 bg-background flex flex-col">
+          <div className="flex items-center justify-end p-3">
+            <button onClick={() => setFullscreenIframe(null)} className="text-foreground hover:text-primary">
+              <X className="w-8 h-8" />
+            </button>
+          </div>
+          <iframe
+            src={fullscreenIframe}
+            className="flex-1 w-full border-0"
+            allowFullScreen
+            allow="xr-spatial-tracking"
+            title="Tour virtual 360°"
+          />
+        </div>
+      )}
 
       {/* Lightbox */}
       {lightbox !== null && (
