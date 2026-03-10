@@ -54,7 +54,6 @@ const App = () => (
           <TrackingScripts />
           <PageTracker />
           <Routes>
-          <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/legal/:slug" element={<Legal />} />
