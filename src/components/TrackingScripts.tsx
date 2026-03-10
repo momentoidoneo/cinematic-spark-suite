@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const TRACKING_KEYS = [
+  "google_tag_manager_id",
+  "google_tag_manager_enabled",
   "google_analytics_id",
   "google_analytics_enabled",
   "google_ads_id",

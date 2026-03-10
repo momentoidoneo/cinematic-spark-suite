@@ -122,6 +122,49 @@ const AdminTracking = () => {
         <p className="text-muted-foreground">Configura Google Analytics, Google Ads y Meta Pixel para tu sitio web.</p>
       </div>
 
+      {/* Google Tag Manager */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Tags className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Google Tag Manager</CardTitle>
+                <CardDescription>Gestiona todas tus etiquetas de seguimiento desde un solo contenedor GTM.</CardDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="gtm-enabled" className="text-sm text-muted-foreground">Activo</Label>
+              <Switch
+                id="gtm-enabled"
+                checked={config.google_tag_manager_enabled === "true"}
+                onCheckedChange={() => toggleEnabled("google_tag_manager_enabled")}
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="gtm-id">Container ID</Label>
+            <Input
+              id="gtm-id"
+              placeholder="GTM-XXXXXXX"
+              value={config.google_tag_manager_id}
+              onChange={(e) => setField("google_tag_manager_id", e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Encuéntralo en{" "}
+              <a href="https://tagmanager.google.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                Google Tag Manager <ExternalLink className="h-3 w-3" />
+              </a>
+              {" "}→ Administrar → Tu contenedor → ID del contenedor.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Google Analytics */}
       <Card>
         <CardHeader>
