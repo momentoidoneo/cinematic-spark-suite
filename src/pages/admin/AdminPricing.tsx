@@ -246,6 +246,7 @@ const AdminPricing = () => {
                   <CardContent className="space-y-2">
                     {p.price != null && (
                       <p className="text-2xl font-bold text-primary">
+                        {p.show_from && <span className="text-sm font-normal text-muted-foreground">desde </span>}
                         {p.price}€ <span className="text-sm font-normal text-muted-foreground">{p.price_suffix}</span>
                       </p>
                     )}
