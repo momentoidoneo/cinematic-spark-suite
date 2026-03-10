@@ -164,6 +164,11 @@ const AdminSubcategories = () => {
               <LayoutGrid className="w-4 h-4" />
             </button>
           </div>
+          {emptySubIds.length > 0 && (
+            <button onClick={hideAllEmpty} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-muted-foreground hover:text-foreground transition-colors" title="Ocultar subcategorías sin contenido">
+              <EyeOff className="w-4 h-4" /> Ocultar vacías ({emptySubIds.length})
+            </button>
+          )}
           <CoverGenerator
             type="subcategory"
             items={subcategories.map(s => ({ id: s.id, name: s.name, cover_image: s.cover_image, categoryName: s.portfolio_categories?.name }))}
