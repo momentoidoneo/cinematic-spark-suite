@@ -216,6 +216,51 @@ const AdminMessages = () => {
           ))}
         </div>
       )}
+
+      {/* Dialog detalle */}
+      <Dialog open={!!selectedMsg} onOpenChange={(open) => !open && setSelectedMsg(null)}>
+        <DialogContent className="max-w-lg">
+          {selectedMsg && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-lg">{selectedMsg.name}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+                  <a href={`mailto:${selectedMsg.email}`} className="hover:text-primary underline">
+                    {selectedMsg.email}
+                  </a>
+                  {selectedMsg.phone && (
+                    <a href={`tel:${selectedMsg.phone}`} className="flex items-center gap-1 hover:text-primary">
+                      <Phone className="h-3 w-3" /> {selectedMsg.phone}
+                    </a>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(selectedMsg.created_at), "EEEE dd 'de' MMMM yyyy, HH:mm", { locale: es })}
+                </p>
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                    {selectedMsg.message}
+                  </p>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button asChild size="sm">
+                    <a href={`mailto:${selectedMsg.email}`}>Responder por email</a>
+                  </Button>
+                  {selectedMsg.phone && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={`https://wa.me/${selectedMsg.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener">
+                        WhatsApp
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
