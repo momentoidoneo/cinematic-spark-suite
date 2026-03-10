@@ -252,9 +252,14 @@ const Navbar = () => {
         </Sheet>
 
         {/* Mobile brand center */}
-        <span className="md:hidden text-sm font-display font-bold text-gradient-primary">
-          Silvio Costa
-        </span>
+        <div className="md:hidden flex flex-col items-center leading-tight">
+          <span className="text-sm font-display font-bold tracking-wide text-foreground uppercase">
+            Silvio Costa
+          </span>
+          <span className="text-[9px] tracking-[0.2em] text-muted-foreground uppercase">
+            Servicios Audiovisuales
+          </span>
+        </div>
         <div className="md:hidden w-10" /> {/* spacer for symmetry */}
 
         {/* Desktop */}
