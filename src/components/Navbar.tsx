@@ -51,7 +51,14 @@ const NavLinkItem = ({
     );
   }
   return (
-    <Link to={item.href} className={className} onClick={onClick}>
+    <Link
+      to={item.href}
+      className={className}
+      onClick={() => {
+        window.scrollTo(0, 0);
+        onClick?.();
+      }}
+    >
       {item.label}
     </Link>
   );
