@@ -386,19 +386,41 @@ const AdminImages = () => {
             <SortableContext items={images.map(img => img.id)} strategy={rectSortingStrategy}>
               <div className="flex flex-wrap gap-3">
                 {images.map((img, idx) => (
-                  <SortableItem key={img.id} id={img.id} className="h-48">
-                    <div className="group relative h-48 rounded-xl overflow-hidden border border-border bg-card flex-shrink-0 cursor-pointer" onClick={() => setLightboxIdx(idx)}>
-                      <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="h-full w-auto object-cover pointer-events-none select-none" draggable={false} onContextMenu={(e) => e.preventDefault()} />
+                  <SortableItem key={img.id} id={img.id} className="h-auto">
+                    <div className="group relative rounded-xl overflow-hidden border border-border bg-card flex-shrink-0">
+                      {img.media_type === "iframe" && img.video_url ? (
+                        <div className="flex flex-col">
+                          <div className="relative h-48 w-64">
+                            <iframe
+                              src={img.video_url}
+                              className="w-full h-full border-0 pointer-events-none"
+                              title={img.alt_text || img.title || "Tour virtual"}
+                            />
+                          </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setFullscreenIframe(img.video_url!); }}
+                            className="flex items-center justify-center gap-2 py-2 bg-secondary text-foreground text-xs font-medium hover:bg-secondary/80 transition-colors"
+                          >
+                            <Maximize2 className="w-3.5 h-3.5" /> Maximizar
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="h-48 cursor-pointer" onClick={() => setLightboxIdx(idx)}>
+                          <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="h-full w-auto object-cover pointer-events-none select-none" draggable={false} onContextMenu={(e) => e.preventDefault()} />
+                        </div>
+                      )}
                       <div className={`absolute top-2 left-10 ${mediaColor(img.media_type)} text-white rounded-full p-1.5 flex items-center gap-1`}>
                         {mediaIcon(img.media_type)}
                       </div>
-                      <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <button onClick={(e) => { e.stopPropagation(); toggleFeatured(img); }} className={`p-2 rounded-lg ${img.is_featured ? "bg-accent text-accent-foreground" : "bg-secondary text-foreground"}`}>
-                          <Star className="w-4 h-4" />
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete(img); }} className="p-2 rounded-lg bg-destructive text-destructive-foreground">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none">
+                        <div className="pointer-events-auto flex gap-2">
+                          <button onClick={(e) => { e.stopPropagation(); toggleFeatured(img); }} className={`p-2 rounded-lg ${img.is_featured ? "bg-accent text-accent-foreground" : "bg-secondary text-foreground"}`}>
+                            <Star className="w-4 h-4" />
+                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDelete(img); }} className="p-2 rounded-lg bg-destructive text-destructive-foreground">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                       {img.is_featured && (
                         <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-accent flex items-center justify-center">
