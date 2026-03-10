@@ -120,6 +120,7 @@ const Precios = () => {
                         {plan.description && <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>}
                         {plan.price != null && (
                           <div className="mb-6">
+                            {plan.show_from && <span className="text-sm text-muted-foreground">desde </span>}
                             <span className="text-4xl font-bold text-primary">{plan.price}€</span>
                             {plan.price_suffix && <span className="text-muted-foreground ml-1">{plan.price_suffix}</span>}
                           </div>
