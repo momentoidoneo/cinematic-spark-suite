@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import FloatingCTA from "@/components/FloatingCTA";
 import { motion } from "framer-motion";
 import SEOHead, { photographyServiceSchema, breadcrumbSchema, faqPageSchema, getSiteUrl } from "@/components/SEOHead";
 import {
