@@ -398,6 +398,10 @@ const AdminPricing = () => {
               </datalist>
             </div>
             <div className="flex items-center gap-3">
+              <Switch checked={serviceForm.show_from} onCheckedChange={v => setServiceForm(f => ({ ...f, show_from: v }))} />
+              <Label>Mostrar "desde" antes del precio</Label>
+            </div>
+            <div className="flex items-center gap-3">
               <Switch checked={serviceForm.is_visible} onCheckedChange={v => setServiceForm(f => ({ ...f, is_visible: v }))} />
               <Label>Visible en la web</Label>
             </div>
