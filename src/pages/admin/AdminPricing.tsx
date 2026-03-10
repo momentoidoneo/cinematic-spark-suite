@@ -22,6 +22,7 @@ interface Plan {
   features: string[];
   is_highlighted: boolean;
   is_visible: boolean;
+  show_from: boolean;
   order: number;
 }
 
