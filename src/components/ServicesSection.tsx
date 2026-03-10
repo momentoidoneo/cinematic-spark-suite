@@ -67,7 +67,7 @@ const ServiceCard = ({ name, catSlug, subSlug, index, coverImage, coverPosition,
       {coverImage && (
         <img
           src={coverImage}
-          alt={name}
+          alt={`${name} — Servicio profesional de Silvio Costa Photography`}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           style={{ objectPosition: coverPosition || 'center' }}
           loading="lazy"
