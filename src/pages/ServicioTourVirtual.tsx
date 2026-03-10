@@ -2,7 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { motion } from "framer-motion";
-import SEOHead, { tourVirtualServiceSchema, breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
+import SEOHead, { tourVirtualServiceSchema, breadcrumbSchema, faqPageSchema, getSiteUrl } from "@/components/SEOHead";
 import {
   Rotate3D, Building, Home, Store, Hotel, Landmark, CheckCircle2, ArrowRight,
   Scan, Ruler, MapPin, Smartphone, Globe, Layers, Box, FileText
@@ -46,6 +46,14 @@ const matterportFeatures = [
   { icon: Globe, title: "Property Intelligence con IA", desc: "La inteligencia artificial de Matterport analiza propiedades y carteras completas para generar información estratégica automatizada. Desde evaluación del estado de la propiedad hasta análisis de accesibilidad y cumplimiento normativo." },
 ];
 
+const tourVirtualFAQs = [
+  { question: "¿Qué es un tour virtual Matterport?", answer: "Es un recorrido interactivo 360° creado con tecnología Matterport Pro3. Permite a los usuarios explorar un espacio físico desde cualquier dispositivo, con navegación fluida, vistas en 3D, planos de planta y herramientas de medición integradas." },
+  { question: "¿Cuánto cuesta un tour virtual 360°?", answer: "El precio se calcula según los metros cuadrados del espacio y las personalizaciones necesarias. Ofrecemos presupuestos personalizados sin compromiso. Contacta con nosotros para recibir una propuesta adaptada." },
+  { question: "¿Cuánto tarda la entrega de un tour virtual?", answer: "El procesamiento estándar es de 48 a 72 horas tras el escaneo del espacio. Para proyectos complejos con muchas personalizaciones, el plazo puede extenderse a 5-7 días laborables." },
+  { question: "¿Se puede integrar el tour virtual en Google Maps?", answer: "Sí, publicamos directamente tu tour en Google Maps y Google Business Profile. Esto mejora tu visibilidad en búsquedas locales y permite que los usuarios exploren tu espacio desde el propio buscador de Google." },
+  { question: "¿En qué dispositivos se puede ver el tour virtual?", answer: "Los tours son accesibles desde cualquier navegador web, en ordenador, tablet o smartphone, sin necesidad de instalar aplicaciones. También son compatibles con visores de realidad virtual como Meta Quest." },
+];
+
 const ServicioTourVirtual = () => {
   const siteUrl = getSiteUrl();
 
@@ -62,6 +70,7 @@ const ServicioTourVirtual = () => {
             { name: "Servicios", url: `${siteUrl}/#servicios` },
             { name: "Tour Virtual 360°", url: `${siteUrl}/servicios/tour-virtual` },
           ]),
+          faqPageSchema(tourVirtualFAQs),
         ]}
       />
       <Navbar />
