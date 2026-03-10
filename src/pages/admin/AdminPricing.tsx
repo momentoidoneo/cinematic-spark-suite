@@ -86,6 +86,7 @@ const AdminPricing = () => {
       features: p.features.length ? p.features : [""],
       is_highlighted: p.is_highlighted,
       is_visible: p.is_visible,
+      show_from: p.show_from,
     });
     setPlanOpen(true);
   };
