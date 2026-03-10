@@ -32,6 +32,7 @@ const AdminSubcategories = () => {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [viewMode, setViewMode] = useState<"cards" | "grid">("cards");
+  const [imageCounts, setImageCounts] = useState<Record<string, number>>({});
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
