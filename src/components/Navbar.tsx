@@ -19,6 +19,8 @@ const staticNavItems: NavItem[] = [
       { label: "Fotografía", href: "/servicios/fotografia", isAnchor: false },
       { label: "Video y Dron", href: "/servicios/video-dron", isAnchor: false },
       { label: "Tour Virtual 360°", href: "/servicios/tour-virtual", isAnchor: false },
+      { label: "Eventos", href: "/servicios/eventos", isAnchor: false },
+      { label: "Renders 3D", href: "/servicios/renders", isAnchor: false },
     ],
   },
   {

@@ -58,6 +58,8 @@ const App = () => (
             <Route path="/servicios/fotografia" element={<ServicioFotografia />} />
             <Route path="/servicios/video-dron" element={<ServicioVideoDron />} />
             <Route path="/servicios/tour-virtual" element={<ServicioTourVirtual />} />
+            <Route path="/servicios/eventos" element={<ServicioEventos />} />
+            <Route path="/servicios/renders" element={<ServicioRenders />} />
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="categories" element={<AdminCategories />} />
