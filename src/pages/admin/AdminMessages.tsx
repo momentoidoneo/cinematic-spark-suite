@@ -169,7 +169,7 @@ const AdminMessages = () => {
                         {format(new Date(msg.created_at), "dd MMM yyyy, HH:mm", { locale: es })}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground/80 whitespace-pre-wrap mt-2">
+                    <p className="text-sm text-foreground/80 mt-2 line-clamp-2">
                       {msg.message}
                     </p>
                   </div>
