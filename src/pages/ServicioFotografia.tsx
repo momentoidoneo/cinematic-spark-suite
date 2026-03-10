@@ -2,7 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { motion } from "framer-motion";
-import SEOHead, { photographyServiceSchema, breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
+import SEOHead, { photographyServiceSchema, breadcrumbSchema, faqPageSchema, getSiteUrl } from "@/components/SEOHead";
 import {
   Home, ShoppingBag, UtensilsCrossed, Sofa, Building2, Package,
   Shirt, Building, Camera, Megaphone, CalendarDays, Boxes, CheckCircle2, ArrowRight, Star, Users, Zap, Eye

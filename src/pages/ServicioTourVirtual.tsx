@@ -2,7 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { motion } from "framer-motion";
-import SEOHead, { tourVirtualServiceSchema, breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
+import SEOHead, { tourVirtualServiceSchema, breadcrumbSchema, faqPageSchema, getSiteUrl } from "@/components/SEOHead";
 import {
   Rotate3D, Building, Home, Store, Hotel, Landmark, CheckCircle2, ArrowRight,
   Scan, Ruler, MapPin, Smartphone, Globe, Layers, Box, FileText
