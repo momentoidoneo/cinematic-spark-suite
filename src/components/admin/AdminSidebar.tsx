@@ -31,7 +31,8 @@ const marketingItems = [
   { title: "Blog", url: "/admin/blog", icon: FileText },
 ];
 
-const whatsappItems = [
+const communicationItems = [
+  { title: "Mensajes Contacto", url: "/admin/messages", icon: Mail },
   { title: "Chats WhatsApp", url: "/admin/whatsapp-chats", icon: MessageCircle },
   { title: "Config. WhatsApp", url: "/admin/whatsapp-config", icon: Settings },
 ];
