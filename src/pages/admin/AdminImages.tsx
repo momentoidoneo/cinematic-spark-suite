@@ -36,6 +36,7 @@ const AdminImages = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "grid">("cards");
+  const [fullscreenIframe, setFullscreenIframe] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   // Optimizer state
