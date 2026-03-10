@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const TRACKING_KEYS = [
+  "google_tag_manager_id",
+  "google_tag_manager_enabled",
   "google_analytics_id",
   "google_analytics_enabled",
   "google_ads_id",
@@ -26,6 +28,24 @@ const TrackingScripts = () => {
 
       const cfg: Record<string, string> = {};
       data.forEach((r) => { cfg[r.key] = r.value || ""; });
+
+      // Google Tag Manager
+      if (cfg.google_tag_manager_enabled === "true" && cfg.google_tag_manager_id) {
+        const gtmId = cfg.google_tag_manager_id;
+        const s = document.createElement("script");
+        s.textContent = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`;
+        document.head.appendChild(s);
+
+        const noscript = document.createElement("noscript");
+        const iframe = document.createElement("iframe");
+        iframe.src = `https://www.googletagmanager.com/ns.html?id=${gtmId}`;
+        iframe.height = "0";
+        iframe.width = "0";
+        iframe.style.display = "none";
+        iframe.style.visibility = "hidden";
+        noscript.appendChild(iframe);
+        document.body.insertBefore(noscript, document.body.firstChild);
+      }
 
       // Google Analytics 4
       if (cfg.google_analytics_enabled === "true" && cfg.google_analytics_id) {
