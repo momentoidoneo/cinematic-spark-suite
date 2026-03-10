@@ -137,7 +137,11 @@ const AdminMessages = () => {
           {filtered.map((msg) => (
             <Card
               key={msg.id}
-              className={`transition-colors ${!msg.is_read ? "border-primary/40 bg-primary/5" : ""}`}
+              className={`transition-colors cursor-pointer hover:shadow-md ${!msg.is_read ? "border-primary/40 bg-primary/5" : ""}`}
+              onClick={() => {
+                setSelectedMsg(msg);
+                if (!msg.is_read) toggleRead.mutate({ id: msg.id, is_read: false });
+              }}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4">
