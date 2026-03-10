@@ -8,9 +8,9 @@ const services = [
   { icon: Camera, label: "FOTOGRAFÍA", href: "/servicios/fotografia" },
   { icon: Plane, label: "SERVICIOS DRON", href: "/servicios/video-dron" },
   { icon: Globe, label: "TOUR VIRTUAL", href: "/servicios/tour-virtual" },
-  { icon: Video, label: "VIDEO", href: "/#video" },
-  { icon: PartyPopper, label: "EVENTOS", href: "/#servicios" },
-  { icon: Boxes, label: "RENDERS 3D", href: "/#servicios" },
+  { icon: Video, label: "VIDEO", href: "/servicios/video-dron" },
+  { icon: PartyPopper, label: "EVENTOS", href: "/servicios/eventos" },
+  { icon: Boxes, label: "RENDERS 3D", href: "/servicios/renders" },
 ];
 
 
