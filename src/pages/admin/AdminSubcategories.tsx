@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, X, Search, Eye, EyeOff, Upload, ImageIcon, LayoutGrid, List } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Search, Eye, EyeOff, Upload, ImageIcon, LayoutGrid, List, EyeOff as EyeOffIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import CoverGenerator from "@/components/admin/CoverGenerator";
@@ -32,16 +32,23 @@ const AdminSubcategories = () => {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [viewMode, setViewMode] = useState<"cards" | "grid">("cards");
+  const [imageCounts, setImageCounts] = useState<Record<string, number>>({});
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const fetchData = async () => {
-    const [{ data: cats }, { data: subs }] = await Promise.all([
+    const [{ data: cats }, { data: subs }, { data: images }] = await Promise.all([
       supabase.from("portfolio_categories").select("id, name").order("order"),
       supabase.from("portfolio_subcategories").select("*, portfolio_categories(id, name)").order("order"),
+      supabase.from("portfolio_images").select("subcategory_id"),
     ]);
     if (cats) setCategories(cats);
     if (subs) setSubcategories(subs as any);
+    if (images) {
+      const counts: Record<string, number> = {};
+      images.forEach(img => { counts[img.subcategory_id] = (counts[img.subcategory_id] || 0) + 1; });
+      setImageCounts(counts);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -132,6 +139,16 @@ const AdminSubcategories = () => {
 
   const galleryLabels: Record<string, string> = { grid: "Grid", masonry: "Masonry", carousel: "Carousel" };
 
+  const emptySubIds = subcategories.filter(s => s.is_visible && !(imageCounts[s.id] > 0)).map(s => s.id);
+
+  const hideAllEmpty = async () => {
+    if (emptySubIds.length === 0) { toast.info("No hay subcategorías vacías visibles"); return; }
+    if (!confirm(`¿Ocultar ${emptySubIds.length} subcategorías vacías?`)) return;
+    await Promise.all(emptySubIds.map(id => supabase.from("portfolio_subcategories").update({ is_visible: false }).eq("id", id)));
+    setSubcategories(prev => prev.map(s => emptySubIds.includes(s.id) ? { ...s, is_visible: false } : s));
+    toast.success(`${emptySubIds.length} subcategorías ocultadas`);
+  };
+
   const gridItems: GridItem[] = filtered.map(s => ({ ...s, name: s.name }));
 
   return (
@@ -147,6 +164,11 @@ const AdminSubcategories = () => {
               <LayoutGrid className="w-4 h-4" />
             </button>
           </div>
+          {emptySubIds.length > 0 && (
+            <button onClick={hideAllEmpty} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary border border-border text-sm text-muted-foreground hover:text-foreground transition-colors" title="Ocultar subcategorías sin contenido">
+              <EyeOff className="w-4 h-4" /> Ocultar vacías ({emptySubIds.length})
+            </button>
+          )}
           <CoverGenerator
             type="subcategory"
             items={subcategories.map(s => ({ id: s.id, name: s.name, cover_image: s.cover_image, categoryName: s.portfolio_categories?.name }))}
