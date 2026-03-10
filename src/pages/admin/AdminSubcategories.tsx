@@ -139,6 +139,16 @@ const AdminSubcategories = () => {
 
   const galleryLabels: Record<string, string> = { grid: "Grid", masonry: "Masonry", carousel: "Carousel" };
 
+  const emptySubIds = subcategories.filter(s => s.is_visible && !(imageCounts[s.id] > 0)).map(s => s.id);
+
+  const hideAllEmpty = async () => {
+    if (emptySubIds.length === 0) { toast.info("No hay subcategorías vacías visibles"); return; }
+    if (!confirm(`¿Ocultar ${emptySubIds.length} subcategorías vacías?`)) return;
+    await Promise.all(emptySubIds.map(id => supabase.from("portfolio_subcategories").update({ is_visible: false }).eq("id", id)));
+    setSubcategories(prev => prev.map(s => emptySubIds.includes(s.id) ? { ...s, is_visible: false } : s));
+    toast.success(`${emptySubIds.length} subcategorías ocultadas`);
+  };
+
   const gridItems: GridItem[] = filtered.map(s => ({ ...s, name: s.name }));
 
   return (
