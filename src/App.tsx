@@ -13,6 +13,8 @@ import BlogPostPage from "./pages/BlogPost";
 import ServicioFotografia from "./pages/ServicioFotografia";
 import ServicioVideoDron from "./pages/ServicioVideoDron";
 import ServicioTourVirtual from "./pages/ServicioTourVirtual";
+import ServicioEventos from "./pages/ServicioEventos";
+import ServicioRenders from "./pages/ServicioRenders";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCategories from "./pages/admin/AdminCategories";
