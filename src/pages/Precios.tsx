@@ -28,6 +28,7 @@ interface PricingService {
   price: number | null;
   price_suffix: string | null;
   category: string | null;
+  show_from: boolean;
   order: number;
 }
 
