@@ -145,6 +145,7 @@ const AdminPricing = () => {
       price_suffix: s.price_suffix || "",
       category: s.category || "",
       is_visible: s.is_visible,
+      show_from: s.show_from,
     });
     setServiceOpen(true);
   };
