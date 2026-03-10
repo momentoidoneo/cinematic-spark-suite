@@ -33,6 +33,8 @@ const TRACKING_KEYS: (keyof TrackingConfig)[] = [
 ];
 
 const DEFAULT_CONFIG: TrackingConfig = {
+  google_tag_manager_id: "",
+  google_tag_manager_enabled: "false",
   google_analytics_id: "",
   google_analytics_enabled: "false",
   google_ads_id: "",
