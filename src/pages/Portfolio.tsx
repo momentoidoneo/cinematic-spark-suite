@@ -315,6 +315,24 @@ const Portfolio = () => {
         )}
       </div>
 
+      {/* Fullscreen iframe */}
+      {fullscreenIframe && (
+        <div className="fixed inset-0 z-50 bg-background flex flex-col">
+          <div className="flex items-center justify-end p-3">
+            <button onClick={() => setFullscreenIframe(null)} className="text-foreground hover:text-primary">
+              <X className="w-8 h-8" />
+            </button>
+          </div>
+          <iframe
+            src={fullscreenIframe}
+            className="flex-1 w-full border-0"
+            allowFullScreen
+            allow="xr-spatial-tracking"
+            title="Tour virtual 360°"
+          />
+        </div>
+      )}
+
       {/* Lightbox */}
       {lightbox !== null && (
         <div className="fixed inset-0 z-50 bg-background/95 flex items-center justify-center" onClick={() => setLightbox(null)}>
