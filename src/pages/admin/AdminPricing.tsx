@@ -38,8 +38,8 @@ interface PricingService {
   order: number;
 }
 
-const emptyPlan = { name: "", description: "", price: "", price_suffix: "/proyecto", features: [""], is_highlighted: false, is_visible: true };
-const emptyService = { name: "", description: "", price: "", price_suffix: "", category: "", is_visible: true };
+const emptyPlan = { name: "", description: "", price: "", price_suffix: "/proyecto", features: [""], is_highlighted: false, is_visible: true, show_from: false };
+const emptyService = { name: "", description: "", price: "", price_suffix: "", category: "", is_visible: true, show_from: false };
 
 const AdminPricing = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
