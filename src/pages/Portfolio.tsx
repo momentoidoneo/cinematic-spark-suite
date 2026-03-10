@@ -262,14 +262,23 @@ const Portfolio = () => {
                   onClick={() => img.media_type !== "iframe" && openLightbox(i)}
                 >
                   {img.media_type === "iframe" && img.video_url ? (
-                    <iframe
-                      src={img.video_url}
-                      className="w-full h-full absolute inset-0 border-0"
-                      allowFullScreen
-                      allow="xr-spatial-tracking"
-                      loading="lazy"
-                      title={img.alt_text || img.title || "Tour virtual 360°"}
-                    />
+                    <>
+                      <iframe
+                        src={img.video_url}
+                        className="w-full h-full absolute inset-0 border-0"
+                        allowFullScreen
+                        allow="xr-spatial-tracking"
+                        loading="lazy"
+                        title={img.alt_text || img.title || "Tour virtual 360°"}
+                      />
+                      <button
+                        onClick={() => setFullscreenIframe(img.video_url!)}
+                        className="absolute top-3 right-3 z-10 bg-background/80 backdrop-blur-sm text-foreground rounded-full p-2 hover:bg-background transition-colors"
+                        title="Ver en pantalla completa"
+                      >
+                        <Maximize2 className="w-4 h-4" />
+                      </button>
+                    </>
                   ) : (
                     <>
                       <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
