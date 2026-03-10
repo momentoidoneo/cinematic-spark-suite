@@ -37,12 +37,18 @@ const AdminSubcategories = () => {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const fetchData = async () => {
-    const [{ data: cats }, { data: subs }] = await Promise.all([
+    const [{ data: cats }, { data: subs }, { data: images }] = await Promise.all([
       supabase.from("portfolio_categories").select("id, name").order("order"),
       supabase.from("portfolio_subcategories").select("*, portfolio_categories(id, name)").order("order"),
+      supabase.from("portfolio_images").select("subcategory_id"),
     ]);
     if (cats) setCategories(cats);
     if (subs) setSubcategories(subs as any);
+    if (images) {
+      const counts: Record<string, number> = {};
+      images.forEach(img => { counts[img.subcategory_id] = (counts[img.subcategory_id] || 0) + 1; });
+      setImageCounts(counts);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
