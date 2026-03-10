@@ -35,7 +35,9 @@ import AdminTracking from "./pages/admin/AdminTracking";
 import AdminMigration from "./pages/admin/AdminMigration";
 import AdminMessages from "./pages/admin/AdminMessages";
 import Legal from "./pages/Legal";
+import Precios from "./pages/Precios";
 import TrackingScripts from "./components/TrackingScripts";
+import AdminPricing from "./pages/admin/AdminPricing";
 
 const queryClient = new QueryClient();
 
