@@ -79,6 +79,7 @@ const App = () => (
               <Route path="landing" element={<AdminLanding />} />
               <Route path="tracking" element={<AdminTracking />} />
               <Route path="migration" element={<AdminMigration />} />
+              <Route path="messages" element={<AdminMessages />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

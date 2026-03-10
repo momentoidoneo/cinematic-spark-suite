@@ -142,7 +142,7 @@ const AdminSidebar = () => {
         <SidebarSeparator />
         <MenuGroup label="Marketing" items={marketingItems} collapsed={collapsed} />
         <SidebarSeparator />
-        <MenuGroup label="WhatsApp" items={whatsappItems} collapsed={collapsed} />
+        <MenuGroup label="Comunicación" items={communicationItems} collapsed={collapsed} />
         <SidebarSeparator />
         <MenuGroup label="Configuración" items={settingsItems} collapsed={collapsed} />
       </SidebarContent>
