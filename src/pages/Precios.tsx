@@ -196,6 +196,7 @@ const Precios = () => {
                               </div>
                               {s.price != null && (
                                 <p className="text-lg font-bold text-primary whitespace-nowrap">
+                                  {s.show_from && <span className="text-xs font-normal text-muted-foreground">desde </span>}
                                   {s.price}€ <span className="text-xs font-normal text-muted-foreground">{s.price_suffix}</span>
                                 </p>
                               )}
