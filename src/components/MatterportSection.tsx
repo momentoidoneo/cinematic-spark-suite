@@ -80,8 +80,7 @@ const MatterportSection = () => {
           <div className="relative w-full md:w-2/5 min-h-[200px]">
             <img
               src={streetviewImg}
-              alt="Tour virtual integrado en Google Street View"
-              title=""
+              alt="Tour virtual Matterport integrado en Google Street View para mejorar la visibilidad en Google Maps"
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
             />

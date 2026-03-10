@@ -33,7 +33,7 @@ const HeroSection = () => {
           transition={{ duration: 0.8 }}
           className="mb-8"
         >
-          <img src={logo} alt="Silvio Costa Photography" className="h-28 md:h-36 lg:h-44 w-auto mx-auto drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]" />
+          <img src={logo} alt="Silvio Costa Photography — Logotipo del estudio de fotografía profesional" className="h-28 md:h-36 lg:h-44 w-auto mx-auto drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]" />
         </motion.div>
 
         <motion.h1

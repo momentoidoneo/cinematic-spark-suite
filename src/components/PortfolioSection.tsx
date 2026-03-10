@@ -123,9 +123,9 @@ function CategoryCard({ cat }: { cat: Category }) {
       {(cat.cover_image || fallbackImages[cat.slug]) ? (
         <img
           src={cat.cover_image || fallbackImages[cat.slug]}
-          alt={cat.name}
-          title=""
+          alt={`Portafolio de ${cat.name} — Silvio Costa Photography`}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+          loading="lazy"
         />
       ) : (
         <div className="w-full h-full bg-secondary flex items-center justify-center">

@@ -124,7 +124,7 @@ const SectionBanner = ({ image, title, subtitle, reverse = false }: { image: str
       className={`relative rounded-2xl overflow-hidden mb-12 flex flex-col ${reverse ? "md:flex-row-reverse" : "md:flex-row"} items-stretch min-h-[280px] md:min-h-[340px]`}
     >
       <div className="relative w-full md:w-1/2 min-h-[200px] md:min-h-full">
-        <img src={image} alt={title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+        <img src={image} alt={`${title} — Servicio profesional de fotografía y producción audiovisual`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
         <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-card/60 to-transparent" />
       </div>
       <div className="relative w-full md:w-1/2 flex flex-col justify-center p-8 md:p-12 bg-card/90 border border-border/50">
