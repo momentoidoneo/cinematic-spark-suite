@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { BarChart3, Eye, Save, ExternalLink } from "lucide-react";
 
 interface TrackingConfig {
+  google_tag_manager_id: string;
+  google_tag_manager_enabled: string;
   google_analytics_id: string;
   google_analytics_enabled: string;
   google_ads_id: string;
