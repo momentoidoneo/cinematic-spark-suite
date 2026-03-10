@@ -324,6 +324,7 @@ const ServicioFotografia = () => {
 
       <Footer />
       <WhatsAppButton />
+      <FloatingCTA />
     </div>
   );
 };

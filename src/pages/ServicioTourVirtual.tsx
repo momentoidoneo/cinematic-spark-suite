@@ -358,6 +358,7 @@ const ServicioTourVirtual = () => {
 
       <Footer />
       <WhatsAppButton />
+      <FloatingCTA />
     </div>
   );
 };

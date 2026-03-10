@@ -333,6 +333,7 @@ const ServicioVideoDron = () => {
 
       <Footer />
       <WhatsAppButton />
+      <FloatingCTA />
     </div>
   );
 };
