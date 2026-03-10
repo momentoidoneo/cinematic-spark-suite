@@ -34,6 +34,7 @@ interface PricingService {
   price_suffix: string | null;
   category: string | null;
   is_visible: boolean;
+  show_from: boolean;
   order: number;
 }
 
