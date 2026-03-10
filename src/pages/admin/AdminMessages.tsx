@@ -32,7 +32,6 @@ const AdminMessages = () => {
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
   const [selectedMsg, setSelectedMsg] = useState<any | null>(null);
   const { toast } = useToast();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: messages = [], isLoading, refetch } = useQuery({
