@@ -6,9 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Mail, MailOpen, Trash2, Phone, Calendar, RefreshCw } from "lucide-react";
+import { Search, Mail, MailOpen, Trash2, Phone, Calendar, RefreshCw, X } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +30,7 @@ import {
 const AdminMessages = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
+  const [selectedMsg, setSelectedMsg] = useState<any | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -130,7 +137,11 @@ const AdminMessages = () => {
           {filtered.map((msg) => (
             <Card
               key={msg.id}
-              className={`transition-colors ${!msg.is_read ? "border-primary/40 bg-primary/5" : ""}`}
+              className={`transition-colors cursor-pointer hover:shadow-md ${!msg.is_read ? "border-primary/40 bg-primary/5" : ""}`}
+              onClick={() => {
+                setSelectedMsg(msg);
+                if (!msg.is_read) toggleRead.mutate({ id: msg.id, is_read: false });
+              }}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4">
@@ -158,12 +169,12 @@ const AdminMessages = () => {
                         {format(new Date(msg.created_at), "dd MMM yyyy, HH:mm", { locale: es })}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground/80 whitespace-pre-wrap mt-2">
+                    <p className="text-sm text-foreground/80 mt-2 line-clamp-2">
                       {msg.message}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -205,6 +216,51 @@ const AdminMessages = () => {
           ))}
         </div>
       )}
+
+      {/* Dialog detalle */}
+      <Dialog open={!!selectedMsg} onOpenChange={(open) => !open && setSelectedMsg(null)}>
+        <DialogContent className="max-w-lg">
+          {selectedMsg && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-lg">{selectedMsg.name}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+                  <a href={`mailto:${selectedMsg.email}`} className="hover:text-primary underline">
+                    {selectedMsg.email}
+                  </a>
+                  {selectedMsg.phone && (
+                    <a href={`tel:${selectedMsg.phone}`} className="flex items-center gap-1 hover:text-primary">
+                      <Phone className="h-3 w-3" /> {selectedMsg.phone}
+                    </a>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(selectedMsg.created_at), "EEEE dd 'de' MMMM yyyy, HH:mm", { locale: es })}
+                </p>
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                    {selectedMsg.message}
+                  </p>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button asChild size="sm">
+                    <a href={`mailto:${selectedMsg.email}`}>Responder por email</a>
+                  </Button>
+                  {selectedMsg.phone && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={`https://wa.me/${selectedMsg.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener">
+                        WhatsApp
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
