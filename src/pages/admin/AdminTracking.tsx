@@ -21,6 +21,8 @@ interface TrackingConfig {
 }
 
 const TRACKING_KEYS: (keyof TrackingConfig)[] = [
+  "google_tag_manager_id",
+  "google_tag_manager_enabled",
   "google_analytics_id",
   "google_analytics_enabled",
   "google_ads_id",
