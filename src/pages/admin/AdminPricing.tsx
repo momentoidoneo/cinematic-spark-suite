@@ -159,6 +159,7 @@ const AdminPricing = () => {
       price_suffix: serviceForm.price_suffix || null,
       category: serviceForm.category.trim() || null,
       is_visible: serviceForm.is_visible,
+      show_from: serviceForm.show_from,
     };
 
     if (editingService) {
