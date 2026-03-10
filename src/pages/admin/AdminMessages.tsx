@@ -30,6 +30,8 @@ import {
 const AdminMessages = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
+  const [selectedMsg, setSelectedMsg] = useState<any | null>(null);
+  const { toast } = useToast();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
