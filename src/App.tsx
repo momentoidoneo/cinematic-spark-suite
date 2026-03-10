@@ -52,6 +52,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <TrackingScripts />
+          <PageTracker />
+          <Routes>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
