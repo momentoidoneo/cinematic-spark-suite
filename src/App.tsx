@@ -38,6 +38,9 @@ import Legal from "./pages/Legal";
 import Precios from "./pages/Precios";
 import TrackingScripts from "./components/TrackingScripts";
 import AdminPricing from "./pages/admin/AdminPricing";
+import usePageTracking from "./hooks/usePageTracking";
+
+const PageTracker = () => { usePageTracking(); return null; };
 
 const queryClient = new QueryClient();
 
@@ -49,6 +52,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <TrackingScripts />
+          <PageTracker />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
