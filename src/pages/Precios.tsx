@@ -17,6 +17,7 @@ interface Plan {
   price_suffix: string | null;
   features: string[];
   is_highlighted: boolean;
+  show_from: boolean;
   order: number;
 }
 
