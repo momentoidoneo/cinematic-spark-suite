@@ -75,6 +75,11 @@ const AdminAnalytics = () => {
   // Filter views by period
   const filteredViews = useMemo(() => {
     if (period === "all") return views;
+    if (period === "today") {
+      const todayCutoff = new Date();
+      todayCutoff.setHours(0, 0, 0, 0);
+      return views.filter(v => new Date(v.created_at) >= todayCutoff);
+    }
     const days = period === "7d" ? 7 : 30;
     const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     return views.filter(v => new Date(v.created_at) >= cutoff);
