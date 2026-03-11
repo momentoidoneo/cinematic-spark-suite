@@ -35,7 +35,7 @@ const AdminAnalytics = () => {
     categories: 0, subcategories: 0, images: 0, blogPosts: 0, promotions: 0, contacts: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<"7d" | "30d" | "all">("30d");
+  const [period, setPeriod] = useState<"today" | "7d" | "30d" | "all">("30d");
 
   useEffect(() => {
     const fetch = async () => {
