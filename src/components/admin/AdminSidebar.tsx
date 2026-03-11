@@ -53,30 +53,43 @@ const MenuGroup = ({
   label,
   items,
   collapsed,
+  badges,
 }: {
   label: string;
   items: typeof portfolioItems;
   collapsed: boolean;
+  badges?: Record<string, number>;
 }) => (
   <SidebarGroup>
     <SidebarGroupLabel>{label}</SidebarGroupLabel>
     <SidebarGroupContent>
       <SidebarMenu>
-        {items.map((item) => (
-          <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild>
-              <NavLink
-                to={item.url}
-                end={item.url === "/admin"}
-                className="hover:bg-secondary/50"
-                activeClassName="bg-primary/10 text-primary font-medium"
-              >
-                <item.icon className="mr-2 h-4 w-4" />
-                {!collapsed && <span>{item.title}</span>}
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
+        {items.map((item) => {
+          const badge = badges?.[item.url] || 0;
+          return (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton asChild>
+                <NavLink
+                  to={item.url}
+                  end={item.url === "/admin"}
+                  className="hover:bg-secondary/50 relative"
+                  activeClassName="bg-primary/10 text-primary font-medium"
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>{item.title}</span>}
+                  {badge > 0 && (
+                    <span className="ml-auto min-w-5 h-5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  )}
+                  {badge > 0 && collapsed && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-destructive" />
+                  )}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroupContent>
   </SidebarGroup>
