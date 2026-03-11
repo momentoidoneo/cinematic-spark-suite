@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Records a page view on every route change (public pages only).
- * Generates a simple hash from the IP via the Supabase anon header.
+ * Excludes: admin routes, logged-in users, and traffic from Lovable preview/editor.
  */
 const usePageTracking = () => {
   const location = useLocation();
@@ -13,8 +13,22 @@ const usePageTracking = () => {
     // Skip admin routes
     if (location.pathname.startsWith("/admin") || location.pathname === "/login") return;
 
+    // Skip Lovable preview/editor traffic
+    const ref = document.referrer || "";
+    const host = window.location.hostname || "";
+    if (
+      ref.includes("lovable.dev") ||
+      ref.includes("lovableproject.com") ||
+      host.includes("lovableproject.com") ||
+      host.includes("id-preview--")
+    ) return;
+
     const record = async () => {
       try {
+        // Skip if user is authenticated (admin)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) return;
+
         await supabase.from("page_views").insert({
           page_path: location.pathname,
           referrer: document.referrer || null,
