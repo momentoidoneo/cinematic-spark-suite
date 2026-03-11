@@ -35,7 +35,7 @@ const AdminAnalytics = () => {
     categories: 0, subcategories: 0, images: 0, blogPosts: 0, promotions: 0, contacts: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<"7d" | "30d" | "all">("30d");
+  const [period, setPeriod] = useState<"today" | "7d" | "30d" | "all">("30d");
 
   useEffect(() => {
     const fetch = async () => {
@@ -75,6 +75,11 @@ const AdminAnalytics = () => {
   // Filter views by period
   const filteredViews = useMemo(() => {
     if (period === "all") return views;
+    if (period === "today") {
+      const todayCutoff = new Date();
+      todayCutoff.setHours(0, 0, 0, 0);
+      return views.filter(v => new Date(v.created_at) >= todayCutoff);
+    }
     const days = period === "7d" ? 7 : 30;
     const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     return views.filter(v => new Date(v.created_at) >= cutoff);
@@ -82,6 +87,15 @@ const AdminAnalytics = () => {
 
   // Daily views chart
   const dailyChart = useMemo(() => {
+    if (period === "today") {
+      // Hourly breakdown for today
+      const hours = Array(24).fill(0);
+      filteredViews.forEach(v => { hours[new Date(v.created_at).getHours()]++; });
+      return hours.map((count, h) => ({
+        date: `${h}:00`,
+        visitas: count,
+      }));
+    }
     const map = new Map<string, number>();
     const days = period === "7d" ? 7 : period === "30d" ? 30 : 60;
     for (let i = days - 1; i >= 0; i--) {
@@ -97,6 +111,16 @@ const AdminAnalytics = () => {
       visitas: count,
     }));
   }, [filteredViews, period]);
+
+  // Unique visits (by ip_hash or user_agent as fallback)
+  const uniqueVisits = useMemo(() => {
+    const seen = new Set<string>();
+    filteredViews.forEach(v => {
+      const key = v.user_agent || v.id;
+      seen.add(key);
+    });
+    return seen.size;
+  }, [filteredViews]);
 
   // Top pages
   const topPages = useMemo(() => {
@@ -194,7 +218,7 @@ const AdminAnalytics = () => {
           <p className="text-sm text-muted-foreground">Estadísticas y métricas de tu sitio web</p>
         </div>
         <div className="flex gap-1 bg-secondary rounded-lg p-1">
-          {(["7d", "30d", "all"] as const).map(p => (
+          {(["today", "7d", "30d", "all"] as const).map(p => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
@@ -202,18 +226,19 @@ const AdminAnalytics = () => {
                 period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {p === "7d" ? "7 días" : p === "30d" ? "30 días" : "Todo"}
+              {p === "today" ? "Hoy" : p === "7d" ? "7 días" : p === "30d" ? "30 días" : "Todo"}
             </button>
           ))}
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <KPICard label="Hoy" value={todayViews} icon={Eye} color="text-green-400" />
         <KPICard label="Semana" value={weekViews} icon={TrendingUp} color="text-blue-400" />
         <KPICard label="Periodo" value={filteredViews.length} icon={BarChart3} color="text-primary" />
-        <KPICard label="Páginas únicas" value={new Set(filteredViews.map(v => v.page_path)).size} icon={MousePointerClick} color="text-accent" />
+        <KPICard label="Visitas únicas" value={uniqueVisits} icon={Users} color="text-accent" />
+        <KPICard label="Páginas únicas" value={new Set(filteredViews.map(v => v.page_path)).size} icon={MousePointerClick} color="text-muted-foreground" />
       </div>
 
       {/* Main chart */}
