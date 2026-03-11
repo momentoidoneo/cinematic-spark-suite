@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard, BarChart3, Image, FolderOpen, Layers, HardDrive,
   Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard
@@ -5,6 +6,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
