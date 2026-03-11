@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard, BarChart3, Image, FolderOpen, Layers, HardDrive,
   Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard
@@ -5,6 +6,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -51,30 +53,43 @@ const MenuGroup = ({
   label,
   items,
   collapsed,
+  badges,
 }: {
   label: string;
   items: typeof portfolioItems;
   collapsed: boolean;
+  badges?: Record<string, number>;
 }) => (
   <SidebarGroup>
     <SidebarGroupLabel>{label}</SidebarGroupLabel>
     <SidebarGroupContent>
       <SidebarMenu>
-        {items.map((item) => (
-          <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild>
-              <NavLink
-                to={item.url}
-                end={item.url === "/admin"}
-                className="hover:bg-secondary/50"
-                activeClassName="bg-primary/10 text-primary font-medium"
-              >
-                <item.icon className="mr-2 h-4 w-4" />
-                {!collapsed && <span>{item.title}</span>}
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
+        {items.map((item) => {
+          const badge = badges?.[item.url] || 0;
+          return (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton asChild>
+                <NavLink
+                  to={item.url}
+                  end={item.url === "/admin"}
+                  className="hover:bg-secondary/50 relative"
+                  activeClassName="bg-primary/10 text-primary font-medium"
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>{item.title}</span>}
+                  {badge > 0 && (
+                    <span className="ml-auto min-w-5 h-5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold px-1">
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  )}
+                  {badge > 0 && collapsed && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-destructive" />
+                  )}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroupContent>
   </SidebarGroup>
@@ -84,6 +99,31 @@ const AdminSidebar = () => {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      const { count } = await supabase
+        .from("contact_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("is_read", false);
+      setUnreadCount(count || 0);
+    };
+    fetchUnread();
+
+    const channel = supabase
+      .channel("unread-messages")
+      .on("postgres_changes", { event: "*", schema: "public", table: "contact_messages" }, () => {
+        fetchUnread();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const commBadges: Record<string, number> = {
+    "/admin/messages": unreadCount,
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -94,7 +134,6 @@ const AdminSidebar = () => {
         {!collapsed && <span className="font-display font-bold text-foreground">Admin Panel</span>}
       </div>
 
-      {/* User info */}
       {!collapsed && (
         <div className="px-4 py-3 border-b border-border">
           <p className="text-sm font-medium text-foreground truncate">
@@ -105,7 +144,6 @@ const AdminSidebar = () => {
       )}
 
       <SidebarContent>
-        {/* Dashboard */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -143,7 +181,7 @@ const AdminSidebar = () => {
         <SidebarSeparator />
         <MenuGroup label="Marketing" items={marketingItems} collapsed={collapsed} />
         <SidebarSeparator />
-        <MenuGroup label="Comunicación" items={communicationItems} collapsed={collapsed} />
+        <MenuGroup label="Comunicación" items={communicationItems} collapsed={collapsed} badges={commBadges} />
         <SidebarSeparator />
         <MenuGroup label="Configuración" items={settingsItems} collapsed={collapsed} />
       </SidebarContent>
