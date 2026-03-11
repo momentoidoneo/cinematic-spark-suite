@@ -99,6 +99,31 @@ const AdminSidebar = () => {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      const { count } = await supabase
+        .from("contact_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("is_read", false);
+      setUnreadCount(count || 0);
+    };
+    fetchUnread();
+
+    const channel = supabase
+      .channel("unread-messages")
+      .on("postgres_changes", { event: "*", schema: "public", table: "contact_messages" }, () => {
+        fetchUnread();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const commBadges: Record<string, number> = {
+    "/admin/messages": unreadCount,
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -109,7 +134,6 @@ const AdminSidebar = () => {
         {!collapsed && <span className="font-display font-bold text-foreground">Admin Panel</span>}
       </div>
 
-      {/* User info */}
       {!collapsed && (
         <div className="px-4 py-3 border-b border-border">
           <p className="text-sm font-medium text-foreground truncate">
@@ -120,7 +144,6 @@ const AdminSidebar = () => {
       )}
 
       <SidebarContent>
-        {/* Dashboard */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -158,7 +181,7 @@ const AdminSidebar = () => {
         <SidebarSeparator />
         <MenuGroup label="Marketing" items={marketingItems} collapsed={collapsed} />
         <SidebarSeparator />
-        <MenuGroup label="Comunicación" items={communicationItems} collapsed={collapsed} />
+        <MenuGroup label="Comunicación" items={communicationItems} collapsed={collapsed} badges={commBadges} />
         <SidebarSeparator />
         <MenuGroup label="Configuración" items={settingsItems} collapsed={collapsed} />
       </SidebarContent>
