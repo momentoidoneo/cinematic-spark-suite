@@ -233,11 +233,12 @@ const AdminAnalytics = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <KPICard label="Hoy" value={todayViews} icon={Eye} color="text-green-400" />
         <KPICard label="Semana" value={weekViews} icon={TrendingUp} color="text-blue-400" />
         <KPICard label="Periodo" value={filteredViews.length} icon={BarChart3} color="text-primary" />
-        <KPICard label="Páginas únicas" value={new Set(filteredViews.map(v => v.page_path)).size} icon={MousePointerClick} color="text-accent" />
+        <KPICard label="Visitas únicas" value={uniqueVisits} icon={Users} color="text-accent" />
+        <KPICard label="Páginas únicas" value={new Set(filteredViews.map(v => v.page_path)).size} icon={MousePointerClick} color="text-muted-foreground" />
       </div>
 
       {/* Main chart */}
