@@ -87,6 +87,15 @@ const AdminAnalytics = () => {
 
   // Daily views chart
   const dailyChart = useMemo(() => {
+    if (period === "today") {
+      // Hourly breakdown for today
+      const hours = Array(24).fill(0);
+      filteredViews.forEach(v => { hours[new Date(v.created_at).getHours()]++; });
+      return hours.map((count, h) => ({
+        date: `${h}:00`,
+        visitas: count,
+      }));
+    }
     const map = new Map<string, number>();
     const days = period === "7d" ? 7 : period === "30d" ? 30 : 60;
     for (let i = days - 1; i >= 0; i--) {
@@ -102,6 +111,16 @@ const AdminAnalytics = () => {
       visitas: count,
     }));
   }, [filteredViews, period]);
+
+  // Unique visits (by ip_hash or user_agent as fallback)
+  const uniqueVisits = useMemo(() => {
+    const seen = new Set<string>();
+    filteredViews.forEach(v => {
+      const key = v.user_agent || v.id;
+      seen.add(key);
+    });
+    return seen.size;
+  }, [filteredViews]);
 
   // Top pages
   const topPages = useMemo(() => {
