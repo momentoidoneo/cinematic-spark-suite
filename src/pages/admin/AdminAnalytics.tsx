@@ -218,7 +218,7 @@ const AdminAnalytics = () => {
           <p className="text-sm text-muted-foreground">Estadísticas y métricas de tu sitio web</p>
         </div>
         <div className="flex gap-1 bg-secondary rounded-lg p-1">
-          {(["7d", "30d", "all"] as const).map(p => (
+          {(["today", "7d", "30d", "all"] as const).map(p => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
@@ -226,7 +226,7 @@ const AdminAnalytics = () => {
                 period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {p === "7d" ? "7 días" : p === "30d" ? "30 días" : "Todo"}
+              {p === "today" ? "Hoy" : p === "7d" ? "7 días" : p === "30d" ? "30 días" : "Todo"}
             </button>
           ))}
         </div>
