@@ -95,12 +95,21 @@ const Portfolio = () => {
         setCategories(data as Category[]);
         if (categorySlug) {
           const found = data.find(c => c.slug === categorySlug);
-          if (found) setSelectedCat(found as Category);
+          if (found) {
+            setSelectedCat(found as Category);
+            if (!subcategorySlug) setSelectedSub(null);
+          } else {
+            setSelectedCat(null);
+            setSelectedSub(null);
+          }
+        } else {
+          setSelectedCat(null);
+          setSelectedSub(null);
         }
       }
     };
     fetchCats();
-  }, [categorySlug]);
+  }, [categorySlug, subcategorySlug]);
 
   useEffect(() => {
     if (!selectedCat) { setSubcategories([]); setImages([]); return; }
