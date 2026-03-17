@@ -22,6 +22,16 @@ type PortfolioImage = {
 
 type MediaMode = "image" | "video" | "iframe";
 
+/** Extract YouTube video ID from common URL formats */
+const getYouTubeId = (url: string): string | null => {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/);
+  return match ? match[1] : null;
+};
+
+/** Get the best available YouTube thumbnail URL */
+const getYouTubeThumbnail = (videoId: string): string =>
+  `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+
 const AdminImages = () => {
   const [searchParams] = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -126,7 +136,22 @@ const AdminImages = () => {
     let query = supabase.from("portfolio_images").select("*").order("order");
     if (filterSub) query = query.eq("subcategory_id", filterSub);
     const { data } = await query;
-    if (data) setImages(data as PortfolioImage[]);
+    if (data) {
+      // Auto-fix YouTube videos missing thumbnails
+      const toFix = (data as PortfolioImage[]).filter(
+        img => img.media_type === "video" && img.video_url && !img.thumbnail_url && getYouTubeId(img.video_url)
+      );
+      if (toFix.length > 0) {
+        await Promise.all(toFix.map(img => {
+          const thumb = getYouTubeThumbnail(getYouTubeId(img.video_url!)!);
+          return supabase.from("portfolio_images").update({ thumbnail_url: thumb, image_url: thumb }).eq("id", img.id);
+        }));
+        // Re-fetch after fix
+        const { data: refreshed } = await query;
+        if (refreshed) { setImages(refreshed as PortfolioImage[]); return; }
+      }
+      setImages(data as PortfolioImage[]);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -186,15 +211,18 @@ const AdminImages = () => {
           });
         }
       } else if (uploadForm.video_url) {
+        // Auto-detect YouTube thumbnail if no custom thumbnail provided
+        const ytId = getYouTubeId(uploadForm.video_url);
+        const autoThumb = !uploadForm.thumbnail_url && ytId ? getYouTubeThumbnail(ytId) : uploadForm.thumbnail_url || null;
         await supabase.from("portfolio_images").insert({
           subcategory_id: uploadForm.subcategory_id,
-          image_url: uploadForm.thumbnail_url || "/placeholder.svg",
+          image_url: autoThumb || "/placeholder.svg",
           video_url: uploadForm.video_url,
           title: uploadForm.title || "Video",
           alt_text: uploadForm.alt_text || "Video",
           order: images.length,
           media_type: "video",
-          thumbnail_url: uploadForm.thumbnail_url || null,
+          thumbnail_url: autoThumb,
         });
       } else {
         toast.error("Proporciona un archivo de vídeo o un enlace");
