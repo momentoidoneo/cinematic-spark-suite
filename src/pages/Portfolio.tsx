@@ -259,8 +259,11 @@ const Portfolio = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.05 }}
-                  className={`relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/30 transition-all group ${img.media_type !== "iframe" ? "cursor-pointer" : ""}`}
-                  onClick={() => img.media_type !== "iframe" && openLightbox(i)}
+                  className={`relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/30 transition-all group ${img.media_type === "iframe" || (img.media_type === "video" && img.video_url && getEmbedUrl(img.video_url) !== img.video_url) ? "" : "cursor-pointer"}`}
+                  onClick={() => {
+                    const isEmbeddedVideo = img.media_type === "video" && img.video_url && getEmbedUrl(img.video_url) !== img.video_url;
+                    if (img.media_type !== "iframe" && !isEmbeddedVideo) openLightbox(i);
+                  }}
                 >
                   {img.media_type === "iframe" && img.video_url ? (
                     <>
@@ -274,6 +277,23 @@ const Portfolio = () => {
                       />
                       <button
                         onClick={() => setFullscreenIframe(img.video_url!)}
+                        className="absolute top-3 right-3 z-10 bg-background/80 backdrop-blur-sm text-foreground rounded-full p-2 hover:bg-background transition-colors"
+                        title="Ver en pantalla completa"
+                      >
+                        <Maximize2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : img.media_type === "video" && img.video_url && getEmbedUrl(img.video_url) !== img.video_url ? (
+                    <>
+                      <iframe
+                        src={getEmbedUrl(img.video_url)}
+                        className="w-full h-full absolute inset-0 border-0"
+                        allowFullScreen
+                        loading="lazy"
+                        title={img.alt_text || img.title || "Vídeo"}
+                      />
+                      <button
+                        onClick={() => setFullscreenIframe(getEmbedUrl(img.video_url!))}
                         className="absolute top-3 right-3 z-10 bg-background/80 backdrop-blur-sm text-foreground rounded-full p-2 hover:bg-background transition-colors"
                         title="Ver en pantalla completa"
                       >
