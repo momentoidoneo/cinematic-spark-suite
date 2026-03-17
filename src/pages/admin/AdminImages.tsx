@@ -196,15 +196,18 @@ const AdminImages = () => {
           });
         }
       } else if (uploadForm.video_url) {
+        // Auto-detect YouTube thumbnail if no custom thumbnail provided
+        const ytId = getYouTubeId(uploadForm.video_url);
+        const autoThumb = !uploadForm.thumbnail_url && ytId ? getYouTubeThumbnail(ytId) : uploadForm.thumbnail_url || null;
         await supabase.from("portfolio_images").insert({
           subcategory_id: uploadForm.subcategory_id,
-          image_url: uploadForm.thumbnail_url || "/placeholder.svg",
+          image_url: autoThumb || "/placeholder.svg",
           video_url: uploadForm.video_url,
           title: uploadForm.title || "Video",
           alt_text: uploadForm.alt_text || "Video",
           order: images.length,
           media_type: "video",
-          thumbnail_url: uploadForm.thumbnail_url || null,
+          thumbnail_url: autoThumb,
         });
       } else {
         toast.error("Proporciona un archivo de vídeo o un enlace");
