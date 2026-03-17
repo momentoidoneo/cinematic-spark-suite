@@ -24,14 +24,61 @@ type MediaMode = "image" | "video" | "iframe";
 
 /** Extract YouTube video ID from common URL formats */
 const getYouTubeId = (url: string): string | null => {
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/);
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([^&\s?/]+)/);
   return match ? match[1] : null;
 };
 
-/** Get the best available YouTube thumbnail URL */
-const getYouTubeThumbnail = (videoId: string): string =>
-  `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+const getYouTubeThumbnailCandidates = (videoId: string): string[] => [
+  `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+  `https://i.ytimg.com/vi/${videoId}/sddefault.jpg`,
+  `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+  `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`,
+  `https://i.ytimg.com/vi/${videoId}/default.jpg`,
+];
 
+/** Use a reliable default thumbnail for saved data */
+const getYouTubeThumbnail = (videoId: string): string =>
+  getYouTubeThumbnailCandidates(videoId)[2];
+
+const AdminThumbnail = ({ img }: { img: PortfolioImage }) => {
+  const youtubeId = img.video_url ? getYouTubeId(img.video_url) : null;
+  const fallbackSources = youtubeId ? getYouTubeThumbnailCandidates(youtubeId) : [];
+  const initialSource = img.thumbnail_url || img.image_url || fallbackSources[0] || "/placeholder.svg";
+  const [src, setSrc] = useState(initialSource);
+  const [fallbackIndex, setFallbackIndex] = useState(0);
+
+  useEffect(() => {
+    setSrc(initialSource);
+    setFallbackIndex(0);
+  }, [initialSource]);
+
+  const handleError = () => {
+    if (!fallbackSources.length) {
+      if (src !== "/placeholder.svg") setSrc("/placeholder.svg");
+      return;
+    }
+
+    const nextIndex = fallbackIndex + 1;
+    if (nextIndex < fallbackSources.length) {
+      setFallbackIndex(nextIndex);
+      setSrc(fallbackSources[nextIndex]);
+      return;
+    }
+
+    if (src !== "/placeholder.svg") setSrc("/placeholder.svg");
+  };
+
+  return (
+    <img
+      src={src}
+      alt={img.alt_text || img.title || "Miniatura del vídeo"}
+      className="h-full w-64 object-cover pointer-events-none select-none"
+      draggable={false}
+      onError={handleError}
+      onContextMenu={(e) => e.preventDefault()}
+    />
+  );
+};
 const AdminImages = () => {
   const [searchParams] = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
