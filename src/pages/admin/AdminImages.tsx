@@ -22,6 +22,16 @@ type PortfolioImage = {
 
 type MediaMode = "image" | "video" | "iframe";
 
+/** Extract YouTube video ID from common URL formats */
+const getYouTubeId = (url: string): string | null => {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/);
+  return match ? match[1] : null;
+};
+
+/** Get the best available YouTube thumbnail URL */
+const getYouTubeThumbnail = (videoId: string): string =>
+  `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+
 const AdminImages = () => {
   const [searchParams] = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
