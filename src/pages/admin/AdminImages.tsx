@@ -136,7 +136,22 @@ const AdminImages = () => {
     let query = supabase.from("portfolio_images").select("*").order("order");
     if (filterSub) query = query.eq("subcategory_id", filterSub);
     const { data } = await query;
-    if (data) setImages(data as PortfolioImage[]);
+    if (data) {
+      // Auto-fix YouTube videos missing thumbnails
+      const toFix = (data as PortfolioImage[]).filter(
+        img => img.media_type === "video" && img.video_url && !img.thumbnail_url && getYouTubeId(img.video_url)
+      );
+      if (toFix.length > 0) {
+        await Promise.all(toFix.map(img => {
+          const thumb = getYouTubeThumbnail(getYouTubeId(img.video_url!)!);
+          return supabase.from("portfolio_images").update({ thumbnail_url: thumb, image_url: thumb }).eq("id", img.id);
+        }));
+        // Re-fetch after fix
+        const { data: refreshed } = await query;
+        if (refreshed) { setImages(refreshed as PortfolioImage[]); return; }
+      }
+      setImages(data as PortfolioImage[]);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
