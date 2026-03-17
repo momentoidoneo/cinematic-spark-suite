@@ -480,11 +480,11 @@ const AdminImages = () => {
                             <Maximize2 className="w-3.5 h-3.5" /> Maximizar
                           </button>
                         </div>
-                      ) : (
-                        <div className="h-48 cursor-pointer" onClick={() => setLightboxIdx(idx)}>
-                          <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} className="h-full w-auto object-cover pointer-events-none select-none" draggable={false} onContextMenu={(e) => e.preventDefault()} />
-                        </div>
-                      )}
+                        ) : (
+                          <div className="h-48 cursor-pointer" onClick={() => setLightboxIdx(idx)}>
+                            <AdminThumbnail img={img} />
+                          </div>
+                        )}
                       <div className={`absolute top-2 left-10 ${mediaColor(img.media_type)} text-white rounded-full p-1.5 flex items-center gap-1`}>
                         {mediaIcon(img.media_type)}
                       </div>
