@@ -70,7 +70,7 @@ function FreeGrid<T extends { id: string; grid_row: number | null; grid_col: num
   }
 
   return (
-    <div className={`grid gap-6`} style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+    <div className={`grid gap-3 md:gap-6 grid-cols-2 md:grid-cols-${columns}`}>
       {items.map((item, i) => (
         <div key={item.id}>{renderItem(item, i)}</div>
       ))}
@@ -222,9 +222,9 @@ const Portfolio = () => {
               >
                 {cat.cover_image && <img src={cat.cover_image} alt={cat.name} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
-                <div className="absolute bottom-6 left-6">
-                  <h3 className="font-display text-2xl font-bold text-foreground">{cat.name}</h3>
-                  {cat.description && <p className="text-sm text-muted-foreground mt-1">{cat.description}</p>}
+                <div className="absolute bottom-3 left-3 right-3 md:bottom-6 md:left-6">
+                  <h3 className="font-display text-sm md:text-2xl font-bold text-foreground truncate">{cat.name}</h3>
+                  {cat.description && <p className="text-xs md:text-sm text-muted-foreground mt-0.5 md:mt-1 line-clamp-2">{cat.description}</p>}
                 </div>
               </motion.button>
             )}
@@ -247,9 +247,9 @@ const Portfolio = () => {
               >
                 {sub.cover_image && <img src={sub.cover_image} alt={sub.name} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
-                <div className="absolute bottom-6 left-6">
-                  <h3 className="font-display text-2xl font-bold text-foreground">{sub.name}</h3>
-                  {sub.description && <p className="text-sm text-muted-foreground mt-1">{sub.description}</p>}
+                <div className="absolute bottom-3 left-3 right-3 md:bottom-6 md:left-6">
+                  <h3 className="font-display text-sm md:text-2xl font-bold text-foreground truncate">{sub.name}</h3>
+                  {sub.description && <p className="text-xs md:text-sm text-muted-foreground mt-0.5 md:mt-1 line-clamp-2">{sub.description}</p>}
                 </div>
               </motion.button>
             )}
