@@ -9,7 +9,7 @@ import { X, ChevronLeft, ChevronRight, Play, Globe, Maximize2 } from "lucide-rea
 import SEOHead, { breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
 
 type Category = { id: string; name: string; slug: string; description: string | null; cover_image: string | null; grid_row: number | null; grid_col: number | null };
-type Subcategory = { id: string; name: string; slug: string; category_id: string; description: string | null; gallery_style: string | null; cover_image: string | null; grid_row: number | null; grid_col: number | null };
+type Subcategory = { id: string; name: string; slug: string; category_id: string; description: string | null; gallery_style: string | null; cover_image: string | null; cover_position: string; grid_row: number | null; grid_col: number | null };
 type PortfolioImage = { id: string; image_url: string; title: string | null; alt_text: string | null; subcategory_id: string; media_type: string; video_url: string | null; thumbnail_url: string | null; grid_row: number | null; grid_col: number | null };
 
 const getEmbedUrl = (url: string): string => {
@@ -245,7 +245,7 @@ const Portfolio = () => {
                 onClick={() => setSelectedSub(sub)}
                 className="group relative aspect-[4/3] rounded-2xl overflow-hidden text-left border border-border bg-card hover:border-primary/30 transition-all w-full"
               >
-                {sub.cover_image && <img src={sub.cover_image} alt={sub.name} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />}
+                {sub.cover_image && <img src={sub.cover_image} alt={sub.name} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" style={{ objectPosition: sub.cover_position || "center" }} />}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3 md:bottom-6 md:left-6">
                   <h3 className="font-display text-sm md:text-2xl font-bold text-foreground truncate">{sub.name}</h3>
