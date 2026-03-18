@@ -70,7 +70,7 @@ function FreeGrid<T extends { id: string; grid_row: number | null; grid_col: num
   }
 
   return (
-    <div className={`grid gap-6`} style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+    <div className={`grid gap-3 md:gap-6 grid-cols-2 md:grid-cols-${columns}`}>
       {items.map((item, i) => (
         <div key={item.id}>{renderItem(item, i)}</div>
       ))}
