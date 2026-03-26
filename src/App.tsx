@@ -38,6 +38,7 @@ import Legal from "./pages/Legal";
 import Precios from "./pages/Precios";
 import TrackingScripts from "./components/TrackingScripts";
 import AdminPricing from "./pages/admin/AdminPricing";
+import AdminSEO from "./pages/admin/AdminSEO";
 import usePageTracking from "./hooks/usePageTracking";
 
 const PageTracker = () => { usePageTracking(); return null; };
