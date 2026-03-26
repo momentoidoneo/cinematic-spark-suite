@@ -42,7 +42,13 @@ const AdminBlog = () => {
     setEditing(null);
   };
 
-  const openEdit = (post: BlogPost) => {
+  const openEdit = async (post: BlogPost) => {
+    // Load SEO overrides from seo_metadata
+    const { data: seoRow } = await supabase
+      .from("seo_metadata")
+      .select("title, description")
+      .eq("page_path", `/blog/${post.slug}`)
+      .maybeSingle();
     setForm({
       title: post.title,
       slug: post.slug,
@@ -50,6 +56,8 @@ const AdminBlog = () => {
       content: post.content,
       cover_image: post.cover_image || "",
       status: post.status,
+      meta_title: seoRow?.title || "",
+      meta_description: seoRow?.description || "",
     });
     setEditing(post);
     setCreating(false);
