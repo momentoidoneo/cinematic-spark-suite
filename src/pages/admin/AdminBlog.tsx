@@ -37,7 +37,7 @@ const AdminBlog = () => {
   const generateSlug = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
   const openCreate = () => {
-    setForm({ title: "", slug: "", excerpt: "", content: "", cover_image: "", status: "draft" });
+    setForm({ title: "", slug: "", excerpt: "", content: "", cover_image: "", status: "draft", meta_title: "", meta_description: "" });
     setCreating(true);
     setEditing(null);
   };
