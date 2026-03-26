@@ -24,7 +24,7 @@ const AdminBlog = () => {
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState("");
-  const [form, setForm] = useState({ title: "", slug: "", excerpt: "", content: "", cover_image: "", status: "draft" });
+  const [form, setForm] = useState({ title: "", slug: "", excerpt: "", content: "", cover_image: "", status: "draft", meta_title: "", meta_description: "" });
 
   const fetchPosts = async () => {
     const { data } = await supabase.from("blog_posts").select("*").order("created_at", { ascending: false });

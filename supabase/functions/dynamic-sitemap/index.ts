@@ -8,16 +8,19 @@ const corsHeaders = {
 const SITE_URL = "https://silviocosta.net";
 
 const staticPages = [
-  { loc: "/", changefreq: "weekly", priority: "1.0" },
-  { loc: "/servicios/fotografia", changefreq: "monthly", priority: "0.9" },
-  { loc: "/servicios/video-dron", changefreq: "monthly", priority: "0.9" },
-  { loc: "/servicios/tour-virtual", changefreq: "monthly", priority: "0.9" },
-  { loc: "/portafolio", changefreq: "weekly", priority: "0.8" },
-  { loc: "/blog", changefreq: "weekly", priority: "0.8" },
-  { loc: "/legal/privacy-policy", changefreq: "yearly", priority: "0.3" },
-  { loc: "/legal/legal-notice", changefreq: "yearly", priority: "0.3" },
-  { loc: "/legal/cookies", changefreq: "yearly", priority: "0.3" },
-  { loc: "/legal/terms", changefreq: "yearly", priority: "0.3" },
+  { loc: "/", changefreq: "weekly", priority: "1.0", lastmod: "2026-03-26" },
+  { loc: "/servicios/fotografia", changefreq: "monthly", priority: "0.9", lastmod: "2026-03-20" },
+  { loc: "/servicios/video-dron", changefreq: "monthly", priority: "0.9", lastmod: "2026-03-20" },
+  { loc: "/servicios/tour-virtual", changefreq: "monthly", priority: "0.9", lastmod: "2026-03-20" },
+  { loc: "/servicios/eventos", changefreq: "monthly", priority: "0.9", lastmod: "2026-03-20" },
+  { loc: "/servicios/renders", changefreq: "monthly", priority: "0.9", lastmod: "2026-03-20" },
+  { loc: "/portafolio", changefreq: "weekly", priority: "0.8", lastmod: "2026-03-25" },
+  { loc: "/blog", changefreq: "weekly", priority: "0.8", lastmod: "2026-03-25" },
+  { loc: "/precios", changefreq: "monthly", priority: "0.7", lastmod: "2026-03-20" },
+  { loc: "/legal/privacy-policy", changefreq: "yearly", priority: "0.3", lastmod: "2026-01-01" },
+  { loc: "/legal/legal-notice", changefreq: "yearly", priority: "0.3", lastmod: "2026-01-01" },
+  { loc: "/legal/cookies", changefreq: "yearly", priority: "0.3", lastmod: "2026-01-01" },
+  { loc: "/legal/terms", changefreq: "yearly", priority: "0.3", lastmod: "2026-01-01" },
 ];
 
 Deno.serve(async (req) => {
@@ -38,7 +41,7 @@ Deno.serve(async (req) => {
 
     const urls = staticPages.map(
       (p) =>
-        `  <url>\n    <loc>${SITE_URL}${p.loc}</loc>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>`
+        `  <url>\n    <loc>${SITE_URL}${p.loc}</loc>\n    <lastmod>${p.lastmod}</lastmod>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>`
     );
 
     if (posts) {
