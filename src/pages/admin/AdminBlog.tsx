@@ -24,7 +24,7 @@ const AdminBlog = () => {
   const [editing, setEditing] = useState<BlogPost | null>(null);
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState("");
-  const [form, setForm] = useState({ title: "", slug: "", excerpt: "", content: "", cover_image: "", status: "draft" });
+  const [form, setForm] = useState({ title: "", slug: "", excerpt: "", content: "", cover_image: "", status: "draft", meta_title: "", meta_description: "" });
 
   const fetchPosts = async () => {
     const { data } = await supabase.from("blog_posts").select("*").order("created_at", { ascending: false });
@@ -37,12 +37,18 @@ const AdminBlog = () => {
   const generateSlug = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
   const openCreate = () => {
-    setForm({ title: "", slug: "", excerpt: "", content: "", cover_image: "", status: "draft" });
+    setForm({ title: "", slug: "", excerpt: "", content: "", cover_image: "", status: "draft", meta_title: "", meta_description: "" });
     setCreating(true);
     setEditing(null);
   };
 
-  const openEdit = (post: BlogPost) => {
+  const openEdit = async (post: BlogPost) => {
+    // Load SEO overrides from seo_metadata
+    const { data: seoRow } = await supabase
+      .from("seo_metadata")
+      .select("title, description")
+      .eq("page_path", `/blog/${post.slug}`)
+      .maybeSingle();
     setForm({
       title: post.title,
       slug: post.slug,
@@ -50,6 +56,8 @@ const AdminBlog = () => {
       content: post.content,
       cover_image: post.cover_image || "",
       status: post.status,
+      meta_title: seoRow?.title || "",
+      meta_description: seoRow?.description || "",
     });
     setEditing(post);
     setCreating(false);
@@ -78,6 +86,18 @@ const AdminBlog = () => {
       if (error) { toast.error(error.message); return; }
       toast.success("Artículo creado");
     }
+
+    // Upsert SEO metadata for this blog post
+    if (form.meta_title.trim() || form.meta_description.trim()) {
+      const seoPath = `/blog/${slug}`;
+      const { data: existing } = await supabase.from("seo_metadata").select("id").eq("page_path", seoPath).maybeSingle();
+      if (existing) {
+        await supabase.from("seo_metadata").update({ title: form.meta_title || null, description: form.meta_description || null }).eq("id", existing.id);
+      } else {
+        await supabase.from("seo_metadata").insert({ page_path: seoPath, title: form.meta_title || null, description: form.meta_description || null });
+      }
+    }
+
     setEditing(null);
     setCreating(false);
     fetchPosts();
@@ -168,6 +188,32 @@ const AdminBlog = () => {
                   <option value="published">Publicado</option>
                   <option value="archived">Archivado</option>
                 </select>
+              </div>
+            </div>
+            <div className="rounded-xl bg-card border border-border p-4 space-y-4">
+              <h3 className="font-semibold text-foreground text-sm">🔍 SEO (Meta Tags)</h3>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
+                  Meta Title <span className={`text-xs ml-1 ${form.meta_title.length > 60 ? 'text-red-500' : 'text-muted-foreground'}`}>({form.meta_title.length}/60)</span>
+                </label>
+                <input
+                  value={form.meta_title}
+                  onChange={(e) => setForm({ ...form, meta_title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="Título para buscadores (vacío = título del post)"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
+                  Meta Description <span className={`text-xs ml-1 ${form.meta_description.length > 160 ? 'text-red-500' : 'text-muted-foreground'}`}>({form.meta_description.length}/160)</span>
+                </label>
+                <textarea
+                  value={form.meta_description}
+                  onChange={(e) => setForm({ ...form, meta_description: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  rows={3}
+                  placeholder="Descripción para buscadores (vacío = extracto)"
+                />
               </div>
             </div>
           </div>
