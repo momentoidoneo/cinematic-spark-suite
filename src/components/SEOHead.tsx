@@ -19,9 +19,17 @@ export function getSiteUrl() {
 }
 
 const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, noindex = false, jsonLd }: SEOHeadProps) => {
+  // Derive page path from canonical for DB lookup
+  const pagePath = canonical ? new URL(canonical, SITE_URL).pathname.replace(/\/$/, "") || "/" : null;
+  const seoOverride = useSEOMetadata(pagePath || "/");
+
+  const finalTitle = seoOverride?.title || title;
+  const finalDescription = seoOverride?.description || description;
+  const finalOgImage = seoOverride?.og_image || ogImage;
+
   useEffect(() => {
     // Title
-    document.title = title;
+    document.title = finalTitle;
 
     // Meta tags
     const setMeta = (name: string, content: string, attr = "name") => {
