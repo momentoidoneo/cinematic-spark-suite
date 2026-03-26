@@ -160,8 +160,8 @@ const AdminSEO = () => {
                   {/* Google Preview */}
                   <div className="rounded-lg bg-muted/50 p-3 space-y-0.5">
                     <p className="text-xs text-muted-foreground">Vista previa en Google:</p>
-                    <p className="text-blue-400 text-sm truncate">{entry.title || "Sin título"}</p>
-                    <p className="text-xs text-green-500 truncate">silviocosta.net{entry.page_path}</p>
+                    <p className="text-primary text-sm truncate">{entry.title || "Sin título"}</p>
+                    <p className="text-xs text-accent-foreground/70 truncate">silviocosta.net{entry.page_path}</p>
                     <p className="text-xs text-muted-foreground line-clamp-2">{entry.description || "Sin descripción"}</p>
                   </div>
                 </CardContent>
