@@ -86,6 +86,18 @@ const AdminBlog = () => {
       if (error) { toast.error(error.message); return; }
       toast.success("Artículo creado");
     }
+
+    // Upsert SEO metadata for this blog post
+    if (form.meta_title.trim() || form.meta_description.trim()) {
+      const seoPath = `/blog/${slug}`;
+      const { data: existing } = await supabase.from("seo_metadata").select("id").eq("page_path", seoPath).maybeSingle();
+      if (existing) {
+        await supabase.from("seo_metadata").update({ title: form.meta_title || null, description: form.meta_description || null }).eq("id", existing.id);
+      } else {
+        await supabase.from("seo_metadata").insert({ page_path: seoPath, title: form.meta_title || null, description: form.meta_description || null });
+      }
+    }
+
     setEditing(null);
     setCreating(false);
     fetchPosts();
