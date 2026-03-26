@@ -102,7 +102,7 @@ const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, n
     return () => {
       document.querySelectorAll('script[data-seo-jsonld]').forEach(s => s.remove());
     };
-  }, [title, description, canonical, ogType, ogImage, noindex, jsonLd]);
+  }, [finalTitle, finalDescription, canonical, ogType, finalOgImage, noindex, jsonLd]);
 
   return null;
 };

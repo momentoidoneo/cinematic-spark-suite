@@ -89,6 +89,7 @@ const App = () => (
               <Route path="migration" element={<AdminMigration />} />
               <Route path="messages" element={<AdminMessages />} />
               <Route path="pricing" element={<AdminPricing />} />
+              <Route path="seo" element={<AdminSEO />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
