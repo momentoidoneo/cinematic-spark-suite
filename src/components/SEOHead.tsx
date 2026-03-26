@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useSEOMetadata } from "@/hooks/useSEOMetadata";
 
 interface SEOHeadProps {
   title: string;
@@ -18,9 +19,17 @@ export function getSiteUrl() {
 }
 
 const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, noindex = false, jsonLd }: SEOHeadProps) => {
+  // Derive page path from canonical for DB lookup
+  const pagePath = canonical ? new URL(canonical, SITE_URL).pathname.replace(/\/$/, "") || "/" : null;
+  const seoOverride = useSEOMetadata(pagePath || "/");
+
+  const finalTitle = seoOverride?.title || title;
+  const finalDescription = seoOverride?.description || description;
+  const finalOgImage = seoOverride?.og_image || ogImage;
+
   useEffect(() => {
     // Title
-    document.title = title;
+    document.title = finalTitle;
 
     // Meta tags
     const setMeta = (name: string, content: string, attr = "name") => {
@@ -33,23 +42,23 @@ const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, n
       el.content = content;
     };
 
-    setMeta("description", description);
+    setMeta("description", finalDescription);
     setMeta("robots", noindex ? "noindex, nofollow" : "index, follow");
 
     // Open Graph
-    setMeta("og:title", title, "property");
-    setMeta("og:description", description, "property");
+    setMeta("og:title", finalTitle, "property");
+    setMeta("og:description", finalDescription, "property");
     setMeta("og:type", ogType, "property");
-    setMeta("og:image", ogImage || DEFAULT_OG_IMAGE, "property");
+    setMeta("og:image", finalOgImage || DEFAULT_OG_IMAGE, "property");
     setMeta("og:url", canonical || window.location.href, "property");
     setMeta("og:site_name", "Silvio Costa Photography", "property");
     setMeta("og:locale", "es_ES", "property");
 
     // Twitter
     setMeta("twitter:card", "summary_large_image", "name");
-    setMeta("twitter:title", title, "name");
-    setMeta("twitter:description", description, "name");
-    setMeta("twitter:image", ogImage || DEFAULT_OG_IMAGE, "name");
+    setMeta("twitter:title", finalTitle, "name");
+    setMeta("twitter:description", finalDescription, "name");
+    setMeta("twitter:image", finalOgImage || DEFAULT_OG_IMAGE, "name");
 
     // Canonical
     let canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
@@ -93,7 +102,7 @@ const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, n
     return () => {
       document.querySelectorAll('script[data-seo-jsonld]').forEach(s => s.remove());
     };
-  }, [title, description, canonical, ogType, ogImage, noindex, jsonLd]);
+  }, [finalTitle, finalDescription, canonical, ogType, finalOgImage, noindex, jsonLd]);
 
   return null;
 };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard, BarChart3, Image, FolderOpen, Layers, HardDrive,
-  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard
+  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard, Search
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,6 +41,7 @@ const communicationItems = [
 
 const settingsItems = [
   { title: "Landing Page", url: "/admin/landing", icon: Monitor },
+  { title: "SEO & Meta Tags", url: "/admin/seo", icon: Search },
   { title: "Precios", url: "/admin/pricing", icon: CreditCard },
   { title: "Tracking & Ads", url: "/admin/tracking", icon: Target },
   { title: "Textos Legales", url: "/admin/legal", icon: Scale },
