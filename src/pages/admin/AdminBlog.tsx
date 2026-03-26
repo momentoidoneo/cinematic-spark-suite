@@ -190,6 +190,32 @@ const AdminBlog = () => {
                 </select>
               </div>
             </div>
+            <div className="rounded-xl bg-card border border-border p-4 space-y-4">
+              <h3 className="font-semibold text-foreground text-sm">🔍 SEO (Meta Tags)</h3>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
+                  Meta Title <span className={`text-xs ml-1 ${form.meta_title.length > 60 ? 'text-red-500' : 'text-muted-foreground'}`}>({form.meta_title.length}/60)</span>
+                </label>
+                <input
+                  value={form.meta_title}
+                  onChange={(e) => setForm({ ...form, meta_title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="Título para buscadores (vacío = título del post)"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
+                  Meta Description <span className={`text-xs ml-1 ${form.meta_description.length > 160 ? 'text-red-500' : 'text-muted-foreground'}`}>({form.meta_description.length}/160)</span>
+                </label>
+                <textarea
+                  value={form.meta_description}
+                  onChange={(e) => setForm({ ...form, meta_description: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  rows={3}
+                  placeholder="Descripción para buscadores (vacío = extracto)"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
