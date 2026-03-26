@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useSEOMetadata } from "@/hooks/useSEOMetadata";
 
 interface SEOHeadProps {
   title: string;
