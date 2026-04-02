@@ -32,6 +32,11 @@ const WhatsAppButton = () => {
 
   const url = `https://wa.me/${phone.replace("+", "")}${message ? `?text=${encodeURIComponent(message)}` : ""}`;
 
+  const handleClick = () => {
+    trackEvent("whatsapp_click", { event_category: "contact", event_label: "floating_button" });
+    fireGoogleAdsConversion();
+  };
+
   return (
     <div className="fixed bottom-6 right-6 z-50 flex items-end gap-3">
       <AnimatePresence>
@@ -41,7 +46,7 @@ const WhatsAppButton = () => {
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 10, scale: 0.9 }}
             className="bg-card border border-border rounded-xl px-4 py-3 shadow-lg max-w-[220px] cursor-pointer"
-            onClick={() => window.open(url, "_blank")}
+            onClick={() => { handleClick(); window.open(url, "_blank"); }}
           >
             <p className="text-xs text-muted-foreground mb-0.5">WhatsApp</p>
             <p className="text-sm text-foreground font-medium">¿Necesitas ayuda? ¡Escríbenos!</p>
@@ -52,6 +57,7 @@ const WhatsAppButton = () => {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={handleClick}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", delay: 1 }}
