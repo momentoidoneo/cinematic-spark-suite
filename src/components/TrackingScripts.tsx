@@ -7,10 +7,23 @@ const TRACKING_KEYS = [
   "google_analytics_id",
   "google_analytics_enabled",
   "google_ads_id",
+  "google_ads_conversion_label",
   "google_ads_enabled",
   "meta_pixel_id",
   "meta_pixel_enabled",
 ];
+
+// Store ads conversion info globally so other components can fire conversion events
+export const fireGoogleAdsConversion = () => {
+  const w = window as any;
+  if (w.__gads_conversion_id && w.__gads_conversion_label && typeof w.gtag === "function") {
+    w.gtag("event", "conversion", {
+      send_to: `${w.__gads_conversion_id}/${w.__gads_conversion_label}`,
+    });
+    return true;
+  }
+  return false;
+};
 
 const TrackingScripts = () => {
   const [loaded, setLoaded] = useState(false);
@@ -77,6 +90,12 @@ const TrackingScripts = () => {
         const s3 = document.createElement("script");
         s3.textContent = `gtag('config','${adsId}');`;
         document.head.appendChild(s3);
+
+        // Store conversion info for use by fireGoogleAdsConversion()
+        (window as any).__gads_conversion_id = adsId;
+        if (cfg.google_ads_conversion_label) {
+          (window as any).__gads_conversion_label = cfg.google_ads_conversion_label;
+        }
       }
 
       // Meta Pixel
