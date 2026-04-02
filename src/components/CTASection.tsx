@@ -4,7 +4,7 @@ import { Sparkles, Send, MessageCircle, CheckCircle, Phone, Mail, User } from "l
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
-import { fireGoogleAdsConversion } from "./TrackingScripts";
+import { fireGoogleAdsConversion, trackEvent } from "./TrackingScripts";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio").max(100),
