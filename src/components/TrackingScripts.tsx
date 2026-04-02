@@ -90,6 +90,12 @@ const TrackingScripts = () => {
         const s3 = document.createElement("script");
         s3.textContent = `gtag('config','${adsId}');`;
         document.head.appendChild(s3);
+
+        // Store conversion info for use by fireGoogleAdsConversion()
+        (window as any).__gads_conversion_id = adsId;
+        if (cfg.google_ads_conversion_label) {
+          (window as any).__gads_conversion_label = cfg.google_ads_conversion_label;
+        }
       }
 
       // Meta Pixel
