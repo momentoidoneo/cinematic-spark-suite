@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { fireGoogleAdsConversion, trackEvent } from "./TrackingScripts";
 
 const WhatsAppButton = () => {
   const [phone, setPhone] = useState<string | null>(null);
