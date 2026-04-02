@@ -64,7 +64,8 @@ const CTASection = () => {
       setSent(true);
       setForm({ name: "", email: "", phone: "", message: "" });
       toast.success("¡Mensaje enviado correctamente!");
-      // Fire Google Ads conversion
+      // Fire tracking events
+      trackEvent("generate_lead", { event_category: "contact", event_label: "contact_form" });
       fireGoogleAdsConversion();
     }
     setSending(false);
