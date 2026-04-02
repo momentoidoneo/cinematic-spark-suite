@@ -4,7 +4,7 @@ import { Sparkles, Send, MessageCircle, CheckCircle, Phone, Mail, User } from "l
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
-import { fireGoogleAdsConversion } from "./TrackingScripts";
+import { fireGoogleAdsConversion, trackEvent } from "./TrackingScripts";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio").max(100),
@@ -64,7 +64,8 @@ const CTASection = () => {
       setSent(true);
       setForm({ name: "", email: "", phone: "", message: "" });
       toast.success("¡Mensaje enviado correctamente!");
-      // Fire Google Ads conversion
+      // Fire tracking events
+      trackEvent("generate_lead", { event_category: "contact", event_label: "contact_form" });
       fireGoogleAdsConversion();
     }
     setSending(false);
@@ -206,6 +207,10 @@ const CTASection = () => {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => {
+                  trackEvent("whatsapp_click", { event_category: "contact", event_label: "cta_section" });
+                  fireGoogleAdsConversion();
+                }}
                 className="group rounded-2xl bg-[#25D366]/10 border border-[#25D366]/20 p-6 hover:bg-[#25D366]/15 transition-colors block"
               >
                 <div className="w-12 h-12 rounded-xl bg-[#25D366] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">

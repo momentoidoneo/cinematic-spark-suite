@@ -25,6 +25,14 @@ export const fireGoogleAdsConversion = () => {
   return false;
 };
 
+// Fire a GA4 custom event + Google Ads conversion
+export const trackEvent = (eventName: string, params?: Record<string, string>) => {
+  const w = window as any;
+  if (typeof w.gtag === "function") {
+    w.gtag("event", eventName, params);
+  }
+};
+
 const TrackingScripts = () => {
   const [loaded, setLoaded] = useState(false);
 
