@@ -23,6 +23,7 @@ export type Database = {
           excerpt: string | null
           id: string
           published_at: string | null
+          scheduled_at: string | null
           slug: string
           status: string
           title: string
@@ -36,6 +37,7 @@ export type Database = {
           excerpt?: string | null
           id?: string
           published_at?: string | null
+          scheduled_at?: string | null
           slug: string
           status?: string
           title: string
@@ -49,9 +51,40 @@ export type Database = {
           excerpt?: string | null
           id?: string
           published_at?: string | null
+          scheduled_at?: string | null
           slug?: string
           status?: string
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      blog_templates: {
+        Row: {
+          content: string
+          created_at: string
+          description: string | null
+          excerpt: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          description?: string | null
+          excerpt?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          description?: string | null
+          excerpt?: string | null
+          id?: string
+          name?: string
           updated_at?: string
         }
         Relationships: []
