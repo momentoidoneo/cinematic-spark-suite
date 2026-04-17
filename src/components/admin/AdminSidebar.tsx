@@ -115,9 +115,36 @@ const AdminSidebar = () => {
 
     const channel = supabase
       .channel("unread-messages")
-      .on("postgres_changes", { event: "*", schema: "public", table: "contact_messages" }, () => {
-        fetchUnread();
-      })
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "contact_messages" },
+        (payload) => {
+          fetchUnread();
+          const msg = payload.new as { name?: string; email?: string };
+          toast({
+            title: "📩 Nuevo mensaje de contacto",
+            description: `${msg.name ?? "Anónimo"} · ${msg.email ?? ""}`,
+          });
+          // Sonido suave de notificación
+          try {
+            const audio = new Audio(
+              "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="
+            );
+            audio.volume = 0.3;
+            audio.play().catch(() => {});
+          } catch {}
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "contact_messages" },
+        () => fetchUnread()
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "contact_messages" },
+        () => fetchUnread()
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
