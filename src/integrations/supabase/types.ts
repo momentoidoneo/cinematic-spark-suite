@@ -943,6 +943,60 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_cities: {
+        Row: {
+          country: string
+          created_at: string
+          geo_lat: number | null
+          geo_lng: number | null
+          highlights: string[]
+          id: string
+          intro: string
+          is_visible: boolean
+          name: string
+          order: number
+          postal: string | null
+          region: string
+          slug: string
+          updated_at: string
+          zones: string[]
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          geo_lat?: number | null
+          geo_lng?: number | null
+          highlights?: string[]
+          id?: string
+          intro?: string
+          is_visible?: boolean
+          name: string
+          order?: number
+          postal?: string | null
+          region: string
+          slug: string
+          updated_at?: string
+          zones?: string[]
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          geo_lat?: number | null
+          geo_lng?: number | null
+          highlights?: string[]
+          id?: string
+          intro?: string
+          is_visible?: boolean
+          name?: string
+          order?: number
+          postal?: string | null
+          region?: string
+          slug?: string
+          updated_at?: string
+          zones?: string[]
+        }
+        Relationships: []
+      }
       seo_metadata: {
         Row: {
           created_at: string

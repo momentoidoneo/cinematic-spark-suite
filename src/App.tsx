@@ -36,6 +36,7 @@ import AdminTracking from "./pages/admin/AdminTracking";
 import AdminMigration from "./pages/admin/AdminMigration";
 import AdminMessages from "./pages/admin/AdminMessages";
 import AdminMarketingTools from "./pages/admin/AdminMarketingTools";
+import AdminCities from "./pages/admin/AdminCities";
 import Legal from "./pages/Legal";
 import Precios from "./pages/Precios";
 import TrackingScripts from "./components/TrackingScripts";
@@ -98,6 +99,7 @@ const App = () => (
               <Route path="pricing" element={<AdminPricing />} />
               <Route path="seo" element={<AdminSEO />} />
               <Route path="marketing-tools" element={<AdminMarketingTools />} />
+              <Route path="cities" element={<AdminCities />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

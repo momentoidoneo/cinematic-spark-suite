@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { useParams, Navigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -169,8 +171,42 @@ const services = [
 
 const FotografiaCiudad = () => {
   const { city } = useParams<{ city: string }>();
-  const data = city ? CITIES[city] : null;
+  const [dbCity, setDbCity] = useState<CityData | null | undefined>(undefined); // undefined = loading
+  const hardcoded = city ? CITIES[city] : null;
 
+  useEffect(() => {
+    if (!city || hardcoded) { setDbCity(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("seo_cities" as any)
+        .select("slug, name, region, country, intro, highlights, zones, postal, geo_lat, geo_lng")
+        .eq("slug", city)
+        .eq("is_visible", true)
+        .maybeSingle();
+      if (cancelled) return;
+      if (!data) { setDbCity(null); return; }
+      const row = data as any;
+      setDbCity({
+        slug: row.slug,
+        name: row.name,
+        region: row.region,
+        country: (row.country === "Portugal" ? "Portugal" : "España") as "España" | "Portugal",
+        intro: row.intro || "",
+        highlights: row.highlights || [],
+        zones: row.zones || [],
+        postal: row.postal || undefined,
+        geo: row.geo_lat != null && row.geo_lng != null ? { lat: Number(row.geo_lat), lng: Number(row.geo_lng) } : undefined,
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [city, hardcoded]);
+
+  const data = hardcoded ?? dbCity;
+
+  if (dbCity === undefined && !hardcoded) {
+    return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Cargando…</div>;
+  }
   if (!data) return <Navigate to="/" replace />;
 
   const siteUrl = getSiteUrl();
