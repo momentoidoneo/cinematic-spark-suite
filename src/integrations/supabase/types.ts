@@ -14,6 +14,140 @@ export type Database = {
   }
   public: {
     Tables: {
+      ab_test_events: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          event_type: string
+          id: string
+          session_id: string | null
+          test_id: string
+          utm_source: string | null
+          variant_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          event_type: string
+          id?: string
+          session_id?: string | null
+          test_id: string
+          utm_source?: string | null
+          variant_id: string
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          event_type?: string
+          id?: string
+          session_id?: string | null
+          test_id?: string
+          utm_source?: string | null
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_test_events_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "ab_tests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ab_test_events_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "ab_test_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ab_test_variants: {
+        Row: {
+          button_color: string | null
+          button_text: string
+          created_at: string
+          id: string
+          is_control: boolean
+          label: string
+          test_id: string
+          weight: number
+        }
+        Insert: {
+          button_color?: string | null
+          button_text: string
+          created_at?: string
+          id?: string
+          is_control?: boolean
+          label: string
+          test_id: string
+          weight?: number
+        }
+        Update: {
+          button_color?: string | null
+          button_text?: string
+          created_at?: string
+          id?: string
+          is_control?: boolean
+          label?: string
+          test_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_test_variants_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "ab_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ab_tests: {
+        Row: {
+          created_at: string
+          description: string | null
+          ended_at: string | null
+          id: string
+          location: string
+          name: string
+          started_at: string | null
+          status: string
+          target_device: string
+          target_source: string | null
+          updated_at: string
+          winner_variant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          location?: string
+          name: string
+          started_at?: string | null
+          status?: string
+          target_device?: string
+          target_source?: string | null
+          updated_at?: string
+          winner_variant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          location?: string
+          name?: string
+          started_at?: string | null
+          status?: string
+          target_device?: string
+          target_source?: string | null
+          updated_at?: string
+          winner_variant_id?: string | null
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string
@@ -89,6 +223,98 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_snapshots: {
+        Row: {
+          changes_summary: string | null
+          competitor_id: string
+          content_hash: string | null
+          created_at: string
+          has_changes: boolean
+          id: string
+          links_count: number | null
+          markdown: string | null
+          meta_description: string | null
+          screenshot_url: string | null
+          title: string | null
+        }
+        Insert: {
+          changes_summary?: string | null
+          competitor_id: string
+          content_hash?: string | null
+          created_at?: string
+          has_changes?: boolean
+          id?: string
+          links_count?: number | null
+          markdown?: string | null
+          meta_description?: string | null
+          screenshot_url?: string | null
+          title?: string | null
+        }
+        Update: {
+          changes_summary?: string | null
+          competitor_id?: string
+          content_hash?: string | null
+          created_at?: string
+          has_changes?: boolean
+          id?: string
+          links_count?: number | null
+          markdown?: string | null
+          meta_description?: string | null
+          screenshot_url?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitor_snapshots_competitor_id_fkey"
+            columns: ["competitor_id"]
+            isOneToOne: false
+            referencedRelation: "competitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitors: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          last_change_detected_at: string | null
+          last_checked_at: string | null
+          monitoring_mode: string
+          name: string
+          notes: string | null
+          tags: string[] | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_change_detected_at?: string | null
+          last_checked_at?: string | null
+          monitoring_mode?: string
+          name: string
+          notes?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_change_detected_at?: string | null
+          last_checked_at?: string | null
+          monitoring_mode?: string
+          name?: string
+          notes?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string
@@ -155,6 +381,117 @@ export type Database = {
           slug?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      newsletter_campaigns: {
+        Row: {
+          bounces_count: number | null
+          clicks_count: number | null
+          created_at: string
+          external_id: string | null
+          html_content: string
+          id: string
+          name: string
+          opens_count: number | null
+          preview_text: string | null
+          provider: string
+          recipients_count: number | null
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          tags_filter: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          bounces_count?: number | null
+          clicks_count?: number | null
+          created_at?: string
+          external_id?: string | null
+          html_content?: string
+          id?: string
+          name: string
+          opens_count?: number | null
+          preview_text?: string | null
+          provider?: string
+          recipients_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          tags_filter?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          bounces_count?: number | null
+          clicks_count?: number | null
+          created_at?: string
+          external_id?: string | null
+          html_content?: string
+          id?: string
+          name?: string
+          opens_count?: number | null
+          preview_text?: string | null
+          provider?: string
+          recipients_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          tags_filter?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      newsletter_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          external_id: string | null
+          id: string
+          name: string | null
+          provider: string
+          source: string | null
+          status: string
+          subscribed_at: string
+          tags: string[] | null
+          unsubscribed_at: string | null
+          updated_at: string
+          utm_campaign: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          external_id?: string | null
+          id?: string
+          name?: string | null
+          provider?: string
+          source?: string | null
+          status?: string
+          subscribed_at?: string
+          tags?: string[] | null
+          unsubscribed_at?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          external_id?: string | null
+          id?: string
+          name?: string | null
+          provider?: string
+          source?: string | null
+          status?: string
+          subscribed_at?: string
+          tags?: string[] | null
+          unsubscribed_at?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_source?: string | null
         }
         Relationships: []
       }
@@ -1030,6 +1367,60 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      utm_links: {
+        Row: {
+          base_url: string
+          click_count: number
+          created_at: string
+          created_by: string | null
+          full_url: string
+          id: string
+          name: string
+          notes: string | null
+          short_code: string | null
+          updated_at: string
+          utm_campaign: string
+          utm_content: string | null
+          utm_medium: string
+          utm_source: string
+          utm_term: string | null
+        }
+        Insert: {
+          base_url: string
+          click_count?: number
+          created_at?: string
+          created_by?: string | null
+          full_url: string
+          id?: string
+          name: string
+          notes?: string | null
+          short_code?: string | null
+          updated_at?: string
+          utm_campaign: string
+          utm_content?: string | null
+          utm_medium: string
+          utm_source: string
+          utm_term?: string | null
+        }
+        Update: {
+          base_url?: string
+          click_count?: number
+          created_at?: string
+          created_by?: string | null
+          full_url?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          short_code?: string | null
+          updated_at?: string
+          utm_campaign?: string
+          utm_content?: string | null
+          utm_medium?: string
+          utm_source?: string
+          utm_term?: string | null
         }
         Relationships: []
       }
