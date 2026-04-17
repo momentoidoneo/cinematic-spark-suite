@@ -2,8 +2,9 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import ChangePasswordDialog from "@/components/admin/ChangePasswordDialog";
+import CommandPalette from "@/components/admin/CommandPalette";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { LogOut, ExternalLink, MoreVertical } from "lucide-react";
+import { LogOut, ExternalLink, MoreVertical, Search } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
