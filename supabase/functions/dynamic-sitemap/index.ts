@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     const today = new Date().toISOString().split("T")[0];
 
     // Datos en paralelo
-    const [postsRes, categoriesRes, subcategoriesRes, imagesRes] = await Promise.all([
+    const [postsRes, categoriesRes, subcategoriesRes, imagesRes, citiesRes] = await Promise.all([
       supabase.from("blog_posts").select("slug, updated_at, cover_image, title").eq("status", "published"),
       supabase.from("portfolio_categories").select("slug, updated_at").eq("is_visible", true),
       supabase.from("portfolio_subcategories").select("slug, updated_at, category_id, link_enabled, is_visible"),
@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
         .eq("media_type", "image")
         .order("created_at", { ascending: false })
         .limit(1000),
+      supabase.from("seo_cities").select("slug, updated_at").eq("is_visible", true),
     ]);
 
     const categories = categoriesRes.data || [];
@@ -76,10 +77,16 @@ Deno.serve(async (req) => {
       );
     });
 
-    // Páginas de ubicación SEO local
-    LOCATIONS.forEach((loc) => {
+    // Páginas de ubicación SEO local — hardcoded + dinámicas (BD)
+    const dbCitySlugs = new Map<string, string>();
+    ((citiesRes?.data as any[]) || []).forEach((c) => {
+      dbCitySlugs.set(c.slug, (c.updated_at || today).split("T")[0]);
+    });
+    const allCitySlugs = new Set<string>([...LOCATIONS, ...dbCitySlugs.keys()]);
+    allCitySlugs.forEach((slug) => {
+      const lastmod = dbCitySlugs.get(slug) || today;
       urls.push(
-        `  <url>\n    <loc>${SITE_URL}/fotografia-${loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.85</priority>\n  </url>`
+        `  <url>\n    <loc>${SITE_URL}/fotografia-${slug}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.85</priority>\n  </url>`
       );
     });
 
