@@ -118,28 +118,73 @@ export type Database = {
       }
       page_views: {
         Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
           created_at: string
+          device_type: string | null
+          duration_seconds: number | null
           id: string
           ip_hash: string | null
+          is_exit: boolean | null
+          os: string | null
           page_path: string
           referrer: string | null
+          region: string | null
+          screen_size: string | null
+          session_id: string | null
           user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
         }
         Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
           id?: string
           ip_hash?: string | null
+          is_exit?: boolean | null
+          os?: string | null
           page_path: string
           referrer?: string | null
+          region?: string | null
+          screen_size?: string | null
+          session_id?: string | null
           user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
           id?: string
           ip_hash?: string | null
+          is_exit?: boolean | null
+          os?: string | null
           page_path?: string
           referrer?: string | null
+          region?: string | null
+          screen_size?: string | null
+          session_id?: string | null
           user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: []
       }
