@@ -266,6 +266,16 @@ const AdminBlog = () => {
         }
       }
 
+      // Notify search engines (IndexNow + Google ping) when published
+      if (payload.status === "published") {
+        supabase.functions.invoke("indexnow", {
+          body: {
+            urls: [`/blog/${slug}`, "/blog", "/sitemap-blog.xml", "/rss.xml"],
+            triggered_by: "blog-publish",
+          },
+        }).catch(() => {/* silent */});
+      }
+
       setLastSaved(new Date());
       dirtyRef.current = false;
       if (showToast) toast.success("Guardado");
