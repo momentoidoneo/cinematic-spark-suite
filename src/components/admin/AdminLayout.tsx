@@ -28,6 +28,7 @@ const AdminLayout = () => {
 
   return (
     <SidebarProvider>
+      <CommandPalette />
       <div className="min-h-screen flex w-full bg-background">
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
@@ -40,7 +41,18 @@ const AdminLayout = () => {
             </div>
 
             {/* Desktop actions */}
-            <div className="hidden md:flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const ev = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
+                  document.dispatchEvent(ev);
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors min-w-[200px]"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span className="flex-1 text-left">Buscar...</span>
+                <kbd className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
+              </button>
               <a
                 href="/"
                 target="_blank"
