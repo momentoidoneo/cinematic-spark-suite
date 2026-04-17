@@ -44,6 +44,7 @@ const communicationItems = [
 const settingsItems = [
   { title: "Landing Page", url: "/admin/landing", icon: Monitor },
   { title: "SEO & Meta Tags", url: "/admin/seo", icon: Search },
+  { title: "SEO Técnico", url: "/admin/seo-technical", icon: Rss },
   { title: "Ciudades SEO", url: "/admin/cities", icon: MapPin },
   { title: "Precios", url: "/admin/pricing", icon: CreditCard },
   { title: "Tracking & Ads", url: "/admin/tracking", icon: Target },

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Send, Rss, Map, AlertTriangle, Search } from "lucide-react";
+import { Loader2, Send, Rss, Map as MapIcon, AlertTriangle, Search } from "lucide-react";
 
 interface PingRow {
   id: string;
@@ -51,23 +51,21 @@ export default function AdminSEOTechnical() {
   async function loadDuplicates() {
     const { data: meta } = await supabase.from("seo_metadata").select("page_path, title, description");
     if (!meta) return;
-    const byTitle = new Map<string, string[]>();
-    const byDesc = new Map<string, string[]>();
+    const byTitle: Record<string, string[]> = {};
+    const byDesc: Record<string, string[]> = {};
     meta.forEach((m: any) => {
       if (m.title) {
-        const arr = byTitle.get(m.title) || [];
-        arr.push(m.page_path);
-        byTitle.set(m.title, arr);
+        byTitle[m.title] = byTitle[m.title] || [];
+        byTitle[m.title].push(m.page_path);
       }
       if (m.description) {
-        const arr = byDesc.get(m.description) || [];
-        arr.push(m.page_path);
-        byDesc.set(m.description, arr);
+        byDesc[m.description] = byDesc[m.description] || [];
+        byDesc[m.description].push(m.page_path);
       }
     });
     const dupes: { field: string; value: string; pages: string[] }[] = [];
-    byTitle.forEach((pages, value) => { if (pages.length > 1) dupes.push({ field: "title", value, pages }); });
-    byDesc.forEach((pages, value) => { if (pages.length > 1) dupes.push({ field: "description", value, pages }); });
+    Object.entries(byTitle).forEach(([value, pages]) => { if (pages.length > 1) dupes.push({ field: "title", value, pages }); });
+    Object.entries(byDesc).forEach(([value, pages]) => { if (pages.length > 1) dupes.push({ field: "description", value, pages }); });
     setDuplicates(dupes);
   }
 
@@ -121,7 +119,7 @@ export default function AdminSEOTechnical() {
       <Tabs defaultValue="indexnow">
         <TabsList>
           <TabsTrigger value="indexnow"><Send className="h-4 w-4 mr-1" /> IndexNow</TabsTrigger>
-          <TabsTrigger value="sitemaps"><Map className="h-4 w-4 mr-1" /> Sitemaps & RSS</TabsTrigger>
+          <TabsTrigger value="sitemaps"><MapIcon className="h-4 w-4 mr-1" /> Sitemaps & RSS</TabsTrigger>
           <TabsTrigger value="duplicates"><AlertTriangle className="h-4 w-4 mr-1" /> Duplicados</TabsTrigger>
           <TabsTrigger value="logs"><Search className="h-4 w-4 mr-1" /> Logs</TabsTrigger>
         </TabsList>
@@ -185,7 +183,7 @@ export default function AdminSEOTechnical() {
           ) : duplicates.map((d, i) => (
             <Card key={i}>
               <CardContent className="p-4">
-                <div className="text-xs uppercase text-amber-500 font-semibold">{d.field} duplicado</div>
+                <div className="text-xs uppercase text-primary font-semibold">{d.field} duplicado</div>
                 <div className="font-medium my-1">"{d.value}"</div>
                 <div className="text-xs text-muted-foreground">En páginas: {d.pages.join(", ")}</div>
               </CardContent>
@@ -198,7 +196,7 @@ export default function AdminSEOTechnical() {
             <Card key={p.id}>
               <CardContent className="p-3 flex items-center justify-between text-sm">
                 <div className="truncate flex-1 mr-3">
-                  <span className={`inline-block px-2 py-0.5 rounded text-xs mr-2 ${p.status === "ok" ? "bg-emerald-500/15 text-emerald-500" : "bg-red-500/15 text-red-500"}`}>
+                  <span className={`inline-block px-2 py-0.5 rounded text-xs mr-2 ${p.status === "ok" ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"}`}>
                     {p.engine} {p.http_status || ""}
                   </span>
                   <span className="text-muted-foreground">{p.url}</span>
