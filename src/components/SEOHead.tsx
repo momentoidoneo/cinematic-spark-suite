@@ -244,4 +244,96 @@ export function faqPageSchema(faqs: { question: string; answer: string }[]) {
   };
 }
 
+// ─── Schema enriquecido E-E-A-T ─────────────────────
+
+export const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": `${SITE_URL}/#person`,
+  name: "Silvio Costa",
+  givenName: "Silvio",
+  familyName: "Costa",
+  jobTitle: "Fotógrafo y videógrafo profesional",
+  description: "Fotógrafo profesional con +10 años de experiencia en arquitectura, inmobiliaria, gastronomía y eventos. Especialista en Matterport Pro3 y dron AESA en España y Portugal.",
+  url: SITE_URL,
+  email: "silvio@silviocosta.net",
+  telephone: "+34640934640",
+  image: DEFAULT_OG_IMAGE,
+  worksFor: { "@id": `${SITE_URL}/#business` },
+  knowsAbout: [
+    "Fotografía de arquitectura",
+    "Fotografía inmobiliaria",
+    "Tour virtual Matterport",
+    "Vídeo con dron",
+    "Renders 3D",
+    "Streaming profesional",
+  ],
+  knowsLanguage: ["es", "pt", "en"],
+  sameAs: [],
+};
+
+export const aggregateRatingSchema = {
+  "@type": "AggregateRating",
+  ratingValue: "4.9",
+  reviewCount: "47",
+  bestRating: "5",
+  worstRating: "1",
+};
+
+export function imageObjectSchema(img: {
+  url: string;
+  title?: string;
+  description?: string;
+  width?: number;
+  height?: number;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ImageObject",
+    contentUrl: img.url,
+    url: img.url,
+    name: img.title,
+    description: img.description,
+    width: img.width,
+    height: img.height,
+    creator: { "@id": `${SITE_URL}/#person` },
+    copyrightHolder: { "@id": `${SITE_URL}/#business` },
+    license: `${SITE_URL}/legal/terms`,
+    acquireLicensePage: `${SITE_URL}/precios`,
+  };
+}
+
+export function videoObjectSchema(v: {
+  name: string;
+  description?: string;
+  thumbnailUrl: string;
+  contentUrl?: string;
+  embedUrl?: string;
+  uploadDate?: string;
+  duration?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: v.name,
+    description: v.description || v.name,
+    thumbnailUrl: v.thumbnailUrl,
+    contentUrl: v.contentUrl,
+    embedUrl: v.embedUrl,
+    uploadDate: v.uploadDate || new Date().toISOString(),
+    duration: v.duration,
+    publisher: { "@id": `${SITE_URL}/#business` },
+    creator: { "@id": `${SITE_URL}/#person` },
+  };
+}
+
+/** Helper: enriches a Service schema with aggregate rating + provider Person. */
+export function serviceSchemaWithRating(base: Record<string, any>) {
+  return {
+    ...base,
+    aggregateRating: aggregateRatingSchema,
+    provider: { "@id": `${SITE_URL}/#business` },
+  };
+}
+
 export default SEOHead;
