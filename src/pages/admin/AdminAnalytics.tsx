@@ -1,472 +1,361 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  BarChart3, Eye, TrendingUp, Globe, Smartphone, Monitor,
-  FileText, Image, FolderOpen, Layers, Tag, MousePointerClick,
-  ArrowUpRight, Users, Clock
+  Eye, Users, Globe, Smartphone, Monitor, Tablet, Download, TrendingUp, Clock,
+  Link2, Megaphone, FileText,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area, CartesianGrid,
+  AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer,
+  Tooltip, XAxis, YAxis, CartesianGrid,
 } from "recharts";
+import KPICard from "@/components/admin/dashboard/KPICard";
+import HeatmapChart from "@/components/admin/dashboard/HeatmapChart";
+import ConversionFunnel from "@/components/admin/dashboard/ConversionFunnel";
+import {
+  fetchViews, groupByDay, uniqueSessions, topBy, referrerHost, exportCSV,
+  pctChange, periodLabel, type Period, type PageViewRow,
+} from "@/lib/analytics";
 
-interface PageView {
-  id: string;
-  page_path: string;
-  referrer: string | null;
-  user_agent: string | null;
-  created_at: string;
-}
-
-const CHART_COLORS = [
-  "hsl(168, 55%, 45%)",
-  "hsl(42, 80%, 55%)",
-  "hsl(195, 60%, 50%)",
-  "hsl(280, 50%, 55%)",
-  "hsl(0, 70%, 55%)",
-  "hsl(120, 40%, 50%)",
-];
+const PERIODS: Period[] = ["today", "7d", "30d", "90d", "all"];
+const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(45 90% 60%)", "hsl(280 70% 60%)", "hsl(20 80% 60%)", "hsl(180 60% 50%)"];
 
 const AdminAnalytics = () => {
-  const [views, setViews] = useState<PageView[]>([]);
-  const [contentStats, setContentStats] = useState({
-    categories: 0, subcategories: 0, images: 0, blogPosts: 0, promotions: 0, contacts: 0,
-  });
+  const [period, setPeriod] = useState<Period>("7d");
+  const [views, setViews] = useState<PageViewRow[]>([]);
+  const [prevViews, setPrevViews] = useState<PageViewRow[]>([]);
+  const [messagesCount, setMessagesCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<"today" | "7d" | "30d" | "all">("30d");
 
   useEffect(() => {
-    const fetch = async () => {
+    const load = async () => {
       setLoading(true);
+      const days = period === "today" ? 1 : period === "7d" ? 7 : period === "30d" ? 30 : period === "90d" ? 90 : 1825;
+      const since = new Date(Date.now() - days * 86400_000).toISOString();
+      const prevSince = new Date(Date.now() - days * 2 * 86400_000).toISOString();
+      const cutoff = new Date(since).getTime();
 
-      // Fetch page views (last 1000 max)
-      const { data: viewsData } = await supabase
-        .from("page_views")
-        .select("id, page_path, referrer, user_agent, created_at")
-        .order("created_at", { ascending: false })
-        .limit(1000);
-
-      // Content counts
-      const [cats, subs, imgs, posts, promos, contacts] = await Promise.all([
-        supabase.from("portfolio_categories").select("id", { count: "exact", head: true }),
-        supabase.from("portfolio_subcategories").select("id", { count: "exact", head: true }),
-        supabase.from("portfolio_images").select("id", { count: "exact", head: true }),
-        supabase.from("blog_posts").select("id", { count: "exact", head: true }),
-        supabase.from("promotions").select("id", { count: "exact", head: true }),
-        supabase.from("contact_messages").select("id", { count: "exact", head: true }),
+      const [v, pv, msgs] = await Promise.all([
+        fetchViews(since),
+        period === "all" ? Promise.resolve([] as PageViewRow[]) : fetchViews(prevSince),
+        supabase.from("contact_messages").select("id,created_at", { count: "exact" }).gte("created_at", since),
       ]);
-
-      setViews(viewsData || []);
-      setContentStats({
-        categories: cats.count ?? 0,
-        subcategories: subs.count ?? 0,
-        images: imgs.count ?? 0,
-        blogPosts: posts.count ?? 0,
-        promotions: promos.count ?? 0,
-        contacts: contacts.count ?? 0,
-      });
+      setViews(v);
+      setPrevViews(pv.filter((r) => new Date(r.created_at).getTime() < cutoff));
+      setMessagesCount(msgs.count ?? 0);
       setLoading(false);
     };
-    fetch();
-  }, []);
+    load();
+  }, [period]);
 
-  // Filter views by period
-  const filteredViews = useMemo(() => {
-    if (period === "all") return views;
-    if (period === "today") {
-      const todayCutoff = new Date();
-      todayCutoff.setHours(0, 0, 0, 0);
-      return views.filter(v => new Date(v.created_at) >= todayCutoff);
-    }
-    const days = period === "7d" ? 7 : 30;
-    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    return views.filter(v => new Date(v.created_at) >= cutoff);
-  }, [views, period]);
+  const stats = useMemo(() => {
+    const days = period === "today" ? 1 : period === "7d" ? 7 : period === "30d" ? 30 : period === "90d" ? 90 : 90;
+    const sessions = uniqueSessions(views);
+    const prevSessions = uniqueSessions(prevViews);
 
-  // Daily views chart
-  const dailyChart = useMemo(() => {
-    if (period === "today") {
-      // Hourly breakdown for today
-      const hours = Array(24).fill(0);
-      filteredViews.forEach(v => { hours[new Date(v.created_at).getHours()]++; });
-      return hours.map((count, h) => ({
-        date: `${h}:00`,
-        visitas: count,
-      }));
-    }
-    const map = new Map<string, number>();
-    const days = period === "7d" ? 7 : period === "30d" ? 30 : 60;
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-      map.set(d.toISOString().split("T")[0], 0);
-    }
-    filteredViews.forEach(v => {
-      const day = v.created_at.split("T")[0];
-      if (map.has(day)) map.set(day, (map.get(day) || 0) + 1);
+    const sessionViews: Record<string, number> = {};
+    views.forEach((r) => {
+      const k = r.session_id || r.user_agent || "anon";
+      sessionViews[k] = (sessionViews[k] || 0) + 1;
     });
-    return [...map.entries()].map(([date, count]) => ({
-      date: new Date(date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" }),
-      visitas: count,
-    }));
-  }, [filteredViews, period]);
+    const bouncedSessions = Object.values(sessionViews).filter((c) => c === 1).length;
+    const bounceRate = sessions > 0 ? (bouncedSessions / sessions) * 100 : 0;
 
-  // Unique visits (by ip_hash or user_agent as fallback)
-  const uniqueVisits = useMemo(() => {
-    const seen = new Set<string>();
-    filteredViews.forEach(v => {
-      const key = v.user_agent || v.id;
-      seen.add(key);
-    });
-    return seen.size;
-  }, [filteredViews]);
+    const durations = views.map((r) => r.duration_seconds || 0).filter((d) => d > 0 && d < 1800);
+    const avgDuration = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
 
-  // Top pages
-  const topPages = useMemo(() => {
-    const map = new Map<string, number>();
-    filteredViews.forEach(v => map.set(v.page_path, (map.get(v.page_path) || 0) + 1));
-    return [...map.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([path, count]) => ({ path, count, pct: filteredViews.length ? Math.round((count / filteredViews.length) * 100) : 0 }));
-  }, [filteredViews]);
+    const dailyChart = groupByDay(views, days);
 
-  // Referrers
-  const topReferrers = useMemo(() => {
-    const map = new Map<string, number>();
-    filteredViews.forEach(v => {
-      let source = "Directo";
-      if (v.referrer) {
-        try {
-          const url = new URL(v.referrer);
-          source = url.hostname.replace("www.", "");
-        } catch { source = v.referrer.slice(0, 30); }
+    const pageStats: Record<string, { count: number; totalDur: number; durCount: number }> = {};
+    views.forEach((r) => {
+      if (!pageStats[r.page_path]) pageStats[r.page_path] = { count: 0, totalDur: 0, durCount: 0 };
+      pageStats[r.page_path].count++;
+      if (r.duration_seconds && r.duration_seconds < 1800) {
+        pageStats[r.page_path].totalDur += r.duration_seconds;
+        pageStats[r.page_path].durCount++;
       }
-      map.set(source, (map.get(source) || 0) + 1);
     });
-    return [...map.entries()]
+    const topPages = Object.entries(pageStats)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 10)
+      .map(([path, s]) => ({
+        path, count: s.count,
+        avgDur: s.durCount ? s.totalDur / s.durCount : 0,
+      }));
+
+    const refCounts: Record<string, number> = {};
+    views.forEach((r) => {
+      const h = referrerHost(r.referrer);
+      refCounts[h] = (refCounts[h] || 0) + 1;
+    });
+    const topReferrers = Object.entries(refCounts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8)
-      .map(([source, count]) => ({ source, count }));
-  }, [filteredViews]);
+      .map(([name, count]) => ({ name, count }));
 
-  // Device breakdown
-  const devices = useMemo(() => {
-    let mobile = 0, desktop = 0, tablet = 0;
-    filteredViews.forEach(v => {
-      const ua = (v.user_agent || "").toLowerCase();
-      if (/tablet|ipad/i.test(ua)) tablet++;
-      else if (/mobile|android|iphone/i.test(ua)) mobile++;
-      else desktop++;
-    });
-    return [
-      { name: "Desktop", value: desktop, icon: Monitor },
-      { name: "Móvil", value: mobile, icon: Smartphone },
-      { name: "Tablet", value: tablet, icon: Globe },
-    ].filter(d => d.value > 0);
-  }, [filteredViews]);
+    const devices = topBy(views, "device_type", 5);
+    const browsers = topBy(views, "browser", 6);
+    const os = topBy(views, "os", 5);
+    const countries = topBy(views, "country", 10).filter((c) => c.name !== "(desconocido)");
+    const campaigns = topBy(views, "utm_campaign", 8).filter((c) => c.name !== "(desconocido)");
+    const sources = topBy(views, "utm_source", 8).filter((c) => c.name !== "(desconocido)");
 
-  // Browser breakdown
-  const browsers = useMemo(() => {
-    const map = new Map<string, number>();
-    filteredViews.forEach(v => {
-      const ua = (v.user_agent || "").toLowerCase();
-      let browser = "Otro";
-      if (ua.includes("chrome") && !ua.includes("edg")) browser = "Chrome";
-      else if (ua.includes("safari") && !ua.includes("chrome")) browser = "Safari";
-      else if (ua.includes("firefox")) browser = "Firefox";
-      else if (ua.includes("edg")) browser = "Edge";
-      else if (ua.includes("opera") || ua.includes("opr")) browser = "Opera";
-      map.set(browser, (map.get(browser) || 0) + 1);
-    });
-    return [...map.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, value]) => ({ name, value }));
-  }, [filteredViews]);
+    return {
+      viewsCount: views.length, prevCount: prevViews.length,
+      sessions, prevSessions, bounceRate, avgDuration,
+      pagesPerSession: sessions > 0 ? views.length / sessions : 0,
+      dailyChart, topPages, topReferrers, devices, browsers, os,
+      countries, campaigns, sources,
+    };
+  }, [views, prevViews, period]);
 
-  // Hourly distribution
-  const hourlyChart = useMemo(() => {
-    const hours = Array(24).fill(0);
-    filteredViews.forEach(v => {
-      const h = new Date(v.created_at).getHours();
-      hours[h]++;
-    });
-    return hours.map((count, h) => ({ hour: `${h}:00`, visitas: count }));
-  }, [filteredViews]);
+  const formatDuration = (s: number) => s < 60 ? `${Math.round(s)}s` : `${Math.floor(s / 60)}m ${Math.round(s % 60)}s`;
 
-  // Today/week/month counts
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const todayViews = views.filter(v => v.created_at >= todayStart).length;
-  const weekViews = views.filter(v => v.created_at >= weekStart).length;
+  const handleExport = () => {
+    exportCSV(
+      views.map((r) => ({
+        fecha: r.created_at, pagina: r.page_path, sesion: r.session_id ?? "",
+        pais: r.country ?? "", ciudad: r.city ?? "",
+        dispositivo: r.device_type ?? "", navegador: r.browser ?? "", os: r.os ?? "",
+        referrer: r.referrer ?? "",
+        utm_source: r.utm_source ?? "", utm_medium: r.utm_medium ?? "", utm_campaign: r.utm_campaign ?? "",
+        duracion_s: r.duration_seconds ?? "",
+      })),
+      `analytics-${period}-${new Date().toISOString().slice(0, 10)}.csv`,
+    );
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
+        <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Analytics</h1>
-          <p className="text-sm text-muted-foreground">Estadísticas y métricas de tu sitio web</p>
+          <h1 className="font-display text-3xl font-bold text-foreground mb-1">Analíticas</h1>
+          <p className="text-muted-foreground">{periodLabel[period]} · {views.length} visitas registradas</p>
         </div>
-        <div className="flex gap-1 bg-secondary rounded-lg p-1">
-          {(["today", "7d", "30d", "all"] as const).map(p => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {p === "today" ? "Hoy" : p === "7d" ? "7 días" : p === "30d" ? "30 días" : "Todo"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <KPICard label="Hoy" value={todayViews} icon={Eye} color="text-green-400" />
-        <KPICard label="Semana" value={weekViews} icon={TrendingUp} color="text-blue-400" />
-        <KPICard label="Periodo" value={filteredViews.length} icon={BarChart3} color="text-primary" />
-        <KPICard label="Visitas únicas" value={uniqueVisits} icon={Users} color="text-accent" />
-        <KPICard label="Páginas únicas" value={new Set(filteredViews.map(v => v.page_path)).size} icon={MousePointerClick} color="text-muted-foreground" />
-      </div>
-
-      {/* Main chart */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Visitas por día</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filteredViews.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>No hay datos de visitas para este periodo.</p>
-              <p className="text-xs mt-1">Las visitas se registran automáticamente en las páginas públicas.</p>
-            </div>
-          ) : (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={dailyChart}>
-                  <defs>
-                    <linearGradient id="colorVisitas" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(168, 55%, 45%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(168, 55%, 45%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 18%)" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "hsl(215, 15%, 55%)" }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "hsl(215, 15%, 55%)" }} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{ background: "hsl(220, 18%, 10%)", border: "1px solid hsl(220, 15%, 18%)", borderRadius: "8px", fontSize: 13 }}
-                    labelStyle={{ color: "hsl(210, 20%, 92%)" }}
-                    itemStyle={{ color: "hsl(168, 55%, 45%)" }}
-                  />
-                  <Area type="monotone" dataKey="visitas" stroke="hsl(168, 55%, 45%)" strokeWidth={2} fill="url(#colorVisitas)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Pages */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <ArrowUpRight className="w-4 h-4 text-primary" /> Páginas más visitadas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {topPages.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">Sin datos</p>
-            ) : (
-              <div className="space-y-3">
-                {topPages.map((p, i) => (
-                  <div key={p.path} className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{p.path === "/" ? "Inicio" : p.path}</p>
-                      <div className="w-full bg-secondary rounded-full h-1.5 mt-1">
-                        <div className="bg-primary h-1.5 rounded-full" style={{ width: `${p.pct}%` }} />
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold text-foreground">{p.count}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Referrers */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Globe className="w-4 h-4 text-primary" /> Fuentes de tráfico
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {topReferrers.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">Sin datos</p>
-            ) : (
-              <div className="space-y-3">
-                {topReferrers.map(r => (
-                  <div key={r.source} className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-foreground truncate">{r.source}</span>
-                    <span className="text-sm font-bold text-foreground">{r.count}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Devices */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Smartphone className="w-4 h-4 text-primary" /> Dispositivos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {devices.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">Sin datos</p>
-            ) : (
-              <div className="flex items-center gap-6">
-                <div className="w-36 h-36 shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={devices} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={65} innerRadius={40}>
-                        {devices.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                      </Pie>
-                      <Tooltip contentStyle={{ background: "hsl(220, 18%, 10%)", border: "1px solid hsl(220, 15%, 18%)", borderRadius: "8px", fontSize: 13 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="space-y-2 flex-1">
-                  {devices.map((d, i) => (
-                    <div key={d.name} className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                      <span className="text-sm text-foreground">{d.name}</span>
-                      <span className="text-sm font-bold text-foreground ml-auto">{d.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Browsers */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Globe className="w-4 h-4 text-primary" /> Navegadores
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {browsers.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">Sin datos</p>
-            ) : (
-              <div className="space-y-3">
-                {browsers.map((b, i) => {
-                  const total = browsers.reduce((s, x) => s + x.value, 0);
-                  const pct = total ? Math.round((b.value / total) * 100) : 0;
-                  return (
-                    <div key={b.name} className="flex items-center gap-3">
-                      <div className="w-3 h-3 rounded-full shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                      <span className="text-sm text-foreground flex-1">{b.name}</span>
-                      <span className="text-xs text-muted-foreground">{pct}%</span>
-                      <span className="text-sm font-bold text-foreground">{b.value}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Hourly distribution */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Clock className="w-4 h-4 text-primary" /> Distribución por hora del día
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filteredViews.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">Sin datos</p>
-          ) : (
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={hourlyChart}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 18%)" />
-                  <XAxis dataKey="hour" tick={{ fontSize: 10, fill: "hsl(215, 15%, 55%)" }} tickLine={false} axisLine={false} interval={2} />
-                  <YAxis tick={{ fontSize: 11, fill: "hsl(215, 15%, 55%)" }} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{ background: "hsl(220, 18%, 10%)", border: "1px solid hsl(220, 15%, 18%)", borderRadius: "8px", fontSize: 13 }}
-                    labelStyle={{ color: "hsl(210, 20%, 92%)" }}
-                    itemStyle={{ color: "hsl(42, 80%, 55%)" }}
-                  />
-                  <Bar dataKey="visitas" fill="hsl(42, 80%, 55%)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Content summary */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Resumen de Contenido</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <ContentStat icon={FolderOpen} label="Categorías" value={contentStats.categories} />
-            <ContentStat icon={Layers} label="Subcategorías" value={contentStats.subcategories} />
-            <ContentStat icon={Image} label="Imágenes" value={contentStats.images} />
-            <ContentStat icon={FileText} label="Blog" value={contentStats.blogPosts} />
-            <ContentStat icon={Tag} label="Promos" value={contentStats.promotions} />
-            <ContentStat icon={Users} label="Contactos" value={contentStats.contacts} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex rounded-lg border border-border bg-card p-1">
+            {PERIODS.map((p) => (
+              <button key={p} onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                  period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}>
+                {periodLabel[p]}
+              </button>
+            ))}
           </div>
-        </CardContent>
-      </Card>
+          <button onClick={handleExport}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-secondary transition-colors">
+            <Download className="w-3.5 h-3.5" />CSV
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <KPICard label="Visitas" value={stats.viewsCount.toLocaleString()} icon={Eye}
+          change={period !== "all" ? pctChange(stats.viewsCount, stats.prevCount) : undefined} />
+        <KPICard label="Visitantes únicos" value={stats.sessions.toLocaleString()} icon={Users}
+          change={period !== "all" ? pctChange(stats.sessions, stats.prevSessions) : undefined} />
+        <KPICard label="Páginas / sesión" value={stats.pagesPerSession.toFixed(1)} icon={TrendingUp} />
+        <KPICard label="Duración media" value={formatDuration(stats.avgDuration)} icon={Clock} />
+      </div>
+
+      <div className="rounded-xl bg-card border border-border p-6 mb-8">
+        <h2 className="font-display text-lg font-bold text-foreground mb-4">Evolución de visitas</h2>
+        <div className="h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={stats.dailyChart}>
+              <defs>
+                <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+              <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+              <Area type="monotone" dataKey="views" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#g1)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="rounded-xl bg-card border border-border p-6">
+          <h2 className="font-display text-lg font-bold text-foreground mb-1">Mapa de calor</h2>
+          <p className="text-sm text-muted-foreground mb-4">Visitas por día y hora</p>
+          <HeatmapChart rows={views} />
+        </div>
+        <div className="rounded-xl bg-card border border-border p-6">
+          <h2 className="font-display text-lg font-bold text-foreground mb-1">Embudo de conversión</h2>
+          <p className="text-sm text-muted-foreground mb-4">Visitas → sesiones únicas → leads</p>
+          <ConversionFunnel
+            steps={[
+              { label: "Visitas totales", value: stats.viewsCount },
+              { label: "Sesiones únicas", value: stats.sessions, hint: "Visitantes diferentes" },
+              { label: "Sesiones engaged", value: stats.sessions - Math.round(stats.sessions * stats.bounceRate / 100), hint: ">1 página" },
+              { label: "Leads (mensajes)", value: messagesCount, hint: "Conversión final" },
+            ]}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="rounded-xl bg-card border border-border p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Globe className="w-5 h-5 text-primary" />
+            <h2 className="font-display text-lg font-bold text-foreground">Países</h2>
+          </div>
+          {stats.countries.length ? (
+            <div className="space-y-2">
+              {stats.countries.map((c) => {
+                const max = stats.countries[0].count;
+                return (
+                  <div key={c.name} className="flex items-center gap-3">
+                    <span className="text-sm text-foreground w-32 truncate">{c.name}</span>
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-primary" style={{ width: `${(c.count / max) * 100}%` }} />
+                    </div>
+                    <span className="text-sm font-semibold text-foreground w-12 text-right">{c.count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Sin datos de geolocalización aún. Llegan progresivamente con cada visita.</p>
+          )}
+        </div>
+        <div className="rounded-xl bg-card border border-border p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Megaphone className="w-5 h-5 text-accent" />
+            <h2 className="font-display text-lg font-bold text-foreground">Campañas UTM</h2>
+          </div>
+          {stats.campaigns.length || stats.sources.length ? (
+            <div className="space-y-4">
+              {stats.campaigns.length > 0 && (
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Campañas</p>
+                  <div className="space-y-1">
+                    {stats.campaigns.map((c) => (
+                      <div key={c.name} className="flex items-center justify-between py-1 border-b border-border/50">
+                        <span className="text-sm text-foreground truncate">{c.name}</span>
+                        <span className="text-sm font-semibold text-accent">{c.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {stats.sources.length > 0 && (
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Fuentes</p>
+                  <div className="space-y-1">
+                    {stats.sources.map((c) => (
+                      <div key={c.name} className="flex items-center justify-between py-1 border-b border-border/50">
+                        <span className="text-sm text-foreground truncate">{c.name}</span>
+                        <span className="text-sm font-semibold text-primary">{c.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Sin tráfico de campañas. Añade <code className="text-xs bg-muted px-1 rounded">?utm_source=...&amp;utm_campaign=...</code> a tus enlaces.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="rounded-xl bg-card border border-border p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <FileText className="w-5 h-5 text-primary" />
+            <h2 className="font-display text-lg font-bold text-foreground">Páginas más vistas</h2>
+          </div>
+          <div className="space-y-2">
+            {stats.topPages.map((p) => (
+              <div key={p.path} className="flex items-center justify-between gap-3 py-2 border-b border-border/50">
+                <div className="min-w-0 flex-1">
+                  <p className="font-mono text-xs text-foreground truncate">{p.path}</p>
+                  {p.avgDur > 0 && <p className="text-[10px] text-muted-foreground">Tiempo medio: {formatDuration(p.avgDur)}</p>}
+                </div>
+                <span className="text-sm font-semibold text-primary">{p.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-xl bg-card border border-border p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Link2 className="w-5 h-5 text-accent" />
+            <h2 className="font-display text-lg font-bold text-foreground">Fuentes de tráfico</h2>
+          </div>
+          <div className="space-y-2">
+            {stats.topReferrers.map((r) => (
+              <div key={r.name} className="flex items-center justify-between py-2 border-b border-border/50">
+                <span className="text-sm text-foreground truncate">{r.name}</span>
+                <span className="text-sm font-semibold text-accent">{r.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="rounded-xl bg-card border border-border p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Smartphone className="w-5 h-5 text-primary" />
+            <h2 className="font-display text-lg font-bold text-foreground">Dispositivos</h2>
+          </div>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={stats.devices} dataKey="count" nameKey="name" outerRadius={70} label={(e: { name: string }) => e.name}>
+                  {stats.devices.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Pie>
+                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div className="rounded-xl bg-card border border-border p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Monitor className="w-5 h-5 text-accent" />
+            <h2 className="font-display text-lg font-bold text-foreground">Navegadores</h2>
+          </div>
+          <div className="space-y-2">
+            {stats.browsers.map((b) => (
+              <div key={b.name} className="flex items-center justify-between py-2 border-b border-border/50">
+                <span className="text-sm text-foreground">{b.name}</span>
+                <span className="text-sm font-semibold text-foreground">{b.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-xl bg-card border border-border p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Tablet className="w-5 h-5 text-primary" />
+            <h2 className="font-display text-lg font-bold text-foreground">Sistemas operativos</h2>
+          </div>
+          <div className="space-y-2">
+            {stats.os.map((o) => (
+              <div key={o.name} className="flex items-center justify-between py-2 border-b border-border/50">
+                <span className="text-sm text-foreground">{o.name}</span>
+                <span className="text-sm font-semibold text-foreground">{o.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
-
-const KPICard = ({ label, value, icon: Icon, color }: { label: string; value: number; icon: any; color: string }) => (
-  <Card>
-    <CardContent className="flex items-center justify-between py-4 px-4">
-      <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-2xl font-bold text-foreground">{value}</p>
-      </div>
-      <Icon className={`w-8 h-8 ${color} opacity-50`} />
-    </CardContent>
-  </Card>
-);
-
-const ContentStat = ({ icon: Icon, label, value }: { icon: any; label: string; value: number }) => (
-  <div className="text-center py-3">
-    <Icon className="w-5 h-5 text-primary mx-auto mb-1.5 opacity-60" />
-    <p className="text-xl font-bold text-foreground">{value}</p>
-    <p className="text-xs text-muted-foreground">{label}</p>
-  </div>
-);
 
 export default AdminAnalytics;
