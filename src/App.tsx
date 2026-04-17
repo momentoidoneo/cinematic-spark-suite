@@ -45,6 +45,7 @@ import GlobalCTATracker from "./components/GlobalCTATracker";
 import SmartQuoter from "./components/SmartQuoter";
 import AdminPricing from "./pages/admin/AdminPricing";
 import AdminSEO from "./pages/admin/AdminSEO";
+import AdminSEOTechnical from "./pages/admin/AdminSEOTechnical";
 import usePageTracking from "./hooks/usePageTracking";
 
 const PageTracker = () => { usePageTracking(); return null; };
@@ -106,6 +107,7 @@ const App = () => (
               <Route path="messages" element={<AdminMessages />} />
               <Route path="pricing" element={<AdminPricing />} />
               <Route path="seo" element={<AdminSEO />} />
+              <Route path="seo-technical" element={<AdminSEOTechnical />} />
               <Route path="marketing-tools" element={<AdminMarketingTools />} />
               <Route path="cities" element={<AdminCities />} />
             </Route>
