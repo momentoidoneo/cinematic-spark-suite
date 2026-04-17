@@ -16,6 +16,7 @@ import ServicioTourVirtual from "./pages/ServicioTourVirtual";
 import ServicioEventos from "./pages/ServicioEventos";
 import ServicioRenders from "./pages/ServicioRenders";
 import FotografiaCiudad from "./pages/FotografiaCiudad";
+import ServicioCiudad from "./pages/ServicioCiudad";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCategories from "./pages/admin/AdminCategories";
@@ -44,6 +45,7 @@ import GlobalCTATracker from "./components/GlobalCTATracker";
 import SmartQuoter from "./components/SmartQuoter";
 import AdminPricing from "./pages/admin/AdminPricing";
 import AdminSEO from "./pages/admin/AdminSEO";
+import AdminSEOTechnical from "./pages/admin/AdminSEOTechnical";
 import usePageTracking from "./hooks/usePageTracking";
 
 const PageTracker = () => { usePageTracking(); return null; };
@@ -77,6 +79,13 @@ const App = () => (
             <Route path="/servicios/renders" element={<ServicioRenders />} />
             <Route path="/precios" element={<Precios />} />
             <Route path="/fotografia-:city" element={<FotografiaCiudad />} />
+            <Route path="/fotografia-inmobiliaria-:city" element={<ServicioCiudad />} />
+            <Route path="/fotografia-arquitectura-:city" element={<ServicioCiudad />} />
+            <Route path="/fotografia-gastronomia-:city" element={<ServicioCiudad />} />
+            <Route path="/fotografia-producto-:city" element={<ServicioCiudad />} />
+            <Route path="/fotografia-eventos-:city" element={<ServicioCiudad />} />
+            <Route path="/tour-virtual-:city" element={<ServicioCiudad />} />
+            <Route path="/video-dron-:city" element={<ServicioCiudad />} />
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="categories" element={<AdminCategories />} />
@@ -98,6 +107,7 @@ const App = () => (
               <Route path="messages" element={<AdminMessages />} />
               <Route path="pricing" element={<AdminPricing />} />
               <Route path="seo" element={<AdminSEO />} />
+              <Route path="seo-technical" element={<AdminSEOTechnical />} />
               <Route path="marketing-tools" element={<AdminMarketingTools />} />
               <Route path="cities" element={<AdminCities />} />
             </Route>
