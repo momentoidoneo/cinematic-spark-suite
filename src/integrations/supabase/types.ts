@@ -354,6 +354,39 @@ export type Database = {
         }
         Relationships: []
       }
+      indexnow_pings: {
+        Row: {
+          created_at: string
+          engine: string
+          http_status: number | null
+          id: string
+          response: string | null
+          status: string
+          triggered_by: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          engine?: string
+          http_status?: number | null
+          id?: string
+          response?: string | null
+          status?: string
+          triggered_by?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          engine?: string
+          http_status?: number | null
+          id?: string
+          response?: string | null
+          status?: string
+          triggered_by?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       legal_texts: {
         Row: {
           content: string
