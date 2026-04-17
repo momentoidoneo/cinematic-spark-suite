@@ -158,28 +158,22 @@ const usePageTracking = () => {
 
     const timer = setTimeout(record, 300);
 
-    // On unload, try to flag exit + duration via sendBeacon
-    const handleUnload = () => {
-      if (!lastViewIdRef.current) return;
+    // Best-effort duration update on tab hidden (works mid-session for SPA navs above already)
+    const handleVisibility = () => {
+      if (document.visibilityState !== "hidden" || !lastViewIdRef.current) return;
       const duration = Math.round((Date.now() - arrivedAtRef.current) / 1000);
-      try {
-        navigator.sendBeacon?.(
-          `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/rest/v1/page_views?id=eq.${lastViewIdRef.current}`,
-          new Blob(
-            [JSON.stringify({ duration_seconds: duration, is_exit: true })],
-            { type: "application/json" },
-          ),
-        );
-      } catch {
-        /* silent */
-      }
+      supabase
+        .from("page_views")
+        .update({ duration_seconds: duration, is_exit: true })
+        .eq("id", lastViewIdRef.current)
+        .then(() => {});
     };
-    window.addEventListener("beforeunload", handleUnload);
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       cancelled = true;
       clearTimeout(timer);
-      window.removeEventListener("beforeunload", handleUnload);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [location.pathname]);
 };
