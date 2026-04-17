@@ -16,7 +16,7 @@ const contactSchema = z.object({
 const CTASection = () => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "", website: "" });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -51,20 +51,23 @@ const CTASection = () => {
     }
 
     setSending(true);
-    const { error } = await supabase.from("contact_messages").insert({
-      name: result.data.name,
-      email: result.data.email,
-      phone: result.data.phone || null,
-      message: result.data.message,
+    const { data, error } = await supabase.functions.invoke("submit-contact", {
+      body: {
+        name: result.data.name,
+        email: result.data.email,
+        phone: result.data.phone || null,
+        message: result.data.message,
+        website: form.website, // honeypot
+      },
     });
 
-    if (error) {
-      toast.error("Error al enviar el mensaje. Inténtalo de nuevo.");
+    if (error || (data && data.error)) {
+      const msg = (data?.error as string) || "Error al enviar el mensaje. Inténtalo de nuevo.";
+      toast.error(msg);
     } else {
       setSent(true);
-      setForm({ name: "", email: "", phone: "", message: "" });
+      setForm({ name: "", email: "", phone: "", message: "", website: "" });
       toast.success("¡Mensaje enviado correctamente!");
-      // Fire tracking events
       trackEvent("generate_lead", { event_category: "contact", event_label: "contact_form" });
       fireGoogleAdsConversion();
     }
@@ -129,6 +132,17 @@ const CTASection = () => {
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* Honeypot — campo oculto anti-spam */}
+                  <input
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={form.website}
+                    onChange={(e) => setForm({ ...form, website: e.target.value })}
+                    style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+                    aria-hidden="true"
+                  />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label className="text-sm font-medium text-foreground mb-1.5 block">Nombre *</label>
