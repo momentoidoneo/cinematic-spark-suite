@@ -9,7 +9,16 @@ import {
   AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid,
 } from "recharts";
 import KPICard from "@/components/admin/dashboard/KPICard";
-import { fetchViews, groupByDay, uniqueSessions, pctChange, periodLabel, type Period, type PageViewRow } from "@/lib/analytics";
+import {
+  fetchRealContactMessages,
+  fetchViews,
+  groupByDay,
+  pctChange,
+  periodLabel,
+  uniqueSessions,
+  type Period,
+  type PageViewRow,
+} from "@/lib/analytics";
 
 const PERIODS: Period[] = ["today", "7d", "30d"];
 
@@ -19,44 +28,69 @@ const AdminDashboard = () => {
   const [prevViews, setPrevViews] = useState<PageViewRow[]>([]);
   const [counts, setCounts] = useState({
     categories: 0, subcategories: 0, images: 0,
-    messages: 0, unread: 0, totalViews: 0, posts: 0,
+    messages: 0, messagesInPeriod: 0, unread: 0, totalViews: 0, posts: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      setLoadError(null);
       const days = period === "today" ? 1 : period === "7d" ? 7 : 30;
       const since = new Date(Date.now() - days * 86400_000).toISOString();
       const prevSince = new Date(Date.now() - days * 2 * 86400_000).toISOString();
 
-      const [v, pv, cats, subs, imgs, msgsAll, msgsUnread, viewsAll, posts] = await Promise.all([
-        fetchViews(since),
-        fetchViews(prevSince),
-        supabase.from("portfolio_categories").select("id", { count: "exact", head: true }),
-        supabase.from("portfolio_subcategories").select("id", { count: "exact", head: true }),
-        supabase.from("portfolio_images").select("id", { count: "exact", head: true }),
-        supabase.from("contact_messages").select("id", { count: "exact", head: true }),
-        supabase.from("contact_messages").select("id", { count: "exact", head: true }).eq("is_read", false),
-        supabase.from("page_views").select("id", { count: "exact", head: true }),
-        supabase.from("blog_posts").select("id", { count: "exact", head: true }),
-      ]);
+      try {
+        const [v, pv, cats, subs, messagesAll, messagesInPeriod, viewsAll, posts] = await Promise.all([
+          fetchViews(since),
+          fetchViews(prevSince),
+          supabase.from("portfolio_categories").select("id").eq("is_visible", true),
+          supabase.from("portfolio_subcategories").select("id,category_id").eq("is_visible", true),
+          fetchRealContactMessages(),
+          fetchRealContactMessages(since),
+          supabase.from("page_views").select("id", { count: "exact", head: true }),
+          supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("status", "published"),
+        ]);
 
-      setViews(v);
-      // prev = window before current
-      const cutoff = new Date(since).getTime();
-      setPrevViews(pv.filter((r) => new Date(r.created_at).getTime() < cutoff));
+        if (cats.error) throw cats.error;
+        if (subs.error) throw subs.error;
+        if (viewsAll.error) throw viewsAll.error;
+        if (posts.error) throw posts.error;
 
-      setCounts({
-        categories: cats.count ?? 0,
-        subcategories: subs.count ?? 0,
-        images: imgs.count ?? 0,
-        messages: msgsAll.count ?? 0,
-        unread: msgsUnread.count ?? 0,
-        totalViews: viewsAll.count ?? 0,
-        posts: posts.count ?? 0,
-      });
-      setLoading(false);
+        const visibleCategoryIds = new Set((cats.data || []).map((cat) => cat.id));
+        const visibleSubcategoryIds = (subs.data || [])
+          .filter((sub) => visibleCategoryIds.has(sub.category_id))
+          .map((sub) => sub.id);
+        const imgs = visibleSubcategoryIds.length
+          ? await supabase
+              .from("portfolio_images")
+              .select("id", { count: "exact", head: true })
+              .in("subcategory_id", visibleSubcategoryIds)
+          : { count: 0, error: null };
+
+        if (imgs.error) throw imgs.error;
+
+        setViews(v);
+        const cutoff = new Date(since).getTime();
+        setPrevViews(pv.filter((r) => new Date(r.created_at).getTime() < cutoff));
+
+        setCounts({
+          categories: cats.data?.length ?? 0,
+          subcategories: visibleSubcategoryIds.length,
+          images: imgs.count ?? 0,
+          messages: messagesAll.length,
+          messagesInPeriod: messagesInPeriod.length,
+          unread: messagesAll.filter((message) => !message.is_read).length,
+          totalViews: viewsAll.count ?? 0,
+          posts: posts.count ?? 0,
+        });
+      } catch (error) {
+        console.error("[AdminDashboard] Error loading metrics:", error);
+        setLoadError("No se pudieron cargar las métricas reales del panel.");
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [period]);
@@ -93,7 +127,7 @@ const AdminDashboard = () => {
       avgDuration,
       pagesPerSession,
       dailyChart: groupByDay(views, days === 1 ? 1 : days),
-      conversionRate: viewsCount > 0 ? (counts.messages / counts.totalViews) * 100 : 0,
+      conversionRate: viewsCount > 0 ? (counts.messagesInPeriod / viewsCount) * 100 : 0,
     };
   }, [views, prevViews, period, counts]);
 
@@ -118,13 +152,14 @@ const AdminDashboard = () => {
     { label: "Marketing", icon: Zap, link: "/admin/marketing", color: "from-primary/20 to-primary/5" },
     { label: "Configuración", icon: Settings, link: "/admin/tracking", color: "from-secondary to-secondary/50" },
   ];
+  const hasVisitData = stats.viewsCount > 0;
 
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
         <div>
           <h1 className="font-display text-3xl font-bold text-foreground mb-1">Panel de Administración</h1>
-          <p className="text-muted-foreground">Resumen en tiempo real · {periodLabel[period]}</p>
+          <p className="text-muted-foreground">Resumen con datos reales · {periodLabel[period]}</p>
         </div>
         <div className="inline-flex rounded-lg border border-border bg-card p-1 self-start">
           {PERIODS.map((p) => (
@@ -140,6 +175,12 @@ const AdminDashboard = () => {
           ))}
         </div>
       </div>
+
+      {loadError && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive mb-6">
+          {loadError}
+        </div>
+      )}
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
@@ -210,7 +251,7 @@ const AdminDashboard = () => {
           label="Tasa conversión"
           value={`${stats.conversionRate.toFixed(2)}%`}
           icon={BarChart3}
-          hint={`${counts.messages} leads totales`}
+          hint={`${counts.messagesInPeriod} leads reales en ${periodLabel[period]}`}
         />
         <KPICard
           label="Total visitas histórico"
@@ -231,40 +272,49 @@ const AdminDashboard = () => {
             Ver detallado →
           </Link>
         </div>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={stats.dailyChart}>
-              <defs>
-                <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: 8,
-                }}
-              />
-              <Area type="monotone" dataKey="views" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorViews)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        {hasVisitData ? (
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={stats.dailyChart}>
+                <defs>
+                  <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 8,
+                  }}
+                />
+                <Area type="monotone" dataKey="views" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorViews)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="h-64 rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center text-sm text-muted-foreground text-center px-6">
+            Sin visitas registradas en este periodo. No se muestran gráficos estimados ni datos de ejemplo.
+          </div>
+        )}
       </div>
 
       {/* Content */}
-      <h2 className="font-display text-lg font-bold text-foreground mb-3">Contenido</h2>
+      <div className="mb-3">
+        <h2 className="font-display text-lg font-bold text-foreground">Contenido visible</h2>
+        <p className="text-sm text-muted-foreground">Solo cuenta contenido publicado o visible en la web; no incluye borradores ni secciones ocultas.</p>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "Categorías", value: counts.categories, icon: FolderOpen, link: "/admin/categories" },
-          { label: "Subcategorías", value: counts.subcategories, icon: Layers, link: "/admin/subcategories" },
-          { label: "Imágenes", value: counts.images, icon: ImageIcon, link: "/admin/images" },
-          { label: "Posts blog", value: counts.posts, icon: FileText, link: "/admin/blog" },
-          { label: "Mensajes", value: counts.messages, icon: MessageSquare, link: "/admin/messages" },
+          { label: "Categorías visibles", value: counts.categories, icon: FolderOpen, link: "/admin/categories" },
+          { label: "Subcategorías visibles", value: counts.subcategories, icon: Layers, link: "/admin/subcategories" },
+          { label: "Imágenes visibles", value: counts.images, icon: ImageIcon, link: "/admin/images" },
+          { label: "Posts publicados", value: counts.posts, icon: FileText, link: "/admin/blog" },
+          { label: "Leads reales", value: counts.messages, icon: MessageSquare, link: "/admin/messages" },
         ].map((c) => (
           <Link
             key={c.label}

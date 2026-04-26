@@ -13,7 +13,7 @@ const ConversionFunnel = ({ steps }: { steps: FunnelStep[] }) => {
     <div className="space-y-2">
       {steps.map((s, i) => {
         const pct = (s.value / max) * 100;
-        const conversion = i > 0 && steps[i - 1].value > 0 ? (s.value / steps[i - 1].value) * 100 : 100;
+        const conversion = i > 0 && steps[i - 1].value > 0 ? (s.value / steps[i - 1].value) * 100 : null;
         return (
           <div key={s.label}>
             <div
@@ -31,7 +31,9 @@ const ConversionFunnel = ({ steps }: { steps: FunnelStep[] }) => {
                 <div className="text-right">
                   <p className="text-lg font-bold text-foreground">{s.value.toLocaleString()}</p>
                   {i > 0 && (
-                    <p className="text-[10px] text-accent font-semibold">{conversion.toFixed(1)}%</p>
+                    <p className="text-[10px] text-accent font-semibold">
+                      {conversion === null ? "Sin base" : `${conversion.toFixed(1)}%`}
+                    </p>
                   )}
                 </div>
               </div>

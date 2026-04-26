@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Eye, Users, Globe, Smartphone, Monitor, Tablet, Download, TrendingUp, Clock,
   Link2, Megaphone, FileText,
@@ -12,7 +11,7 @@ import KPICard from "@/components/admin/dashboard/KPICard";
 import HeatmapChart from "@/components/admin/dashboard/HeatmapChart";
 import ConversionFunnel from "@/components/admin/dashboard/ConversionFunnel";
 import {
-  fetchViews, groupByDay, uniqueSessions, topBy, referrerHost, exportCSV,
+  fetchRealContactMessages, fetchViews, groupByDay, uniqueSessions, topBy, referrerHost, exportCSV,
   pctChange, periodLabel, type Period, type PageViewRow,
 } from "@/lib/analytics";
 
@@ -34,14 +33,14 @@ const AdminAnalytics = () => {
       const prevSince = new Date(Date.now() - days * 2 * 86400_000).toISOString();
       const cutoff = new Date(since).getTime();
 
-      const [v, pv, msgs] = await Promise.all([
+      const [v, pv, realMessages] = await Promise.all([
         fetchViews(since),
         period === "all" ? Promise.resolve([] as PageViewRow[]) : fetchViews(prevSince),
-        supabase.from("contact_messages").select("id,created_at", { count: "exact" }).gte("created_at", since),
+        fetchRealContactMessages(since),
       ]);
       setViews(v);
       setPrevViews(pv.filter((r) => new Date(r.created_at).getTime() < cutoff));
-      setMessagesCount(msgs.count ?? 0);
+      setMessagesCount(realMessages.length);
       setLoading(false);
     };
     load();
@@ -109,6 +108,8 @@ const AdminAnalytics = () => {
   }, [views, prevViews, period]);
 
   const formatDuration = (s: number) => s < 60 ? `${Math.round(s)}s` : `${Math.floor(s / 60)}m ${Math.round(s % 60)}s`;
+  const hasVisitData = stats.viewsCount > 0;
+  const engagedSessions = Math.max(0, stats.sessions - Math.round(stats.sessions * stats.bounceRate / 100));
 
   const handleExport = () => {
     exportCSV(
@@ -168,23 +169,29 @@ const AdminAnalytics = () => {
 
       <div className="rounded-xl bg-card border border-border p-6 mb-8">
         <h2 className="font-display text-lg font-bold text-foreground mb-4">Evolución de visitas</h2>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={stats.dailyChart}>
-              <defs>
-                <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
-              <Area type="monotone" dataKey="views" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#g1)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        {hasVisitData ? (
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={stats.dailyChart}>
+                <defs>
+                  <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+                <Area type="monotone" dataKey="views" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#g1)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="h-72 rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center text-sm text-muted-foreground text-center px-6">
+            Sin visitas registradas en este periodo. No se muestran gráficos estimados ni datos de ejemplo.
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -200,8 +207,8 @@ const AdminAnalytics = () => {
             steps={[
               { label: "Visitas totales", value: stats.viewsCount },
               { label: "Sesiones únicas", value: stats.sessions, hint: "Visitantes diferentes" },
-              { label: "Sesiones engaged", value: stats.sessions - Math.round(stats.sessions * stats.bounceRate / 100), hint: ">1 página" },
-              { label: "Leads (mensajes)", value: messagesCount, hint: "Conversión final" },
+              { label: "Sesiones engaged", value: engagedSessions, hint: ">1 página" },
+              { label: "Mensajes reales", value: messagesCount, hint: "Excluye pruebas/demo obvias" },
             ]}
           />
         </div>
@@ -281,15 +288,19 @@ const AdminAnalytics = () => {
             <h2 className="font-display text-lg font-bold text-foreground">Páginas más vistas</h2>
           </div>
           <div className="space-y-2">
-            {stats.topPages.map((p) => (
-              <div key={p.path} className="flex items-center justify-between gap-3 py-2 border-b border-border/50">
-                <div className="min-w-0 flex-1">
-                  <p className="font-mono text-xs text-foreground truncate">{p.path}</p>
-                  {p.avgDur > 0 && <p className="text-[10px] text-muted-foreground">Tiempo medio: {formatDuration(p.avgDur)}</p>}
+            {stats.topPages.length ? (
+              stats.topPages.map((p) => (
+                <div key={p.path} className="flex items-center justify-between gap-3 py-2 border-b border-border/50">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-mono text-xs text-foreground truncate">{p.path}</p>
+                    {p.avgDur > 0 && <p className="text-[10px] text-muted-foreground">Tiempo medio: {formatDuration(p.avgDur)}</p>}
+                  </div>
+                  <span className="text-sm font-semibold text-primary">{p.count}</span>
                 </div>
-                <span className="text-sm font-semibold text-primary">{p.count}</span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">Sin páginas vistas en este periodo.</p>
+            )}
           </div>
         </div>
         <div className="rounded-xl bg-card border border-border p-6">
@@ -298,12 +309,16 @@ const AdminAnalytics = () => {
             <h2 className="font-display text-lg font-bold text-foreground">Fuentes de tráfico</h2>
           </div>
           <div className="space-y-2">
-            {stats.topReferrers.map((r) => (
-              <div key={r.name} className="flex items-center justify-between py-2 border-b border-border/50">
-                <span className="text-sm text-foreground truncate">{r.name}</span>
-                <span className="text-sm font-semibold text-accent">{r.count}</span>
-              </div>
-            ))}
+            {stats.topReferrers.length ? (
+              stats.topReferrers.map((r) => (
+                <div key={r.name} className="flex items-center justify-between py-2 border-b border-border/50">
+                  <span className="text-sm text-foreground truncate">{r.name}</span>
+                  <span className="text-sm font-semibold text-accent">{r.count}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">Sin fuentes de tráfico en este periodo.</p>
+            )}
           </div>
         </div>
       </div>
@@ -314,16 +329,20 @@ const AdminAnalytics = () => {
             <Smartphone className="w-5 h-5 text-primary" />
             <h2 className="font-display text-lg font-bold text-foreground">Dispositivos</h2>
           </div>
-          <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={stats.devices} dataKey="count" nameKey="name" outerRadius={70} label={(e: { name: string }) => e.name}>
-                  {stats.devices.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {stats.devices.length ? (
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={stats.devices} dataKey="count" nameKey="name" outerRadius={70} label={(e: { name: string }) => e.name}>
+                    {stats.devices.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Sin datos de dispositivo.</p>
+          )}
         </div>
         <div className="rounded-xl bg-card border border-border p-6">
           <div className="flex items-center gap-2 mb-4">
@@ -331,12 +350,16 @@ const AdminAnalytics = () => {
             <h2 className="font-display text-lg font-bold text-foreground">Navegadores</h2>
           </div>
           <div className="space-y-2">
-            {stats.browsers.map((b) => (
-              <div key={b.name} className="flex items-center justify-between py-2 border-b border-border/50">
-                <span className="text-sm text-foreground">{b.name}</span>
-                <span className="text-sm font-semibold text-foreground">{b.count}</span>
-              </div>
-            ))}
+            {stats.browsers.length ? (
+              stats.browsers.map((b) => (
+                <div key={b.name} className="flex items-center justify-between py-2 border-b border-border/50">
+                  <span className="text-sm text-foreground">{b.name}</span>
+                  <span className="text-sm font-semibold text-foreground">{b.count}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">Sin datos de navegador.</p>
+            )}
           </div>
         </div>
         <div className="rounded-xl bg-card border border-border p-6">
@@ -345,12 +368,16 @@ const AdminAnalytics = () => {
             <h2 className="font-display text-lg font-bold text-foreground">Sistemas operativos</h2>
           </div>
           <div className="space-y-2">
-            {stats.os.map((o) => (
-              <div key={o.name} className="flex items-center justify-between py-2 border-b border-border/50">
-                <span className="text-sm text-foreground">{o.name}</span>
-                <span className="text-sm font-semibold text-foreground">{o.count}</span>
-              </div>
-            ))}
+            {stats.os.length ? (
+              stats.os.map((o) => (
+                <div key={o.name} className="flex items-center justify-between py-2 border-b border-border/50">
+                  <span className="text-sm text-foreground">{o.name}</span>
+                  <span className="text-sm font-semibold text-foreground">{o.count}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">Sin datos de sistema operativo.</p>
+            )}
           </div>
         </div>
       </div>

@@ -21,6 +21,15 @@ export interface PageViewRow {
   duration_seconds: number | null;
 }
 
+export interface ContactMessageMetricRow {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  is_read: boolean | null;
+  created_at: string;
+}
+
 export const periodToHours = (p: Period): number => {
   switch (p) {
     case "today":
@@ -55,6 +64,45 @@ export const fetchViews = async (sinceIso: string): Promise<PageViewRow[]> => {
     .limit(5000);
   if (error) throw error;
   return (data || []) as PageViewRow[];
+};
+
+const DEMO_EMAIL_DOMAINS = [
+  "example.com",
+  "example.es",
+  "test.com",
+  "test.es",
+  "demo.com",
+  "demo.es",
+  "mailinator.com",
+  "tempmail.com",
+];
+
+const DEMO_EMAIL_PREFIXES = ["test", "demo", "prueba", "asdf", "qwerty", "lovable"];
+
+export const isLikelyDemoLead = (row: Pick<ContactMessageMetricRow, "name" | "email" | "message">) => {
+  const email = row.email.trim().toLowerCase();
+  const emailLocal = email.split("@")[0] || "";
+  const text = `${row.name} ${row.message}`.toLowerCase();
+
+  return (
+    DEMO_EMAIL_DOMAINS.some((domain) => email.endsWith(`@${domain}`)) ||
+    DEMO_EMAIL_PREFIXES.includes(emailLocal) ||
+    /\b(lorem ipsum|mensaje de prueba|esto es una prueba|demo lead|test lead|prueba dashboard)\b/i.test(text)
+  );
+};
+
+export const fetchRealContactMessages = async (sinceIso?: string): Promise<ContactMessageMetricRow[]> => {
+  let query = supabase
+    .from("contact_messages")
+    .select("id,name,email,message,is_read,created_at")
+    .order("created_at", { ascending: false })
+    .limit(5000);
+
+  if (sinceIso) query = query.gte("created_at", sinceIso);
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return ((data || []) as ContactMessageMetricRow[]).filter((row) => !isLikelyDemoLead(row));
 };
 
 export const groupByDay = (rows: PageViewRow[], days: number) => {
@@ -124,8 +172,8 @@ export const exportCSV = (rows: Record<string, unknown>[], filename: string) => 
   URL.revokeObjectURL(url);
 };
 
-export const pctChange = (curr: number, prev: number): number => {
-  if (prev === 0) return curr > 0 ? 100 : 0;
+export const pctChange = (curr: number, prev: number): number | undefined => {
+  if (prev === 0) return curr > 0 ? undefined : 0;
   return ((curr - prev) / prev) * 100;
 };
 
