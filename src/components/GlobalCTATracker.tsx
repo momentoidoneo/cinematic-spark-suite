@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { fireGoogleAdsConversion, trackEvent } from "./TrackingScripts";
+import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
 
 /**
  * Listener global que detecta clicks en cualquier enlace que apunte a

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calculator, X, ArrowRight, Loader2, MessageCircle, CheckCircle, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { fireGoogleAdsConversion, trackEvent } from "./TrackingScripts";
+import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
 import { toast } from "sonner";
 
 interface QuoteResult {

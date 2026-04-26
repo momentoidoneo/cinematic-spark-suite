@@ -52,7 +52,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="flex flex-col items-center md:items-start">
             <img src={logo} alt="Silvio Costa Photography" className="h-24 w-auto mb-4" />
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-foreground/75 leading-relaxed">
               Elevando la fotografía a una experiencia cinematográfica. Capturando la esencia de cada momento con una estética premium y atención al detalle.
             </p>
             {socialLinks.length > 0 && (
@@ -66,7 +66,7 @@ const Footer = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       title={link.label || link.platform}
-                      className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/50 hover:scale-110 transition-all duration-300"
+                      className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center text-foreground/75 hover:text-primary hover:border-primary/50 hover:scale-110 transition-all duration-300"
                     >
                       <Icon className="w-4 h-4" />
                     </a>
@@ -82,7 +82,7 @@ const Footer = () => {
             <ul className="space-y-2">
               {["Inicio", "Servicios", "Portafolio", "Contacto"].map((item) => (
                 <li key={item}>
-                  <a href={`#${item.toLowerCase()}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <a href={`#${item.toLowerCase()}`} className="text-sm text-foreground/75 hover:text-foreground transition-colors">
                     {item}
                   </a>
                 </li>
@@ -96,7 +96,7 @@ const Footer = () => {
             <ul className="space-y-2">
               {["Fotografía", "Dron", "Tours Virtuales", "Video", "Eventos"].map((item) => (
                 <li key={item}>
-                  <a href="#portafolio" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <a href="#portafolio" className="text-sm text-foreground/75 hover:text-foreground transition-colors">
                     {item}
                   </a>
                 </li>
@@ -114,7 +114,7 @@ const Footer = () => {
                     <Mail className="w-4 h-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Email</p>
+                    <p className="text-xs text-foreground/75">Email</p>
                     <a href="mailto:silvio@silviocosta.net" className="text-sm font-medium text-foreground">silvio@silviocosta.net</a>
                   </div>
                 </div>
@@ -123,7 +123,7 @@ const Footer = () => {
                     <Phone className="w-4 h-4 text-accent" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Teléfono</p>
+                    <p className="text-xs text-foreground/75">Teléfono</p>
                     <a href="tel:+34640934640" className="text-sm font-medium text-foreground">+34 640 934 640</a>
                   </div>
                 </div>
@@ -132,7 +132,7 @@ const Footer = () => {
                     <MessageCircle className="w-4 h-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">WhatsApp</p>
+                    <p className="text-xs text-foreground/75">WhatsApp</p>
                     <a href="https://wa.me/34640934640" className="text-sm font-medium text-foreground">+34 640 934 640</a>
                   </div>
                 </div>
@@ -143,14 +143,14 @@ const Footer = () => {
 
         {/* Bottom */}
         <div className="border-t border-border pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-foreground/75">
             © 2026 Silvio Costa Photography. Todos los derechos reservados.
           </p>
           <div className="flex gap-4">
-            <a href="/legal/privacy-policy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacidad</a>
-            <a href="/legal/legal-notice" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Aviso Legal</a>
-            <a href="/legal/cookies" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Cookies</a>
-            <a href="/legal/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Términos</a>
+            <a href="/legal/privacy-policy" className="text-xs text-foreground/75 hover:text-foreground transition-colors">Privacidad</a>
+            <a href="/legal/legal-notice" className="text-xs text-foreground/75 hover:text-foreground transition-colors">Aviso Legal</a>
+            <a href="/legal/cookies" className="text-xs text-foreground/75 hover:text-foreground transition-colors">Cookies</a>
+            <a href="/legal/terms" className="text-xs text-foreground/75 hover:text-foreground transition-colors">Términos</a>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Camera, Plane, Globe, Video, PartyPopper, Boxes } from "lucide-react";
+import { Camera, Plane, Globe, Video, PartyPopper, Boxes, Clock, MapPin, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroBg from "@/assets/hero-bg.jpg";
 import logo from "@/assets/logo.png";
@@ -13,6 +13,11 @@ const services = [
   { icon: Boxes, label: "RENDERS 3D", href: "/servicios/renders" },
 ];
 
+const trustSignals = [
+  { icon: Clock, label: "Respuesta en 24h" },
+  { icon: MapPin, label: "España y Portugal" },
+  { icon: ShieldCheck, label: "+500 proyectos realizados" },
+];
 
 const HeroSection = () => {
   return (
@@ -40,42 +45,54 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="font-display text-5xl md:text-7xl lg:text-8xl font-bold leading-tight">
-          
-          Fotografía y Producción{" "}
-          <span className="text-gradient-primary italic">Audiovisual Profesional</span>
+          className="font-display text-5xl md:text-7xl lg:text-8xl font-bold leading-tight"
+        >
+          Fotografía, vídeo y tours 360{" "}
+          <span className="text-gradient-primary italic">para vender mejor tus espacios</span>
         </motion.h1>
-
-        
-
-
-
-
-
-
-        
 
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
-          className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
-          Eleva la imagen de tu marca, servicio, empresa o evento a través de fotografía, video y producción audiovisual.
+          className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground"
+        >
+          Producción visual profesional para inmobiliarias, arquitectura, hoteles, restaurantes, eventos y marcas que necesitan generar confianza antes de la primera llamada.
         </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="mt-6 flex flex-wrap justify-center gap-3"
+        >
+          {trustSignals.map((signal) => (
+            <div
+              key={signal.label}
+              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/45 px-4 py-2 text-sm text-foreground/85 backdrop-blur-sm"
+            >
+              <signal.icon className="h-4 w-4 text-primary" />
+              <span>{signal.label}</span>
+            </div>
+          ))}
+        </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="mt-8 flex flex-col items-center gap-4">
+          className="mt-8 flex flex-col items-center gap-4"
+        >
           <a
             href="#contacto"
-            className="px-8 py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold text-base hover:opacity-90 transition-opacity">
-            Solicitar Presupuesto
+            className="px-8 py-3.5 rounded-full bg-gradient-primary text-primary-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+          >
+            Pedir presupuesto en 24h
           </a>
           <a
             href="#servicios"
-            className="px-8 py-3.5 rounded-full border border-border text-foreground font-semibold text-base hover:bg-secondary transition-colors">
+            className="px-8 py-3.5 rounded-full border border-border text-foreground font-semibold text-base hover:bg-secondary transition-colors"
+          >
             Ver Todos los Servicios
           </a>
         </motion.div>
@@ -84,33 +101,28 @@ const HeroSection = () => {
       {/* Service cards */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 pb-20 w-full">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {services.map((s, i) => {
-            const isExternal = s.href.startsWith("/#");
-            const Wrapper = isExternal ? "a" : Link;
-            const linkProps = isExternal ? { href: s.href } : { to: s.href };
-            return (
-              <motion.div
-                key={s.label}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.9 + i * 0.1 }}
+          {services.map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.9 + i * 0.1 }}
+            >
+              <Link
+                to={s.href}
+                className="group rounded-xl bg-card/60 border border-border/50 p-6 text-center hover:border-primary/40 hover:shadow-glow transition-all cursor-pointer block"
               >
-                <Wrapper
-                  {...(linkProps as any)}
-                  className="group rounded-xl bg-card/60 border border-border/50 p-6 text-center hover:border-primary/40 hover:shadow-glow transition-all cursor-pointer block"
-                >
-                  <s.icon className="w-8 h-8 mx-auto text-primary mb-3 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-semibold tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
-                    {s.label}
-                  </span>
-                </Wrapper>
-              </motion.div>
-            );
-          })}
+                <s.icon className="w-8 h-8 mx-auto text-primary mb-3 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-semibold tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
+                  {s.label}
+                </span>
+              </Link>
+            </motion.div>
+          ))}
         </div>
       </div>
-    </section>);
-
+    </section>
+  );
 };
 
 export default HeroSection;

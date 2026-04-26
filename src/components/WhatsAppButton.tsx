@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { fireGoogleAdsConversion, trackEvent } from "./TrackingScripts";
+import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
 
 const WhatsAppButton = () => {
   const [phone, setPhone] = useState<string | null>(null);
@@ -49,7 +49,7 @@ const WhatsAppButton = () => {
             onClick={() => { handleClick(); window.open(url, "_blank"); }}
           >
             <p className="text-xs text-muted-foreground mb-0.5">WhatsApp</p>
-            <p className="text-sm text-foreground font-medium">¿Necesitas ayuda? ¡Escríbenos!</p>
+            <p className="text-sm text-foreground font-medium">¿Necesitas presupuesto rápido? Escríbenos.</p>
           </motion.div>
         )}
       </AnimatePresence>

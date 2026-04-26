@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate-quote]
 verify_jwt = false
+
+[functions.track-page-view]
+verify_jwt = false

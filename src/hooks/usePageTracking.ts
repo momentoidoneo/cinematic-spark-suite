@@ -28,7 +28,9 @@ const getOrCreateSessionId = (): string => {
       sessionStorage.setItem(SESSION_TS_KEY, String(now));
       return existing;
     }
-    const id = `s_${now}_${Math.random().toString(36).slice(2, 10)}`;
+    const id = typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? `s_${crypto.randomUUID()}`
+      : `s_${now}_${Math.random().toString(36).slice(2, 10)}`;
     sessionStorage.setItem(SESSION_KEY, id);
     sessionStorage.setItem(SESSION_TS_KEY, String(now));
     return id;
@@ -93,8 +95,8 @@ const fetchGeo = async (): Promise<{ country?: string; city?: string; region?: s
 
 const usePageTracking = () => {
   const location = useLocation();
-  const lastPathRef = useRef<string | null>(null);
   const lastViewIdRef = useRef<string | null>(null);
+  const lastSessionIdRef = useRef<string | null>(null);
   const arrivedAtRef = useRef<number>(Date.now());
 
   useEffect(() => {
@@ -112,19 +114,27 @@ const usePageTracking = () => {
 
     let cancelled = false;
 
+    const finishCurrentView = async (isExit = false) => {
+      if (!lastViewIdRef.current || !lastSessionIdRef.current) return;
+
+      const duration = Math.round((Date.now() - arrivedAtRef.current) / 1000);
+      await supabase.functions.invoke("track-page-view", {
+        body: {
+          action: "finish",
+          id: lastViewIdRef.current,
+          session_id: lastSessionIdRef.current,
+          duration_seconds: duration,
+          is_exit: isExit,
+        },
+      });
+    };
+
     const record = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) return;
 
-        // Update duration of previous view
-        if (lastViewIdRef.current) {
-          const duration = Math.round((Date.now() - arrivedAtRef.current) / 1000);
-          await supabase
-            .from("page_views")
-            .update({ duration_seconds: duration })
-            .eq("id", lastViewIdRef.current);
-        }
+        await finishCurrentView();
 
         const session_id = getOrCreateSessionId();
         const device = detectDevice();
@@ -132,9 +142,9 @@ const usePageTracking = () => {
         const geo = await fetchGeo();
         if (cancelled) return;
 
-        const { data, error } = await supabase
-          .from("page_views")
-          .insert({
+        const { data, error } = await supabase.functions.invoke<{ id: string }>("track-page-view", {
+          body: {
+            action: "start",
             page_path: location.pathname,
             referrer: document.referrer || null,
             user_agent: navigator.userAgent || null,
@@ -142,14 +152,13 @@ const usePageTracking = () => {
             ...device,
             ...utm,
             ...geo,
-          })
-          .select("id")
-          .single();
+          },
+        });
 
-        if (!error && data) {
+        if (!error && data?.id) {
           lastViewIdRef.current = data.id;
+          lastSessionIdRef.current = session_id;
           arrivedAtRef.current = Date.now();
-          lastPathRef.current = location.pathname;
         }
       } catch {
         /* silent */
@@ -161,12 +170,7 @@ const usePageTracking = () => {
     // Best-effort duration update on tab hidden (works mid-session for SPA navs above already)
     const handleVisibility = () => {
       if (document.visibilityState !== "hidden" || !lastViewIdRef.current) return;
-      const duration = Math.round((Date.now() - arrivedAtRef.current) / 1000);
-      supabase
-        .from("page_views")
-        .update({ duration_seconds: duration, is_exit: true })
-        .eq("id", lastViewIdRef.current)
-        .then(() => {});
+      finishCurrentView(true).catch(() => {});
     };
     document.addEventListener("visibilitychange", handleVisibility);
 

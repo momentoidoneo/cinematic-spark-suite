@@ -4,19 +4,40 @@ import { Sparkles, Send, MessageCircle, CheckCircle, Phone, Mail, User } from "l
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
-import { fireGoogleAdsConversion, trackEvent } from "./TrackingScripts";
+import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio").max(100),
   email: z.string().trim().email("Email no válido").max(255),
   phone: z.string().trim().max(20).optional(),
+  service: z.string().trim().max(120).optional(),
+  timing: z.string().trim().max(120).optional(),
   message: z.string().trim().min(1, "El mensaje es obligatorio").max(2000),
 });
+
+const serviceOptions = [
+  "Fotografía inmobiliaria",
+  "Arquitectura e interiorismo",
+  "Tour virtual 360",
+  "Vídeo y dron",
+  "Gastronomía / producto",
+  "Evento",
+  "Renders 3D",
+  "Aún no lo sé",
+];
+
+const timingOptions = [
+  "Esta semana",
+  "En 2 semanas",
+  "Este mes",
+  "Más adelante",
+  "Solo quiero orientación",
+];
 
 const CTASection = () => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "", website: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", service: "", timing: "", message: "", website: "" });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -50,13 +71,19 @@ const CTASection = () => {
       return;
     }
 
+    const enrichedMessage = [
+      result.data.service ? `Servicio: ${result.data.service}` : null,
+      result.data.timing ? `Plazo: ${result.data.timing}` : null,
+      result.data.message,
+    ].filter(Boolean).join("\n\n");
+
     setSending(true);
     const { data, error } = await supabase.functions.invoke("submit-contact", {
       body: {
         name: result.data.name,
         email: result.data.email,
         phone: result.data.phone || null,
-        message: result.data.message,
+        message: enrichedMessage,
         website: form.website, // honeypot
       },
     });
@@ -66,7 +93,7 @@ const CTASection = () => {
       toast.error(msg);
     } else {
       setSent(true);
-      setForm({ name: "", email: "", phone: "", message: "", website: "" });
+      setForm({ name: "", email: "", phone: "", service: "", timing: "", message: "", website: "" });
       toast.success("¡Mensaje enviado correctamente!");
       trackEvent("generate_lead", { event_category: "contact", event_label: "contact_form" });
       fireGoogleAdsConversion();
@@ -95,11 +122,11 @@ const CTASection = () => {
             Contacto
           </div>
           <h2 className="font-display text-4xl md:text-6xl font-bold text-foreground mb-4">
-            ¿Listo para dar vida{" "}
-            <span className="text-gradient-primary italic">a tu proyecto?</span>
+            Cuéntanos qué necesitas{" "}
+            <span className="text-gradient-primary italic">y te proponemos el plan</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Cuéntanos tu idea y te responderemos con un presupuesto personalizado sin compromiso.
+            Respuesta en menos de 24 horas con alcance recomendado, disponibilidad y presupuesto orientativo.
           </p>
         </motion.div>
 
@@ -184,6 +211,34 @@ const CTASection = () => {
                       />
                     </div>
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">Servicio</label>
+                      <select
+                        value={form.service}
+                        onChange={(e) => setForm({ ...form, service: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      >
+                        <option value="">Selecciona una opción</option>
+                        {serviceOptions.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">Plazo</label>
+                      <select
+                        value={form.timing}
+                        onChange={(e) => setForm({ ...form, timing: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                      >
+                        <option value="">Selecciona una opción</option>
+                        {timingOptions.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                   <div>
                     <label className="text-sm font-medium text-foreground mb-1.5 block">Mensaje *</label>
                     <textarea
@@ -201,7 +256,7 @@ const CTASection = () => {
                     className="w-full py-3 rounded-lg bg-gradient-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
                     <Send className="w-4 h-4" />
-                    {sending ? "Enviando..." : "Enviar Mensaje"}
+                    {sending ? "Enviando..." : "Solicitar propuesta"}
                   </button>
                 </form>
               )}
@@ -232,7 +287,7 @@ const CTASection = () => {
                 </div>
                 <h3 className="font-display text-lg font-bold text-foreground mb-1">WhatsApp Directo</h3>
                 <p className="text-sm text-muted-foreground">
-                  ¿Prefieres una respuesta inmediata? Escríbenos por WhatsApp y te atendemos al momento.
+                  ¿Prefieres una respuesta rápida? Escríbenos por WhatsApp y revisamos disponibilidad.
                 </p>
               </a>
             )}

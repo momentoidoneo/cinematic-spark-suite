@@ -217,7 +217,12 @@ const Navbar = () => {
         {/* Mobile hamburger */}
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
-            <button className="md:hidden p-2 -ml-2 rounded-lg text-foreground hover:bg-secondary/60 transition-colors">
+            <button
+              className="md:hidden p-2 -ml-2 rounded-lg text-foreground hover:bg-secondary/60 transition-colors"
+              aria-label="Abrir menú de navegación"
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-navigation"
+            >
               <Menu className="w-6 h-6" />
             </button>
           </SheetTrigger>
@@ -233,7 +238,7 @@ const Navbar = () => {
               </div>
 
               {/* Nav items */}
-              <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+              <nav id="mobile-navigation" className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
                 {navItems.map((item) => (
                   <MobileMenuItem key={item.label} item={item} onClose={closeMobile} />
                 ))}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureDataLayer, setGoogleAdsConversion } from "@/lib/trackingEvents";
 
 const TRACKING_KEYS = [
   "google_tag_manager_id",
@@ -13,24 +14,25 @@ const TRACKING_KEYS = [
   "meta_pixel_enabled",
 ];
 
-// Store ads conversion info globally so other components can fire conversion events
-export const fireGoogleAdsConversion = () => {
-  const w = window as any;
-  if (w.__gads_conversion_id && w.__gads_conversion_label && typeof w.gtag === "function") {
-    w.gtag("event", "conversion", {
-      send_to: `${w.__gads_conversion_id}/${w.__gads_conversion_label}`,
-    });
-    return true;
-  }
-  return false;
-};
+const isEnabled = (value?: string) => value === "true";
+const isValidGtmId = (value?: string) => /^GTM-[A-Z0-9]+$/i.test(value || "");
+const isValidGaId = (value?: string) => /^G-[A-Z0-9]+$/i.test(value || "");
+const isValidAdsId = (value?: string) => /^AW-\d+$/i.test(value || "");
+const isValidConversionLabel = (value?: string) => /^[A-Za-z0-9_-]{6,80}$/.test(value || "");
+const isValidMetaPixelId = (value?: string) => /^\d{8,30}$/.test(value || "");
 
-// Fire a GA4 custom event + Google Ads conversion
-export const trackEvent = (eventName: string, params?: Record<string, string>) => {
-  const w = window as any;
-  if (typeof w.gtag === "function") {
-    w.gtag("event", eventName, params);
+const ensureGtag = (id: string) => {
+  if (!document.querySelector(`script[src="https://www.googletagmanager.com/gtag/js?id=${id}"]`)) {
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+    document.head.appendChild(script);
   }
+
+  ensureDataLayer();
+  window.gtag = window.gtag || ((...args: unknown[]) => {
+    window.dataLayer?.push(args);
+  });
 };
 
 const TrackingScripts = () => {
@@ -48,14 +50,31 @@ const TrackingScripts = () => {
       if (!data) return;
 
       const cfg: Record<string, string> = {};
-      data.forEach((r) => { cfg[r.key] = r.value || ""; });
+      data.forEach((r) => {
+        cfg[r.key] = r.value || "";
+      });
 
-      // Google Tag Manager
-      if (cfg.google_tag_manager_enabled === "true" && cfg.google_tag_manager_id) {
-        const gtmId = cfg.google_tag_manager_id;
-        const s = document.createElement("script");
-        s.textContent = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`;
-        document.head.appendChild(s);
+      const gtmId = isEnabled(cfg.google_tag_manager_enabled) && isValidGtmId(cfg.google_tag_manager_id)
+        ? cfg.google_tag_manager_id
+        : null;
+      const gaId = isEnabled(cfg.google_analytics_enabled) && isValidGaId(cfg.google_analytics_id)
+        ? cfg.google_analytics_id
+        : null;
+      const adsId = isEnabled(cfg.google_ads_enabled) && isValidAdsId(cfg.google_ads_id)
+        ? cfg.google_ads_id
+        : null;
+      const adsConversionLabel = isValidConversionLabel(cfg.google_ads_conversion_label)
+        ? cfg.google_ads_conversion_label
+        : null;
+      const pixelId = isEnabled(cfg.meta_pixel_enabled) && isValidMetaPixelId(cfg.meta_pixel_id)
+        ? cfg.meta_pixel_id
+        : null;
+
+      if (gtmId) {
+        ensureDataLayer();
+        const script = document.createElement("script");
+        script.textContent = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`;
+        document.head.appendChild(script);
 
         const noscript = document.createElement("noscript");
         const iframe = document.createElement("iframe");
@@ -68,50 +87,28 @@ const TrackingScripts = () => {
         document.body.insertBefore(noscript, document.body.firstChild);
       }
 
-      // Google Analytics 4
-      if (cfg.google_analytics_enabled === "true" && cfg.google_analytics_id) {
-        const gaId = cfg.google_analytics_id;
-        const s = document.createElement("script");
-        s.async = true;
-        s.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
-        document.head.appendChild(s);
-
-        const s2 = document.createElement("script");
-        s2.textContent = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');`;
-        document.head.appendChild(s2);
+      if (!gtmId && gaId) {
+        ensureGtag(gaId);
+        window.gtag?.("js", new Date());
+        window.gtag?.("config", gaId);
       }
 
-      // Google Ads
-      if (cfg.google_ads_enabled === "true" && cfg.google_ads_id) {
-        const adsId = cfg.google_ads_id;
-        // gtag.js may already be loaded from GA4
-        if (!document.querySelector(`script[src*="googletagmanager.com/gtag/js"]`)) {
-          const s = document.createElement("script");
-          s.async = true;
-          s.src = `https://www.googletagmanager.com/gtag/js?id=${adsId}`;
-          document.head.appendChild(s);
+      if (!gtmId && adsId) {
+        ensureGtag(adsId);
+        window.gtag?.("js", new Date());
+        window.gtag?.("config", adsId);
 
-          const s2 = document.createElement("script");
-          s2.textContent = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());`;
-          document.head.appendChild(s2);
+        if (adsConversionLabel) {
+          setGoogleAdsConversion(adsId, adsConversionLabel);
         }
-        const s3 = document.createElement("script");
-        s3.textContent = `gtag('config','${adsId}');`;
-        document.head.appendChild(s3);
-
-        // Store conversion info for use by fireGoogleAdsConversion()
-        (window as any).__gads_conversion_id = adsId;
-        if (cfg.google_ads_conversion_label) {
-          (window as any).__gads_conversion_label = cfg.google_ads_conversion_label;
-        }
+      } else if (gtmId && adsId && adsConversionLabel) {
+        setGoogleAdsConversion(adsId, adsConversionLabel);
       }
 
-      // Meta Pixel
-      if (cfg.meta_pixel_enabled === "true" && cfg.meta_pixel_id) {
-        const pixelId = cfg.meta_pixel_id;
-        const s = document.createElement("script");
-        s.textContent = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');fbq('track','PageView');`;
-        document.head.appendChild(s);
+      if (pixelId) {
+        const script = document.createElement("script");
+        script.textContent = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');fbq('track','PageView');`;
+        document.head.appendChild(script);
 
         const noscript = document.createElement("noscript");
         const img = document.createElement("img");

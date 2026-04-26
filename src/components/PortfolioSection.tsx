@@ -3,6 +3,7 @@ import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Camera } from "lucide-react";
+import { getOptimizedImageSrcSet, getOptimizedImageUrl } from "@/lib/imageUrl";
 
 // Static fallbacks
 import portfolioFoto from "@/assets/portfolio-foto.jpg";
@@ -115,14 +116,18 @@ const PortfolioSection = () => {
 };
 
 function CategoryCard({ cat }: { cat: Category }) {
+  const image = cat.cover_image || fallbackImages[cat.slug];
+
   return (
     <Link
       to={`/portafolio/${cat.slug}`}
       className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer block"
     >
-      {(cat.cover_image || fallbackImages[cat.slug]) ? (
+      {image ? (
         <img
-          src={cat.cover_image || fallbackImages[cat.slug]}
+          src={getOptimizedImageUrl(image, { width: 720, height: 540, quality: 72 })}
+          srcSet={getOptimizedImageSrcSet(image, [360, 540, 720, 960], { quality: 72 })}
+          sizes="(min-width: 1024px) 31vw, (min-width: 640px) 46vw, 92vw"
           alt={`Portafolio de ${cat.name} — Silvio Costa Photography`}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
           loading="lazy"
