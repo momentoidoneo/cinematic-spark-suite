@@ -35,11 +35,13 @@ const AdminDashboard = () => {
   const [conversions, setConversions] = useState<ConversionSummary>(emptyConversionSummary);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [quoteRequestsWarning, setQuoteRequestsWarning] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setLoadError(null);
+      setQuoteRequestsWarning(null);
       const days = period === "today" ? 1 : period === "7d" ? 7 : 30;
       const since = new Date(Date.now() - days * 86400_000).toISOString();
       const prevSince = new Date(Date.now() - days * 2 * 86400_000).toISOString();
@@ -61,10 +63,12 @@ const AdminDashboard = () => {
 
         if (cats.error) throw cats.error;
         if (subs.error) throw subs.error;
-        if (quoteRequestsAll.error) throw quoteRequestsAll.error;
-        if (quoteRequestsInPeriod.error) throw quoteRequestsInPeriod.error;
         if (viewsAll.error) throw viewsAll.error;
         if (posts.error) throw posts.error;
+        if (quoteRequestsAll.error || quoteRequestsInPeriod.error) {
+          console.warn("[AdminDashboard] Quote requests metrics unavailable:", quoteRequestsAll.error || quoteRequestsInPeriod.error);
+          setQuoteRequestsWarning("Solicitudes IA pendientes de activar en Supabase.");
+        }
 
         const visibleCategoryIds = new Set((cats.data || []).map((cat) => cat.id));
         const visibleSubcategoryIds = (subs.data || [])
@@ -93,9 +97,9 @@ const AdminDashboard = () => {
           unread: messagesAll.filter((message) => !message.is_read).length,
           totalViews: viewsAll.count ?? 0,
           posts: posts.count ?? 0,
-          quoteRequests: quoteRequestsAll.data?.length ?? 0,
-          quoteRequestsInPeriod: quoteRequestsInPeriod.data?.length ?? 0,
-          unreadQuotes: quoteRequestsAll.data?.filter((quote) => !quote.is_read).length ?? 0,
+          quoteRequests: quoteRequestsAll.error ? 0 : quoteRequestsAll.data?.length ?? 0,
+          quoteRequestsInPeriod: quoteRequestsInPeriod.error ? 0 : quoteRequestsInPeriod.data?.length ?? 0,
+          unreadQuotes: quoteRequestsAll.error ? 0 : quoteRequestsAll.data?.filter((quote) => !quote.is_read).length ?? 0,
         });
       } catch (error) {
         console.error("[AdminDashboard] Error loading metrics:", error);
@@ -193,6 +197,12 @@ const AdminDashboard = () => {
       {loadError && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive mb-6">
           {loadError}
+        </div>
+      )}
+
+      {quoteRequestsWarning && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-600 mb-6">
+          {quoteRequestsWarning}
         </div>
       )}
 

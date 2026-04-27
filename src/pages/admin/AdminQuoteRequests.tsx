@@ -101,7 +101,7 @@ const AdminQuoteRequests = () => {
   const [noteDraft, setNoteDraft] = useState("");
   const [noteSavedFor, setNoteSavedFor] = useState<string | null>(null);
 
-  const { data: requests = [], isLoading, isFetching, refetch } = useQuery({
+  const { data: requests = [], isLoading, isFetching, refetch, error: requestsError } = useQuery({
     queryKey: ["quote_requests"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -160,6 +160,7 @@ const AdminQuoteRequests = () => {
       byStatus,
     };
   }, [requests]);
+  const requestsErrorMessage = requestsError instanceof Error ? requestsError.message : "";
 
   const openRequest = (item: QuoteRequest) => {
     setSelectedId(item.id);
@@ -285,6 +286,12 @@ const AdminQuoteRequests = () => {
           ))}
         </div>
       </div>
+
+      {requestsErrorMessage && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-600">
+          No se pudieron cargar las solicitudes IA. Es probable que falte aplicar la migración de Supabase `quote_requests`.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(360px,0.85fr)_minmax(0,1.35fr)] gap-4 min-h-[60vh]">
         <Card className="overflow-hidden">
