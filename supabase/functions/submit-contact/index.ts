@@ -71,69 +71,24 @@ Deno.serve(async (req) => {
 
     if (insertError) throw insertError;
 
-    // Enviar emails vía Resend (notificación admin + autorrespuesta cliente)
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (RESEND_API_KEY) {
-      const adminEmail = "silvio@silviocosta.net";
-      const fromAddress = "Silvio Costa <onboarding@resend.dev>";
-
-      // Notificación al admin
-      await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: fromAddress,
-          to: [adminEmail],
-          reply_to: email,
-          subject: `📩 Nuevo mensaje de ${name}`,
-          html: `
-            <div style="font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;background:#0F172A;color:#fff;">
-              <h2 style="color:#fff;margin:0 0 12px;">Nuevo mensaje de contacto</h2>
-              <p style="color:#94A3B8;margin:0 0 24px;">Recibido desde silviocosta.net</p>
-              <table style="width:100%;border-collapse:collapse;background:#1E293B;border-radius:8px;overflow:hidden;">
-                <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;width:120px;">Nombre</td><td style="padding:12px;border-bottom:1px solid #334155;">${name}</td></tr>
-                <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Email</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="mailto:${email}">${email}</a></td></tr>
-                ${phone ? `<tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Teléfono</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="tel:${phone}">${phone}</a></td></tr>` : ""}
-                <tr><td style="padding:12px;color:#94A3B8;vertical-align:top;">Mensaje</td><td style="padding:12px;white-space:pre-wrap;">${message.replace(/</g, "&lt;")}</td></tr>
-              </table>
-              <p style="margin-top:24px;color:#94A3B8;font-size:13px;">Responde directamente a este email o entra al panel de administración.</p>
-            </div>
-          `,
-        }),
-      }).catch((err) => console.error("[submit-contact] Admin email error:", err));
-
-      // Autorrespuesta al cliente
-      await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: fromAddress,
-          to: [email],
-          reply_to: adminEmail,
-          subject: "Hemos recibido tu mensaje — Silvio Costa Photography",
-          html: `
-            <div style="font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;background:#0F172A;color:#fff;">
-              <h2 style="color:#5EEAD4;margin:0 0 12px;">¡Gracias por contactarnos, ${name}!</h2>
-              <p style="color:#CBD5E1;line-height:1.6;">Hemos recibido tu mensaje y te responderemos en menos de 24 horas con una propuesta personalizada.</p>
-              <div style="background:#1E293B;border-radius:8px;padding:16px;margin:24px 0;border-left:3px solid #5EEAD4;">
-                <p style="margin:0;color:#94A3B8;font-size:13px;">Tu mensaje:</p>
-                <p style="margin:8px 0 0;color:#fff;white-space:pre-wrap;">${message.replace(/</g, "&lt;")}</p>
-              </div>
-              <p style="color:#CBD5E1;line-height:1.6;">Si prefieres una respuesta inmediata, escríbenos por WhatsApp.</p>
-              <p style="margin-top:32px;color:#94A3B8;font-size:13px;">— Silvio Costa Photography<br/>silviocosta.net</p>
-            </div>
-          `,
-        }),
-      }).catch((err) => console.error("[submit-contact] Client email error:", err));
-    } else {
-      console.log("[submit-contact] RESEND_API_KEY not set, skipping emails");
-    }
+    // Notificación admin vía Gmail (la cuenta del propietario)
+    sendAdminEmail({
+      subject: `📩 Nuevo mensaje de ${name}`,
+      replyTo: email,
+      html: `
+        <div style="font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;background:#0F172A;color:#fff;">
+          <h2 style="color:#fff;margin:0 0 12px;">Nuevo mensaje de contacto</h2>
+          <p style="color:#94A3B8;margin:0 0 24px;">Recibido desde silviocosta.net</p>
+          <table style="width:100%;border-collapse:collapse;background:#1E293B;border-radius:8px;overflow:hidden;">
+            <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;width:120px;">Nombre</td><td style="padding:12px;border-bottom:1px solid #334155;">${name}</td></tr>
+            <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Email</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="mailto:${email}">${email}</a></td></tr>
+            ${phone ? `<tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Teléfono</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="tel:${phone}">${phone}</a></td></tr>` : ""}
+            <tr><td style="padding:12px;color:#94A3B8;vertical-align:top;">Mensaje</td><td style="padding:12px;white-space:pre-wrap;">${message.replace(/</g, "&lt;")}</td></tr>
+          </table>
+          <p style="margin-top:24px;color:#94A3B8;font-size:13px;">Responde directamente a este email o entra al panel de administración.</p>
+        </div>
+      `,
+    }).catch((err) => console.error("[submit-contact] Gmail send error:", err));
 
     return new Response(JSON.stringify({ success: true, id: inserted.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -146,3 +101,47 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+// ----------------- Gmail helper -----------------
+const ADMIN_EMAIL = "silvio@silviocosta.net";
+const GMAIL_GATEWAY = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
+
+function buildRawEmail(opts: { to: string; subject: string; html: string; replyTo?: string }) {
+  const headers = [
+    `To: ${opts.to}`,
+    `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(opts.subject)))}?=`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset="UTF-8"',
+    'Content-Transfer-Encoding: 7bit',
+  ];
+  if (opts.replyTo) headers.push(`Reply-To: ${opts.replyTo}`);
+  const message = headers.join("\r\n") + "\r\n\r\n" + opts.html;
+  // base64url
+  return btoa(unescape(encodeURIComponent(message)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+async function sendAdminEmail({ subject, html, replyTo }: { subject: string; html: string; replyTo?: string }) {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const GOOGLE_MAIL_API_KEY = Deno.env.get("GOOGLE_MAIL_API_KEY");
+  if (!LOVABLE_API_KEY || !GOOGLE_MAIL_API_KEY) {
+    console.log("[submit-contact] Gmail connector not configured, skipping email");
+    return;
+  }
+  const raw = buildRawEmail({ to: ADMIN_EMAIL, subject, html, replyTo });
+  const res = await fetch(`${GMAIL_GATEWAY}/users/me/messages/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "X-Connection-Api-Key": GOOGLE_MAIL_API_KEY,
+    },
+    body: JSON.stringify({ raw }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Gmail send failed [${res.status}]: ${txt.slice(0, 300)}`);
+  }
+}
