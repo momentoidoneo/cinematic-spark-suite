@@ -30,6 +30,7 @@ const AdminDashboard = () => {
   const [counts, setCounts] = useState({
     categories: 0, subcategories: 0, images: 0,
     messages: 0, messagesInPeriod: 0, unread: 0, totalViews: 0, posts: 0,
+    quoteRequests: 0, quoteRequestsInPeriod: 0, unreadQuotes: 0,
   });
   const [conversions, setConversions] = useState<ConversionSummary>(emptyConversionSummary);
   const [loading, setLoading] = useState(true);
@@ -44,13 +45,15 @@ const AdminDashboard = () => {
       const prevSince = new Date(Date.now() - days * 2 * 86400_000).toISOString();
 
       try {
-        const [v, pv, cats, subs, messagesAll, messagesInPeriod, viewsAll, posts, conversionSummary] = await Promise.all([
+        const [v, pv, cats, subs, messagesAll, messagesInPeriod, quoteRequestsAll, quoteRequestsInPeriod, viewsAll, posts, conversionSummary] = await Promise.all([
           fetchViews(since),
           fetchViews(prevSince),
           supabase.from("portfolio_categories").select("id").eq("is_visible", true),
           supabase.from("portfolio_subcategories").select("id,category_id").eq("is_visible", true),
           fetchRealContactMessages(),
           fetchRealContactMessages(since),
+          supabase.from("quote_requests").select("id,is_read,created_at"),
+          supabase.from("quote_requests").select("id,is_read,created_at").gte("created_at", since),
           supabase.from("page_views").select("id", { count: "exact", head: true }),
           supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("status", "published"),
           fetchConversionSummary(since),
@@ -58,6 +61,8 @@ const AdminDashboard = () => {
 
         if (cats.error) throw cats.error;
         if (subs.error) throw subs.error;
+        if (quoteRequestsAll.error) throw quoteRequestsAll.error;
+        if (quoteRequestsInPeriod.error) throw quoteRequestsInPeriod.error;
         if (viewsAll.error) throw viewsAll.error;
         if (posts.error) throw posts.error;
 
@@ -88,6 +93,9 @@ const AdminDashboard = () => {
           unread: messagesAll.filter((message) => !message.is_read).length,
           totalViews: viewsAll.count ?? 0,
           posts: posts.count ?? 0,
+          quoteRequests: quoteRequestsAll.data?.length ?? 0,
+          quoteRequestsInPeriod: quoteRequestsInPeriod.data?.length ?? 0,
+          unreadQuotes: quoteRequestsAll.data?.filter((quote) => !quote.is_read).length ?? 0,
         });
       } catch (error) {
         console.error("[AdminDashboard] Error loading metrics:", error);
@@ -105,7 +113,7 @@ const AdminDashboard = () => {
     const prevSessions = uniqueSessions(prevViews);
     const viewsCount = views.length;
     const prevCount = prevViews.length;
-    const measuredContactActions = counts.messagesInPeriod + conversions.whatsappClicks;
+    const measuredContactActions = counts.messagesInPeriod + counts.quoteRequestsInPeriod + conversions.whatsappClicks;
 
     // Bounce: sessions with only 1 view
     const sessionViewCounts: Record<string, number> = {};
@@ -152,8 +160,8 @@ const AdminDashboard = () => {
 
   const quickActions = [
     { label: "Ver mensajes", icon: MessageSquare, link: "/admin/messages", color: "from-primary/20 to-primary/5", badge: counts.unread },
+    { label: "Solicitudes IA", icon: Zap, link: "/admin/quote-requests", color: "from-accent/20 to-accent/5", badge: counts.unreadQuotes },
     { label: "Subir imágenes", icon: Camera, link: "/admin/images", color: "from-accent/20 to-accent/5" },
-    { label: "Nuevo post blog", icon: FileText, link: "/admin/blog", color: "from-primary/20 to-primary/5" },
     { label: "SEO", icon: BarChart3, link: "/admin/seo", color: "from-accent/20 to-accent/5" },
     { label: "Marketing", icon: Zap, link: "/admin/marketing", color: "from-primary/20 to-primary/5" },
     { label: "Configuración", icon: Settings, link: "/admin/tracking", color: "from-secondary to-secondary/50" },
@@ -240,11 +248,11 @@ const AdminDashboard = () => {
       {/* KPIs row 2 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
         <KPICard
-          label="Mensajes sin leer"
-          value={counts.unread}
+          label="Leads sin leer"
+          value={counts.unread + counts.unreadQuotes}
           icon={MailOpen}
           link="/admin/messages"
-          highlight={counts.unread > 0}
+          highlight={counts.unread + counts.unreadQuotes > 0}
         />
         <KPICard
           label="Tasa rebote"
@@ -278,7 +286,7 @@ const AdminDashboard = () => {
         {[
           { label: "Formularios reales", value: counts.messagesInPeriod, icon: MailOpen, hint: "Mensajes recibidos" },
           { label: "WhatsApp", value: conversions.whatsappClicks, icon: MessageSquare, hint: "Clicks de contacto" },
-          { label: "Cotizador IA", value: conversions.quoteCompletions, icon: Zap, hint: "Presupuestos generados" },
+          { label: "Solicitudes IA", value: counts.quoteRequestsInPeriod, icon: Zap, hint: "Leads guardados" },
           { label: "CTAs presupuesto", value: conversions.ctaClicks, icon: BarChart3, hint: "Intención previa" },
         ].map((item) => (
           <div key={item.label} className="rounded-xl bg-card border border-border p-4">
@@ -337,13 +345,14 @@ const AdminDashboard = () => {
         <h2 className="font-display text-lg font-bold text-foreground">Contenido visible</h2>
         <p className="text-sm text-muted-foreground">Solo cuenta contenido publicado o visible en la web; no incluye borradores ni secciones ocultas.</p>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         {[
           { label: "Categorías visibles", value: counts.categories, icon: FolderOpen, link: "/admin/categories" },
           { label: "Subcategorías visibles", value: counts.subcategories, icon: Layers, link: "/admin/subcategories" },
           { label: "Imágenes visibles", value: counts.images, icon: ImageIcon, link: "/admin/images" },
           { label: "Posts publicados", value: counts.posts, icon: FileText, link: "/admin/blog" },
           { label: "Leads reales", value: counts.messages, icon: MessageSquare, link: "/admin/messages" },
+          { label: "Solicitudes IA", value: counts.quoteRequests, icon: Zap, link: "/admin/quote-requests" },
         ].map((c) => (
           <Link
             key={c.label}

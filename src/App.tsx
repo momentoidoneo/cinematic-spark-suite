@@ -49,6 +49,7 @@ const AdminLanding = lazy(() => import("./pages/admin/AdminLanding"));
 const AdminTracking = lazy(() => import("./pages/admin/AdminTracking"));
 const AdminMigration = lazy(() => import("./pages/admin/AdminMigration"));
 const AdminMessages = lazy(() => import("./pages/admin/AdminMessages"));
+const AdminQuoteRequests = lazy(() => import("./pages/admin/AdminQuoteRequests"));
 const AdminMarketingTools = lazy(() => import("./pages/admin/AdminMarketingTools"));
 const AdminCities = lazy(() => import("./pages/admin/AdminCities"));
 const AdminPricing = lazy(() => import("./pages/admin/AdminPricing"));
@@ -117,6 +118,7 @@ const App = () => (
                 <Route path="tracking" element={<AdminTracking />} />
                 <Route path="migration" element={<AdminMigration />} />
                 <Route path="messages" element={<AdminMessages />} />
+                <Route path="quote-requests" element={<AdminQuoteRequests />} />
                 <Route path="pricing" element={<AdminPricing />} />
                 <Route path="seo" element={<AdminSEO />} />
                 <Route path="seo-technical" element={<AdminSEOTechnical />} />

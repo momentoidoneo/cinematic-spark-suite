@@ -12,6 +12,8 @@ interface QuoteResult {
   includes: string[];
   notes: string;
   whatsappMessage: string;
+  requestId?: string | null;
+  source?: "ai" | "fallback";
 }
 
 const SERVICES = [
@@ -29,26 +31,25 @@ const URGENCY = ["Esta semana", "Este mes", "Próximos 3 meses", "Sin prisa"];
 const SmartQuoter = () => {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({ service: "", scope: "", location: "", urgency: "", details: "" });
+  const [form, setForm] = useState({
+    service: "",
+    scope: "",
+    location: "",
+    urgency: "",
+    details: "",
+    name: "",
+    email: "",
+    phone: "",
+  });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<QuoteResult | null>(null);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
 
-  useEffect(() => {
-    supabase
-      .from("whatsapp_config")
-      .select("phone_number")
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.phone_number) {
-          setWhatsappPhone(data.phone_number.replace(/[\s\-()]/g, "").replace("+", ""));
-        }
-      });
-  }, []);
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
 
   const reset = () => {
     setStep(0);
-    setForm({ service: "", scope: "", location: "", urgency: "", details: "" });
+    setForm({ service: "", scope: "", location: "", urgency: "", details: "", name: "", email: "", phone: "" });
     setResult(null);
     setLoading(false);
   };
@@ -63,7 +64,30 @@ const SmartQuoter = () => {
     setTimeout(reset, 300);
   };
 
+  useEffect(() => {
+    supabase
+      .from("whatsapp_config")
+      .select("phone_number")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.phone_number) {
+          setWhatsappPhone(data.phone_number.replace(/[\s\-()]/g, "").replace("+", ""));
+        }
+      });
+  }, []);
+
+  useEffect(() => {
+    const onOpenQuoter = () => handleOpen();
+    window.addEventListener("open-smart-quoter", onOpenQuoter);
+    return () => window.removeEventListener("open-smart-quoter", onOpenQuoter);
+  }, []);
+
   const handleGenerate = async () => {
+    if (!emailValid) {
+      toast.error("Introduce un email válido para guardar la solicitud");
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-quote", { body: form });
@@ -73,6 +97,7 @@ const SmartQuoter = () => {
         return;
       }
       setResult(data as QuoteResult);
+      toast.success("Solicitud guardada. Aquí tienes una estimación orientativa.");
       trackEvent("quoter_complete", {
         event_category: "engagement",
         event_label: form.service,
@@ -96,24 +121,12 @@ const SmartQuoter = () => {
     (step === 0 && form.service) ||
     (step === 1 && form.scope.trim().length > 0) ||
     (step === 2 && form.location.trim().length > 0) ||
-    (step === 3 && form.urgency);
+    (step === 3 && form.urgency) ||
+    step === 4 ||
+    (step === 5 && emailValid);
 
   return (
     <>
-      {/* Floating trigger */}
-      <motion.button
-        onClick={handleOpen}
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", delay: 1.5 }}
-        whileHover={{ scale: 1.05 }}
-        className="fixed bottom-6 right-24 md:right-28 z-40 hidden sm:flex items-center gap-2 px-4 py-3 rounded-full bg-card border border-primary/30 text-foreground text-sm font-semibold shadow-lg hover:shadow-glow hover:border-primary/60 transition-all"
-        aria-label="Cotizador inteligente"
-      >
-        <Sparkles className="w-4 h-4 text-primary" />
-        Cotizador IA
-      </motion.button>
-
       <AnimatePresence>
         {open && (
           <>
@@ -146,7 +159,7 @@ const SmartQuoter = () => {
                   <>
                     {/* Progress */}
                     <div className="flex gap-1.5 mb-6">
-                      {[0, 1, 2, 3, 4].map((i) => (
+                      {[0, 1, 2, 3, 4, 5].map((i) => (
                         <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-secondary"}`} />
                       ))}
                     </div>
@@ -229,6 +242,39 @@ const SmartQuoter = () => {
                       </div>
                     )}
 
+                    {step === 5 && (
+                      <div>
+                        <h3 className="font-display text-xl font-bold text-foreground mb-2">¿Dónde enviamos la estimación?</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Guardaremos la solicitud para poder responderte con una propuesta ajustada.</p>
+                        <div className="space-y-3">
+                          <input
+                            autoFocus
+                            value={form.email}
+                            onChange={(e) => setForm({ ...form, email: e.target.value })}
+                            placeholder="Email"
+                            type="email"
+                            autoComplete="email"
+                            className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                          <input
+                            value={form.name}
+                            onChange={(e) => setForm({ ...form, name: e.target.value })}
+                            placeholder="Nombre (opcional)"
+                            autoComplete="name"
+                            className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                          <input
+                            value={form.phone}
+                            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                            placeholder="Teléfono o WhatsApp (opcional)"
+                            type="tel"
+                            autoComplete="tel"
+                            className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex justify-between items-center mt-6">
                       <button
                         onClick={() => setStep(Math.max(0, step - 1))}
@@ -237,7 +283,7 @@ const SmartQuoter = () => {
                       >
                         Atrás
                       </button>
-                      {step < 4 ? (
+                      {step < 5 ? (
                         <button
                           onClick={() => setStep(step + 1)}
                           disabled={!canNext}
@@ -248,9 +294,10 @@ const SmartQuoter = () => {
                       ) : (
                         <button
                           onClick={handleGenerate}
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                          disabled={!canNext}
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity"
                         >
-                          <Sparkles className="w-4 h-4" /> Calcular presupuesto
+                          <Sparkles className="w-4 h-4" /> Calcular y guardar
                         </button>
                       )}
                     </div>
@@ -311,7 +358,7 @@ const SmartQuoter = () => {
                     </div>
 
                     <p className="text-xs text-muted-foreground text-center mt-4">
-                      * Estimación orientativa. El precio final dependerá de los requisitos concretos del proyecto.
+                      * Estimación orientativa. Tu solicitud queda registrada para poder preparar una propuesta final.
                     </p>
                   </motion.div>
                 )}

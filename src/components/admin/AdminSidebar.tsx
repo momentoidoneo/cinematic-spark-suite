@@ -37,6 +37,7 @@ const marketingItems = [
 
 const communicationItems = [
   { title: "Mensajes Contacto", url: "/admin/messages", icon: Mail },
+  { title: "Solicitudes IA", url: "/admin/quote-requests", icon: Sparkles },
   { title: "Chats WhatsApp", url: "/admin/whatsapp-chats", icon: MessageCircle },
   { title: "Config. WhatsApp", url: "/admin/whatsapp-config", icon: Settings },
 ];
@@ -105,19 +106,27 @@ const AdminSidebar = () => {
   const collapsed = state === "collapsed";
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadQuoteCount, setUnreadQuoteCount] = useState(0);
 
   useEffect(() => {
     const fetchUnread = async () => {
-      const { count } = await supabase
-        .from("contact_messages")
-        .select("*", { count: "exact", head: true })
-        .eq("is_read", false);
-      setUnreadCount(count || 0);
+      const [messages, quotes] = await Promise.all([
+        supabase
+          .from("contact_messages")
+          .select("*", { count: "exact", head: true })
+          .eq("is_read", false),
+        supabase
+          .from("quote_requests")
+          .select("*", { count: "exact", head: true })
+          .eq("is_read", false),
+      ]);
+      setUnreadCount(messages.count || 0);
+      setUnreadQuoteCount(quotes.count || 0);
     };
     fetchUnread();
 
     const channel = supabase
-      .channel("unread-messages")
+      .channel("admin-unread-communication")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "contact_messages" },
@@ -134,8 +143,22 @@ const AdminSidebar = () => {
               "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="
             );
             audio.volume = 0.3;
-            audio.play().catch(() => {});
-          } catch {}
+            audio.play().catch(() => undefined);
+          } catch {
+            // Browsers can block notification audio; the toast is enough.
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "quote_requests" },
+        (payload) => {
+          fetchUnread();
+          const quote = payload.new as { service?: string; email?: string };
+          toast({
+            title: "Nueva solicitud del cotizador",
+            description: `${quote.service ?? "Servicio"} · ${quote.email ?? ""}`,
+          });
         }
       )
       .on(
@@ -145,7 +168,17 @@ const AdminSidebar = () => {
       )
       .on(
         "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "quote_requests" },
+        () => fetchUnread()
+      )
+      .on(
+        "postgres_changes",
         { event: "DELETE", schema: "public", table: "contact_messages" },
+        () => fetchUnread()
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "quote_requests" },
         () => fetchUnread()
       )
       .subscribe();
@@ -155,6 +188,7 @@ const AdminSidebar = () => {
 
   const commBadges: Record<string, number> = {
     "/admin/messages": unreadCount,
+    "/admin/quote-requests": unreadQuoteCount,
   };
 
   return (
