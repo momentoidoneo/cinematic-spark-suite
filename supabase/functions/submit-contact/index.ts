@@ -72,7 +72,8 @@ Deno.serve(async (req) => {
     if (insertError) throw insertError;
 
     // Notificación admin vía Gmail (la cuenta del propietario)
-    sendAdminEmail({
+    // Usamos EdgeRuntime.waitUntil para que el envío termine aunque la respuesta ya se haya enviado
+    const emailPromise = sendAdminEmail({
       subject: `📩 Nuevo mensaje de ${name}`,
       replyTo: email,
       html: `
@@ -89,6 +90,14 @@ Deno.serve(async (req) => {
         </div>
       `,
     }).catch((err) => console.error("[submit-contact] Gmail send error:", err));
+
+    // @ts-ignore — EdgeRuntime es global en Supabase Edge Functions
+    if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(emailPromise);
+    } else {
+      await emailPromise;
+    }
 
     return new Response(JSON.stringify({ success: true, id: inserted.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
