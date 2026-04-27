@@ -254,56 +254,81 @@ const saveQuoteRequest = async (body: QuoteRequest, quote: QuoteResult) => {
   return serviceRoleKey ? data?.id ?? null : null;
 };
 
+const ADMIN_EMAIL = "silvio@silviocosta.net";
+const GMAIL_GATEWAY = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
+
+const buildRawEmail = (opts: { to: string; subject: string; html: string; replyTo?: string }) => {
+  const headers = [
+    `To: ${opts.to}`,
+    `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(opts.subject)))}?=`,
+    "MIME-Version: 1.0",
+    'Content-Type: text/html; charset="UTF-8"',
+    "Content-Transfer-Encoding: 7bit",
+  ];
+  if (opts.replyTo) headers.push(`Reply-To: ${opts.replyTo}`);
+  const message = headers.join("\r\n") + "\r\n\r\n" + opts.html;
+  return btoa(unescape(encodeURIComponent(message)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+};
+
 const sendNotificationEmails = async (body: QuoteRequest, quote: QuoteResult, requestId: string | null) => {
-  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-  if (!RESEND_API_KEY) {
-    console.log("[generate-quote] RESEND_API_KEY not set, skipping emails");
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const GOOGLE_MAIL_API_KEY = Deno.env.get("GOOGLE_MAIL_API_KEY");
+  if (!LOVABLE_API_KEY || !GOOGLE_MAIL_API_KEY) {
+    console.log("[generate-quote] Gmail connector not configured, skipping email");
     return;
   }
 
-  const adminEmail = "silvio@silviocosta.net";
-  const fromAddress = "Silvio Costa <onboarding@resend.dev>";
   const safeName = body.name || "Cliente";
   const safeDetails = (body.details || "—").replace(/</g, "&lt;");
   const rangeText = `${quote.min} – ${quote.max} €`;
 
-  // Notificación al admin
-  await fetch("https://api.resend.com/emails", {
+  const html = `
+    <div style="font-family:Inter,Arial,sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#0F172A;color:#fff;">
+      <h2 style="color:#fff;margin:0 0 8px;">Nueva solicitud del Cotizador IA</h2>
+      <p style="color:#94A3B8;margin:0 0 20px;">Recibida desde silviocosta.net</p>
+      <div style="background:#1E293B;border-radius:8px;padding:16px;margin:0 0 16px;border-left:3px solid #5EEAD4;">
+        <p style="margin:0;color:#94A3B8;font-size:13px;">Presupuesto orientativo IA</p>
+        <p style="margin:6px 0 0;color:#5EEAD4;font-size:22px;font-weight:700;">${rangeText}</p>
+        <p style="margin:8px 0 0;color:#CBD5E1;font-size:14px;">${quote.summary.replace(/</g, "&lt;")}</p>
+      </div>
+      <table style="width:100%;border-collapse:collapse;background:#1E293B;border-radius:8px;overflow:hidden;">
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;width:140px;">Cliente</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeName}</td></tr>
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Email</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="mailto:${body.email}">${body.email}</a></td></tr>
+        ${body.phone ? `<tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Teléfono</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="tel:${body.phone}">${body.phone}</a></td></tr>` : ""}
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Servicio</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.service}</td></tr>
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Alcance</td><td style="padding:12px;border-bottom:1px solid #334155;white-space:pre-wrap;">${body.scope.replace(/</g, "&lt;")}</td></tr>
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Ubicación</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.location}</td></tr>
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Urgencia</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.urgency}</td></tr>
+        <tr><td style="padding:12px;color:#94A3B8;vertical-align:top;">Detalles</td><td style="padding:12px;white-space:pre-wrap;">${safeDetails}</td></tr>
+      </table>
+      ${requestId ? `<p style="margin-top:20px;color:#94A3B8;font-size:13px;">ID de solicitud: <code style="color:#5EEAD4;">${requestId}</code></p>` : ""}
+      <p style="margin-top:8px;color:#94A3B8;font-size:13px;">Responde directamente a este email o entra al panel de administración.</p>
+    </div>
+  `;
+
+  const raw = buildRawEmail({
+    to: ADMIN_EMAIL,
+    subject: `🤖 Nueva solicitud cotizador IA — ${body.service}`,
+    html,
+    replyTo: body.email,
+  });
+
+  const res = await fetch(`${GMAIL_GATEWAY}/users/me/messages/send`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${RESEND_API_KEY}`,
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "X-Connection-Api-Key": GOOGLE_MAIL_API_KEY,
     },
-    body: JSON.stringify({
-      from: fromAddress,
-      to: [adminEmail],
-      reply_to: body.email,
-      subject: `🤖 Nueva solicitud cotizador IA — ${body.service}`,
-      html: `
-        <div style="font-family:Inter,Arial,sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#0F172A;color:#fff;">
-          <h2 style="color:#fff;margin:0 0 8px;">Nueva solicitud del Cotizador IA</h2>
-          <p style="color:#94A3B8;margin:0 0 20px;">Recibida desde silviocosta.net</p>
-          <div style="background:#1E293B;border-radius:8px;padding:16px;margin:0 0 16px;border-left:3px solid #5EEAD4;">
-            <p style="margin:0;color:#94A3B8;font-size:13px;">Presupuesto orientativo IA</p>
-            <p style="margin:6px 0 0;color:#5EEAD4;font-size:22px;font-weight:700;">${rangeText}</p>
-            <p style="margin:8px 0 0;color:#CBD5E1;font-size:14px;">${quote.summary.replace(/</g, "&lt;")}</p>
-          </div>
-          <table style="width:100%;border-collapse:collapse;background:#1E293B;border-radius:8px;overflow:hidden;">
-            <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;width:140px;">Cliente</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeName}</td></tr>
-            <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Email</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="mailto:${body.email}">${body.email}</a></td></tr>
-            ${body.phone ? `<tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Teléfono</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="tel:${body.phone}">${body.phone}</a></td></tr>` : ""}
-            <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Servicio</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.service}</td></tr>
-            <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Alcance</td><td style="padding:12px;border-bottom:1px solid #334155;white-space:pre-wrap;">${body.scope.replace(/</g, "&lt;")}</td></tr>
-            <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Ubicación</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.location}</td></tr>
-            <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Urgencia</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.urgency}</td></tr>
-            <tr><td style="padding:12px;color:#94A3B8;vertical-align:top;">Detalles</td><td style="padding:12px;white-space:pre-wrap;">${safeDetails}</td></tr>
-          </table>
-          ${requestId ? `<p style="margin-top:20px;color:#94A3B8;font-size:13px;">ID de solicitud: <code style="color:#5EEAD4;">${requestId}</code></p>` : ""}
-          <p style="margin-top:8px;color:#94A3B8;font-size:13px;">Responde directamente a este email o entra al panel de administración.</p>
-        </div>
-      `,
-    }),
-  }).catch((err) => console.error("[generate-quote] Admin email error:", err));
+    body: JSON.stringify({ raw }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    console.error(`[generate-quote] Gmail send failed [${res.status}]: ${txt.slice(0, 300)}`);
+  }
 };
 
 Deno.serve(async (req) => {
