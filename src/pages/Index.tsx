@@ -1,9 +1,6 @@
+import { lazy, Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import ServicesSection from "@/components/ServicesSection";
-import MatterportSection from "@/components/MatterportSection";
-import PortfolioSection from "@/components/PortfolioSection";
-import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEOHead, {
@@ -14,6 +11,11 @@ import SEOHead, {
   videoDronServiceSchema,
   tourVirtualServiceSchema,
 } from "@/components/SEOHead";
+
+const ServicesSection = lazy(() => import("@/components/ServicesSection"));
+const MatterportSection = lazy(() => import("@/components/MatterportSection"));
+const PortfolioSection = lazy(() => import("@/components/PortfolioSection"));
+const CTASection = lazy(() => import("@/components/CTASection"));
 
 const Index = () => {
   const siteUrl = getSiteUrl();
@@ -41,10 +43,12 @@ const Index = () => {
       />
       <Navbar />
       <HeroSection />
-      <ServicesSection />
-      <MatterportSection />
-      <PortfolioSection />
-      <CTASection />
+      <Suspense fallback={null}>
+        <ServicesSection />
+        <MatterportSection />
+        <PortfolioSection />
+        <CTASection />
+      </Suspense>
       <Footer />
       <WhatsAppButton />
     </div>

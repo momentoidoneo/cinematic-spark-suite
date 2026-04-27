@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { ArrowLeft, Calendar } from "lucide-react";
 import SEOHead, { blogPostSchema, breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
+import { getOptimizedImageSrcSet, getOptimizedImageUrl } from "@/lib/imageUrl";
 
 interface BlogPost {
   title: string;
@@ -82,9 +83,13 @@ const BlogPost = () => {
             <article>
               {post.cover_image && (
                 <img
-                  src={post.cover_image}
+                  src={getOptimizedImageUrl(post.cover_image, { width: 1200, height: 675, quality: 78 })}
+                  srcSet={getOptimizedImageSrcSet(post.cover_image, [640, 960, 1200, 1600], { quality: 78 })}
+                  sizes="(min-width: 768px) 768px, 100vw"
                   alt={post.title}
                   className="w-full rounded-xl mb-8 aspect-video object-cover"
+                  loading="eager"
+                  decoding="async"
                 />
               )}
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">

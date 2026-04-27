@@ -18,4 +18,19 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("@supabase")) return "vendor-supabase";
+          if (id.includes("framer-motion")) return "vendor-motion";
+          if (id.includes("lucide-react")) return "vendor-icons";
+          if (id.includes("recharts")) return "vendor-charts";
+          return "vendor-core";
+        },
+      },
+    },
+  },
 }));

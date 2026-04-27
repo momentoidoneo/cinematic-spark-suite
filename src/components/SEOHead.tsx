@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useSEOMetadata } from "@/hooks/useSEOMetadata";
 
+type JsonLdSchema = Record<string, unknown>;
+
 interface SEOHeadProps {
   title: string;
   description: string;
@@ -8,11 +10,12 @@ interface SEOHeadProps {
   ogType?: string;
   ogImage?: string;
   noindex?: boolean;
-  jsonLd?: Record<string, any> | Record<string, any>[];
+  jsonLd?: JsonLdSchema | JsonLdSchema[];
 }
 
 const SITE_URL = "https://silviocosta.net";
-const DEFAULT_OG_IMAGE = "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/2f67c332-ce35-47a8-9573-d3eca9b22ea6/id-preview-66eb4a07--fe5fb065-a82f-4e14-9e41-abf41661d2fd.lovable.app-1772959367452.png";
+const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
+const DEFAULT_OG_IMAGE_ALT = "Silvio Costa Photography, estudio de fotografia y produccion audiovisual profesional";
 
 export function getSiteUrl() {
   return SITE_URL;
@@ -50,6 +53,7 @@ const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, n
     setMeta("og:description", finalDescription, "property");
     setMeta("og:type", ogType, "property");
     setMeta("og:image", finalOgImage || DEFAULT_OG_IMAGE, "property");
+    setMeta("og:image:alt", DEFAULT_OG_IMAGE_ALT, "property");
     setMeta("og:url", canonical || window.location.href, "property");
     setMeta("og:site_name", "Silvio Costa Photography", "property");
     setMeta("og:locale", "es_ES", "property");
@@ -59,6 +63,7 @@ const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, n
     setMeta("twitter:title", finalTitle, "name");
     setMeta("twitter:description", finalDescription, "name");
     setMeta("twitter:image", finalOgImage || DEFAULT_OG_IMAGE, "name");
+    setMeta("twitter:image:alt", DEFAULT_OG_IMAGE_ALT, "name");
 
     // Canonical
     let canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
@@ -328,7 +333,7 @@ export function videoObjectSchema(v: {
 }
 
 /** Helper: enriches a Service schema with aggregate rating + provider Person. */
-export function serviceSchemaWithRating(base: Record<string, any>) {
+export function serviceSchemaWithRating(base: JsonLdSchema) {
   return {
     ...base,
     aggregateRating: aggregateRatingSchema,

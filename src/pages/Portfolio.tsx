@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { X, ChevronLeft, ChevronRight, Play, Globe, Maximize2 } from "lucide-react";
 import SEOHead, { breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
+import { getOptimizedImageSrcSet, getOptimizedImageUrl } from "@/lib/imageUrl";
 
 type Category = { id: string; name: string; slug: string; description: string | null; cover_image: string | null; grid_row: number | null; grid_col: number | null };
 type Subcategory = { id: string; name: string; slug: string; category_id: string; description: string | null; gallery_style: string | null; cover_image: string | null; cover_position: string; grid_row: number | null; grid_col: number | null };
@@ -220,7 +221,18 @@ const Portfolio = () => {
                 onClick={() => setSelectedCat(cat)}
                 className="group relative aspect-[4/3] rounded-2xl overflow-hidden text-left border border-border bg-card hover:border-primary/30 transition-all w-full"
               >
-                {cat.cover_image && <img src={cat.cover_image} alt={cat.name} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />}
+                {cat.cover_image && (
+                  <img
+                    src={getOptimizedImageUrl(cat.cover_image, { width: 720, height: 540, quality: 72 })}
+                    srcSet={getOptimizedImageSrcSet(cat.cover_image, [360, 540, 720, 960], { quality: 72 })}
+                    sizes="(min-width: 1024px) 31vw, (min-width: 768px) 48vw, 50vw"
+                    alt={cat.name}
+                    title=""
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading={i < 3 ? "eager" : "lazy"}
+                    decoding="async"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3 md:bottom-6 md:left-6">
                   <h3 className="font-display text-sm md:text-2xl font-bold text-foreground truncate">{cat.name}</h3>
@@ -245,7 +257,19 @@ const Portfolio = () => {
                 onClick={() => setSelectedSub(sub)}
                 className="group relative aspect-[4/3] rounded-2xl overflow-hidden text-left border border-border bg-card hover:border-primary/30 transition-all w-full"
               >
-                {sub.cover_image && <img src={sub.cover_image} alt={sub.name} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" style={{ objectPosition: sub.cover_position || "center" }} />}
+                {sub.cover_image && (
+                  <img
+                    src={getOptimizedImageUrl(sub.cover_image, { width: 720, height: 540, quality: 72 })}
+                    srcSet={getOptimizedImageSrcSet(sub.cover_image, [360, 540, 720, 960], { quality: 72 })}
+                    sizes="(min-width: 1024px) 31vw, (min-width: 768px) 48vw, 50vw"
+                    alt={sub.name}
+                    title=""
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    style={{ objectPosition: sub.cover_position || "center" }}
+                    loading={i < 3 ? "eager" : "lazy"}
+                    decoding="async"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3 md:bottom-6 md:left-6">
                   <h3 className="font-display text-sm md:text-2xl font-bold text-foreground truncate">{sub.name}</h3>
@@ -311,7 +335,16 @@ const Portfolio = () => {
                     </>
                   ) : (
                     <>
-                      <img src={img.thumbnail_url || img.image_url} alt={img.alt_text || ""} title="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <img
+                        src={getOptimizedImageUrl(img.thumbnail_url || img.image_url, { width: 480, height: 480, quality: 70, resize: "cover" })}
+                        srcSet={getOptimizedImageSrcSet(img.thumbnail_url || img.image_url, [240, 360, 480, 720], { quality: 70, resize: "cover" })}
+                        sizes="(min-width: 1024px) 23vw, (min-width: 768px) 31vw, 50vw"
+                        alt={img.alt_text || ""}
+                        title=""
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading={i < 8 ? "eager" : "lazy"}
+                        decoding="async"
+                      />
                       {renderMediaBadge(img)}
                     </>
                   )}

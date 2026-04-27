@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { Calendar, ArrowRight } from "lucide-react";
 import SEOHead, { breadcrumbSchema, getSiteUrl } from "@/components/SEOHead";
+import { getOptimizedImageSrcSet, getOptimizedImageUrl } from "@/lib/imageUrl";
 
 interface BlogPost {
   id: string;
@@ -74,9 +75,13 @@ const Blog = () => {
                   {post.cover_image && (
                     <div className="aspect-video overflow-hidden">
                       <img
-                        src={post.cover_image}
+                        src={getOptimizedImageUrl(post.cover_image, { width: 640, height: 360, quality: 74 })}
+                        srcSet={getOptimizedImageSrcSet(post.cover_image, [320, 480, 640, 960], { quality: 74 })}
+                        sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
                         alt={post.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                   )}

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Camera, Video, Plane as PlaneIcon, Eye, Home, Boxes,
 } from "lucide-react";
+import { getOptimizedImageSrcSet, getOptimizedImageUrl } from "@/lib/imageUrl";
 
 import servicioFotoHero from "@/assets/servicio-foto-hero.jpg";
 import bannerVideo from "@/assets/banner-video.jpg";
@@ -66,11 +67,14 @@ const ServiceCard = ({ name, catSlug, subSlug, index, coverImage, coverPosition,
     <div className="relative w-full h-32 sm:h-36 overflow-hidden">
       {coverImage && (
         <img
-          src={coverImage}
+          src={getOptimizedImageUrl(coverImage, { width: 480, height: 270, quality: 72 })}
+          srcSet={getOptimizedImageSrcSet(coverImage, [320, 480, 640, 960], { quality: 72 })}
+          sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
           alt={`${name} — Servicio profesional de Silvio Costa Photography`}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           style={{ objectPosition: coverPosition || 'center' }}
           loading="lazy"
+          decoding="async"
         />
       )}
       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-card via-card/70 to-transparent px-4 pb-1 pt-12 flex items-end justify-center">
@@ -124,7 +128,7 @@ const SectionBanner = ({ image, title, subtitle, reverse = false }: { image: str
       className={`relative rounded-2xl overflow-hidden mb-12 flex flex-col ${reverse ? "md:flex-row-reverse" : "md:flex-row"} items-stretch min-h-[280px] md:min-h-[340px]`}
     >
       <div className="relative w-full md:w-1/2 min-h-[200px] md:min-h-full">
-        <img src={image} alt={`${title} — Servicio profesional de fotografía y producción audiovisual`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+        <img src={image} alt={`${title} — Servicio profesional de fotografía y producción audiovisual`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
         <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-card/60 to-transparent" />
       </div>
       <div className="relative w-full md:w-1/2 flex flex-col justify-center p-8 md:p-12 bg-card/90 border border-border/50">
