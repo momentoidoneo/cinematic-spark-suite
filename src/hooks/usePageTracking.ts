@@ -19,6 +19,17 @@ interface GeoCache {
   ts: number;
 }
 
+type PageViewPayload = ReturnType<typeof detectDevice> &
+  ReturnType<typeof getUTMParams> & {
+    page_path: string;
+    referrer: string | null;
+    user_agent: string | null;
+    session_id: string;
+    country?: string | null;
+    city?: string | null;
+    region?: string | null;
+  };
+
 const getOrCreateSessionId = (): string => {
   try {
     const now = Date.now();
@@ -114,11 +125,22 @@ const usePageTracking = () => {
 
     let cancelled = false;
 
+    const finishViaDirectUpdate = async (isExit = false) => {
+      if (!lastViewIdRef.current || !lastSessionIdRef.current) return;
+
+      const duration = Math.round((Date.now() - arrivedAtRef.current) / 1000);
+      await supabase
+        .from("page_views")
+        .update({ duration_seconds: duration, is_exit: isExit })
+        .eq("id", lastViewIdRef.current)
+        .eq("session_id", lastSessionIdRef.current);
+    };
+
     const finishCurrentView = async (isExit = false) => {
       if (!lastViewIdRef.current || !lastSessionIdRef.current) return;
 
       const duration = Math.round((Date.now() - arrivedAtRef.current) / 1000);
-      await supabase.functions.invoke("track-page-view", {
+      const { error } = await supabase.functions.invoke("track-page-view", {
         body: {
           action: "finish",
           id: lastViewIdRef.current,
@@ -127,6 +149,19 @@ const usePageTracking = () => {
           is_exit: isExit,
         },
       });
+
+      if (error) await finishViaDirectUpdate(isExit);
+    };
+
+    const recordViaDirectInsert = async (payload: PageViewPayload) => {
+      const { data, error } = await supabase
+        .from("page_views")
+        .insert(payload)
+        .select("id")
+        .single();
+
+      if (!error && data?.id) return data.id;
+      return null;
     };
 
     const record = async () => {
@@ -155,8 +190,22 @@ const usePageTracking = () => {
           },
         });
 
-        if (!error && data?.id) {
-          lastViewIdRef.current = data.id;
+        const fallbackId = error
+          ? await recordViaDirectInsert({
+              page_path: location.pathname,
+              referrer: document.referrer || null,
+              user_agent: navigator.userAgent || null,
+              session_id,
+              ...device,
+              ...utm,
+              ...geo,
+            })
+          : null;
+
+        const id = data?.id || fallbackId;
+
+        if (id) {
+          lastViewIdRef.current = id;
           lastSessionIdRef.current = session_id;
           arrivedAtRef.current = Date.now();
         }
