@@ -366,9 +366,15 @@ Deno.serve(async (req) => {
     const requestId = await saveQuoteRequest(body, quote);
 
     // Notificación admin (no bloquea la respuesta al usuario)
-    sendNotificationEmails(body, quote, requestId).catch((err) =>
+    const emailPromise = sendNotificationEmails(body, quote, requestId).catch((err) =>
       console.error("[generate-quote] Notification error:", err),
     );
+
+    // @ts-ignore — EdgeRuntime es global en Supabase Edge Functions
+    if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(emailPromise);
+    }
 
     return jsonResponse({ ...quote, requestId });
   } catch (err) {
