@@ -44,4 +44,3 @@ Disallow: /admin/
 Disallow: /login
 
 Sitemap: https://silviocosta.net/sitemap.xml
-Sitemap: https://edpqywwtgoiktotxrqrz.supabase.co/functions/v1/dynamic-sitemap
