@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Mail, Phone, MessageCircle, Instagram, Facebook, Youtube, Linkedin, Twitter, Globe, Send, Pin, Video, Music, Camera, Twitch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
+import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
 
 interface SocialLink {
   id: string;
@@ -33,6 +34,11 @@ const socialIconMap: Record<string, React.ComponentType<{ className?: string }>>
 
 const Footer = () => {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+
+  const trackWhatsAppClick = (label: string) => {
+    trackEvent("whatsapp_click", { event_category: "contact", event_label: label });
+    fireGoogleAdsConversion();
+  };
 
   useEffect(() => {
     supabase
@@ -66,6 +72,7 @@ const Footer = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       title={link.label || link.platform}
+                      onClick={link.platform === "whatsapp" ? () => trackWhatsAppClick("footer_social") : undefined}
                       className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center text-foreground/75 hover:text-primary hover:border-primary/50 hover:scale-110 transition-all duration-300"
                     >
                       <Icon className="w-4 h-4" />
@@ -133,7 +140,7 @@ const Footer = () => {
                   </div>
                   <div>
                     <p className="text-xs text-foreground/75">WhatsApp</p>
-                    <a href="https://wa.me/34640934640" className="text-sm font-medium text-foreground">+34 640 934 640</a>
+                    <a href="https://wa.me/34640934640" onClick={() => trackWhatsAppClick("footer_contact")} className="text-sm font-medium text-foreground">+34 640 934 640</a>
                   </div>
                 </div>
               </div>

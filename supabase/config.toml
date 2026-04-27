@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.track-page-view]
 verify_jwt = false
+
+[functions.track-conversion-event]
+verify_jwt = false

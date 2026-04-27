@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Eye, MailOpen, MessageSquare, TrendingUp, BarChart3, Camera, FileText, Settings,
-  FolderOpen, Layers, Image as ImageIcon, Users, Clock, Globe, Zap, Calendar,
+  FolderOpen, Layers, Image as ImageIcon, Users, Clock, Globe, Zap,
 } from "lucide-react";
 import {
   AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid,
@@ -19,6 +19,7 @@ import {
   type Period,
   type PageViewRow,
 } from "@/lib/analytics";
+import { emptyConversionSummary, fetchConversionSummary, type ConversionSummary } from "@/lib/conversionSummary";
 
 const PERIODS: Period[] = ["today", "7d", "30d"];
 
@@ -30,6 +31,7 @@ const AdminDashboard = () => {
     categories: 0, subcategories: 0, images: 0,
     messages: 0, messagesInPeriod: 0, unread: 0, totalViews: 0, posts: 0,
   });
+  const [conversions, setConversions] = useState<ConversionSummary>(emptyConversionSummary);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -42,7 +44,7 @@ const AdminDashboard = () => {
       const prevSince = new Date(Date.now() - days * 2 * 86400_000).toISOString();
 
       try {
-        const [v, pv, cats, subs, messagesAll, messagesInPeriod, viewsAll, posts] = await Promise.all([
+        const [v, pv, cats, subs, messagesAll, messagesInPeriod, viewsAll, posts, conversionSummary] = await Promise.all([
           fetchViews(since),
           fetchViews(prevSince),
           supabase.from("portfolio_categories").select("id").eq("is_visible", true),
@@ -51,6 +53,7 @@ const AdminDashboard = () => {
           fetchRealContactMessages(since),
           supabase.from("page_views").select("id", { count: "exact", head: true }),
           supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("status", "published"),
+          fetchConversionSummary(since),
         ]);
 
         if (cats.error) throw cats.error;
@@ -74,6 +77,7 @@ const AdminDashboard = () => {
         setViews(v);
         const cutoff = new Date(since).getTime();
         setPrevViews(pv.filter((r) => new Date(r.created_at).getTime() < cutoff));
+        setConversions(conversionSummary);
 
         setCounts({
           categories: cats.data?.length ?? 0,
@@ -101,6 +105,7 @@ const AdminDashboard = () => {
     const prevSessions = uniqueSessions(prevViews);
     const viewsCount = views.length;
     const prevCount = prevViews.length;
+    const measuredContactActions = counts.messagesInPeriod + conversions.whatsappClicks;
 
     // Bounce: sessions with only 1 view
     const sessionViewCounts: Record<string, number> = {};
@@ -127,9 +132,10 @@ const AdminDashboard = () => {
       avgDuration,
       pagesPerSession,
       dailyChart: groupByDay(views, days === 1 ? 1 : days),
-      conversionRate: viewsCount > 0 ? (counts.messagesInPeriod / viewsCount) * 100 : 0,
+      measuredContactActions,
+      conversionRate: sessions > 0 ? (measuredContactActions / sessions) * 100 : 0,
     };
-  }, [views, prevViews, period, counts]);
+  }, [views, prevViews, period, counts, conversions]);
 
   if (loading) {
     return (
@@ -232,7 +238,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* KPIs row 2 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
         <KPICard
           label="Mensajes sin leer"
           value={counts.unread}
@@ -248,10 +254,16 @@ const AdminDashboard = () => {
           hint="Sesiones con 1 vista"
         />
         <KPICard
-          label="Tasa conversión"
+          label="Clicks WhatsApp"
+          value={conversions.whatsappClicks.toLocaleString()}
+          icon={MessageSquare}
+          hint={conversions.available ? "Eventos reales medidos" : "Pendiente de desplegar medición"}
+        />
+        <KPICard
+          label="Tasa contacto"
           value={`${stats.conversionRate.toFixed(2)}%`}
           icon={BarChart3}
-          hint={`${counts.messagesInPeriod} leads reales en ${periodLabel[period]}`}
+          hint={`${stats.measuredContactActions} acciones de contacto en ${periodLabel[period]}`}
         />
         <KPICard
           label="Total visitas histórico"
@@ -259,6 +271,23 @@ const AdminDashboard = () => {
           icon={Globe}
           link="/admin/analytics"
         />
+      </div>
+
+      {/* Commercial signals */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        {[
+          { label: "Formularios reales", value: counts.messagesInPeriod, icon: MailOpen, hint: "Mensajes recibidos" },
+          { label: "WhatsApp", value: conversions.whatsappClicks, icon: MessageSquare, hint: "Clicks de contacto" },
+          { label: "Cotizador IA", value: conversions.quoteCompletions, icon: Zap, hint: "Presupuestos generados" },
+          { label: "CTAs presupuesto", value: conversions.ctaClicks, icon: BarChart3, hint: "Intención previa" },
+        ].map((item) => (
+          <div key={item.label} className="rounded-xl bg-card border border-border p-4">
+            <item.icon className="w-5 h-5 text-muted-foreground mb-2" />
+            <p className="text-2xl font-bold text-foreground">{item.value.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
+            <p className="text-[11px] text-muted-foreground/70 mt-1">{item.hint}</p>
+          </div>
+        ))}
       </div>
 
       {/* Trend chart */}

@@ -77,7 +77,6 @@ const SmartQuoter = () => {
         event_category: "engagement",
         event_label: form.service,
       });
-      fireGoogleAdsConversion();
     } catch (err) {
       toast.error("Error al generar el presupuesto");
     }

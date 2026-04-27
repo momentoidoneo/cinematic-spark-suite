@@ -14,6 +14,7 @@ import {
   fetchRealContactMessages, fetchViews, groupByDay, uniqueSessions, topBy, referrerHost, exportCSV,
   pctChange, periodLabel, type Period, type PageViewRow,
 } from "@/lib/analytics";
+import { emptyConversionSummary, fetchConversionSummary, type ConversionSummary } from "@/lib/conversionSummary";
 
 const PERIODS: Period[] = ["today", "7d", "30d", "90d", "all"];
 const COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(45 90% 60%)", "hsl(280 70% 60%)", "hsl(20 80% 60%)", "hsl(180 60% 50%)"];
@@ -23,6 +24,7 @@ const AdminAnalytics = () => {
   const [views, setViews] = useState<PageViewRow[]>([]);
   const [prevViews, setPrevViews] = useState<PageViewRow[]>([]);
   const [messagesCount, setMessagesCount] = useState(0);
+  const [conversions, setConversions] = useState<ConversionSummary>(emptyConversionSummary);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,14 +35,16 @@ const AdminAnalytics = () => {
       const prevSince = new Date(Date.now() - days * 2 * 86400_000).toISOString();
       const cutoff = new Date(since).getTime();
 
-      const [v, pv, realMessages] = await Promise.all([
+      const [v, pv, realMessages, conversionSummary] = await Promise.all([
         fetchViews(since),
         period === "all" ? Promise.resolve([] as PageViewRow[]) : fetchViews(prevSince),
         fetchRealContactMessages(since),
+        fetchConversionSummary(period === "all" ? undefined : since),
       ]);
       setViews(v);
       setPrevViews(pv.filter((r) => new Date(r.created_at).getTime() < cutoff));
       setMessagesCount(realMessages.length);
+      setConversions(conversionSummary);
       setLoading(false);
     };
     load();
@@ -110,6 +114,7 @@ const AdminAnalytics = () => {
   const formatDuration = (s: number) => s < 60 ? `${Math.round(s)}s` : `${Math.floor(s / 60)}m ${Math.round(s % 60)}s`;
   const hasVisitData = stats.viewsCount > 0;
   const engagedSessions = Math.max(0, stats.sessions - Math.round(stats.sessions * stats.bounceRate / 100));
+  const measuredContactActions = messagesCount + conversions.whatsappClicks;
 
   const handleExport = () => {
     exportCSV(
@@ -167,6 +172,17 @@ const AdminAnalytics = () => {
         <KPICard label="Duración media" value={formatDuration(stats.avgDuration)} icon={Clock} />
       </div>
 
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <KPICard label="Mensajes reales" value={messagesCount.toLocaleString()} icon={FileText}
+          hint="Formulario, sin demos obvias" />
+        <KPICard label="Clicks WhatsApp" value={conversions.whatsappClicks.toLocaleString()} icon={Megaphone}
+          hint={conversions.available ? "Eventos medidos" : "Pendiente de desplegar medición"} />
+        <KPICard label="Cotizador IA" value={conversions.quoteCompletions.toLocaleString()} icon={TrendingUp}
+          hint="Presupuestos generados" />
+        <KPICard label="Tasa contacto" value={`${(stats.sessions > 0 ? (measuredContactActions / stats.sessions) * 100 : 0).toFixed(2)}%`} icon={Users}
+          hint={`${measuredContactActions} acciones / sesiones`} />
+      </div>
+
       <div className="rounded-xl bg-card border border-border p-6 mb-8">
         <h2 className="font-display text-lg font-bold text-foreground mb-4">Evolución de visitas</h2>
         {hasVisitData ? (
@@ -202,13 +218,13 @@ const AdminAnalytics = () => {
         </div>
         <div className="rounded-xl bg-card border border-border p-6">
           <h2 className="font-display text-lg font-bold text-foreground mb-1">Embudo de conversión</h2>
-          <p className="text-sm text-muted-foreground mb-4">Visitas → sesiones únicas → leads</p>
+          <p className="text-sm text-muted-foreground mb-4">Visitas → sesiones únicas → señales comerciales</p>
           <ConversionFunnel
             steps={[
               { label: "Visitas totales", value: stats.viewsCount },
               { label: "Sesiones únicas", value: stats.sessions, hint: "Visitantes diferentes" },
               { label: "Sesiones engaged", value: engagedSessions, hint: ">1 página" },
-              { label: "Mensajes reales", value: messagesCount, hint: "Excluye pruebas/demo obvias" },
+              { label: "Acciones contacto", value: measuredContactActions, hint: "Mensajes reales + WhatsApp" },
             ]}
           />
         </div>

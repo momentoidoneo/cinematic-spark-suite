@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
+import { trackEvent } from "@/lib/trackingEvents";
 
 /**
  * Listener global que detecta clicks en cualquier enlace que apunte a
- * #contacto (Solicitar Presupuesto) y dispara los eventos GA4 + Google Ads.
+ * #contacto (Solicitar Presupuesto) y dispara eventos de intención.
  * Funciona automáticamente con todos los CTAs existentes.
  */
 const GlobalCTATracker = () => {
@@ -23,7 +23,6 @@ const GlobalCTATracker = () => {
           event_category: "engagement",
           event_label: `presupuesto_${page}_${section}`,
         });
-        fireGoogleAdsConversion();
       }
     };
     document.addEventListener("click", handler);
