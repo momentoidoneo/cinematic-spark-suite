@@ -7,11 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, GripVertical, X, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Eye, EyeOff, Sparkles } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { defaultPricingPlans, defaultPricingServices } from "@/lib/defaultPricing";
 
 interface Plan {
   id: string;
@@ -40,11 +41,13 @@ interface PricingService {
 
 const emptyPlan = { name: "", description: "", price: "", price_suffix: "/proyecto", features: [""], is_highlighted: false, is_visible: true, show_from: false };
 const emptyService = { name: "", description: "", price: "", price_suffix: "", category: "", is_visible: true, show_from: false };
+const normalizeName = (name: string) => name.trim().toLowerCase();
 
 const AdminPricing = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [services, setServices] = useState<PricingService[]>([]);
   const [loading, setLoading] = useState(true);
+  const [seedingDefaults, setSeedingDefaults] = useState(false);
 
   // Plan dialog
   const [planOpen, setPlanOpen] = useState(false);
@@ -187,6 +190,40 @@ const AdminPricing = () => {
     fetchData();
   };
 
+  const existingPlanNames = new Set(plans.map(plan => normalizeName(plan.name)));
+  const existingServiceNames = new Set(services.map(service => normalizeName(service.name)));
+  const missingDefaultPlans = defaultPricingPlans.filter(plan => !existingPlanNames.has(normalizeName(plan.name)));
+  const missingDefaultServices = defaultPricingServices.filter(service => !existingServiceNames.has(normalizeName(service.name)));
+  const missingDefaultCount = missingDefaultPlans.length + missingDefaultServices.length;
+
+  const seedDefaultPricing = async () => {
+    if (missingDefaultCount === 0) {
+      toast.info("El catálogo estándar ya está cargado");
+      return;
+    }
+
+    setSeedingDefaults(true);
+    try {
+      if (missingDefaultPlans.length > 0) {
+        const { error } = await supabase.from("pricing_plans").insert(missingDefaultPlans);
+        if (error) throw error;
+      }
+
+      if (missingDefaultServices.length > 0) {
+        const { error } = await supabase.from("pricing_services").insert(missingDefaultServices);
+        if (error) throw error;
+      }
+
+      toast.success(`Precios estándar cargados: ${missingDefaultCount} nuevos registros`);
+      await fetchData();
+    } catch (error) {
+      console.error("Error loading default pricing", error);
+      toast.error("No se pudieron cargar los precios estándar. Verifica que tu usuario tenga permisos de admin.");
+    } finally {
+      setSeedingDefaults(false);
+    }
+  };
+
   // Feature helpers
   const addFeature = () => setPlanForm(f => ({ ...f, features: [...f.features, ""] }));
   const removeFeature = (i: number) => setPlanForm(f => ({ ...f, features: f.features.filter((_, idx) => idx !== i) }));
@@ -212,6 +249,25 @@ const AdminPricing = () => {
           visibilidad y el indicador “desde” sin tocar código.
         </p>
       </div>
+
+      {missingDefaultCount > 0 && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-3">
+              <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div>
+                <p className="font-medium text-foreground">Faltan precios estándar por cargar</p>
+                <p className="text-sm text-muted-foreground">
+                  Se añadirán {missingDefaultPlans.length} planes y {missingDefaultServices.length} servicios sin modificar los precios existentes.
+                </p>
+              </div>
+            </div>
+            <Button onClick={seedDefaultPricing} disabled={seedingDefaults} className="shrink-0">
+              {seedingDefaults ? "Cargando..." : "Cargar precios estándar"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="plans">
         <TabsList className="w-full sm:w-auto">
