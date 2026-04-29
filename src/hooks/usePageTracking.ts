@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { detectAIReferrer } from "@/lib/aiReferrers";
 
 /**
  * Records a page view + session + UTM + geo + device data.
@@ -174,6 +175,14 @@ const usePageTracking = () => {
         const session_id = getOrCreateSessionId();
         const device = detectDevice();
         const utm = getUTMParams();
+        const aiReferrer = detectAIReferrer(document.referrer || null);
+        const aiAttribution = aiReferrer && !utm.utm_source
+          ? {
+              utm_source: aiReferrer.source,
+              utm_medium: "ai_search",
+              utm_campaign: "ai_referral",
+            }
+          : {};
         const geo = await fetchGeo();
         if (cancelled) return;
 
@@ -186,6 +195,7 @@ const usePageTracking = () => {
             session_id,
             ...device,
             ...utm,
+            ...aiAttribution,
             ...geo,
           },
         });
@@ -198,6 +208,7 @@ const usePageTracking = () => {
               session_id,
               ...device,
               ...utm,
+              ...aiAttribution,
               ...geo,
             })
           : null;

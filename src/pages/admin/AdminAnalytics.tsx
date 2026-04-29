@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Eye, Users, Globe, Smartphone, Monitor, Tablet, Download, TrendingUp, Clock,
-  Link2, Megaphone, FileText,
+  Link2, Megaphone, FileText, Sparkles,
 } from "lucide-react";
 import {
   AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer,
@@ -12,7 +12,7 @@ import HeatmapChart from "@/components/admin/dashboard/HeatmapChart";
 import ConversionFunnel from "@/components/admin/dashboard/ConversionFunnel";
 import {
   fetchRealContactMessages, fetchViews, groupByDay, uniqueSessions, topBy, referrerHost, exportCSV,
-  pctChange, periodLabel, type Period, type PageViewRow,
+  pctChange, periodLabel, aiReferralCount, topAIReferrers, type Period, type PageViewRow,
 } from "@/lib/analytics";
 import { emptyConversionSummary, fetchConversionSummary, type ConversionSummary } from "@/lib/conversionSummary";
 
@@ -101,6 +101,7 @@ const AdminAnalytics = () => {
     const countries = topBy(views, "country", 10).filter((c) => c.name !== "(desconocido)");
     const campaigns = topBy(views, "utm_campaign", 8).filter((c) => c.name !== "(desconocido)");
     const sources = topBy(views, "utm_source", 8).filter((c) => c.name !== "(desconocido)");
+    const aiSources = topAIReferrers(views, 8);
 
     return {
       viewsCount: views.length, prevCount: prevViews.length,
@@ -108,6 +109,8 @@ const AdminAnalytics = () => {
       pagesPerSession: sessions > 0 ? views.length / sessions : 0,
       dailyChart, topPages, topReferrers, devices, browsers, os,
       countries, campaigns, sources,
+      aiReferralCount: aiReferralCount(views),
+      aiSources,
     };
   }, [views, prevViews, period]);
 
@@ -172,13 +175,15 @@ const AdminAnalytics = () => {
         <KPICard label="Duración media" value={formatDuration(stats.avgDuration)} icon={Clock} />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
         <KPICard label="Mensajes reales" value={messagesCount.toLocaleString()} icon={FileText}
           hint="Formulario, sin demos obvias" />
         <KPICard label="Clicks WhatsApp" value={conversions.whatsappClicks.toLocaleString()} icon={Megaphone}
           hint={conversions.available ? "Eventos medidos" : "Pendiente de desplegar medición"} />
         <KPICard label="Cotizador IA" value={conversions.quoteCompletions.toLocaleString()} icon={TrendingUp}
           hint="Presupuestos generados" />
+        <KPICard label="Tráfico IA" value={stats.aiReferralCount.toLocaleString()} icon={Sparkles}
+          hint="ChatGPT, Perplexity, Gemini, Copilot..." />
         <KPICard label="Tasa contacto" value={`${(stats.sessions > 0 ? (measuredContactActions / stats.sessions) * 100 : 0).toFixed(2)}%`} icon={Users}
           hint={`${measuredContactActions} acciones / sesiones`} />
       </div>
@@ -325,6 +330,19 @@ const AdminAnalytics = () => {
             <h2 className="font-display text-lg font-bold text-foreground">Fuentes de tráfico</h2>
           </div>
           <div className="space-y-2">
+            {stats.aiSources.length > 0 && (
+              <div className="mb-5 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Referidos desde IA</p>
+                <div className="space-y-1">
+                  {stats.aiSources.map((source) => (
+                    <div key={source.name} className="flex items-center justify-between py-1">
+                      <span className="text-sm text-foreground truncate">{source.name}</span>
+                      <span className="text-sm font-semibold text-primary">{source.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {stats.topReferrers.length ? (
               stats.topReferrers.map((r) => (
                 <div key={r.name} className="flex items-center justify-between py-2 border-b border-border/50">

@@ -29,6 +29,7 @@ const FotografiaCiudad = lazy(() => import("./pages/FotografiaCiudad"));
 const ServicioCiudad = lazy(() => import("./pages/ServicioCiudad"));
 const Legal = lazy(() => import("./pages/Legal"));
 const Precios = lazy(() => import("./pages/Precios"));
+const GuiaServiciosAudiovisuales = lazy(() => import("./pages/GuiaServiciosAudiovisuales"));
 
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -91,6 +92,7 @@ const App = () => (
               <Route path="/servicios/eventos" element={<ServicioEventos />} />
               <Route path="/servicios/renders" element={<ServicioRenders />} />
               <Route path="/precios" element={<Precios />} />
+              <Route path="/guia-servicios-audiovisuales" element={<GuiaServiciosAudiovisuales />} />
               <Route path="/fotografia-:city" element={<FotografiaCiudad />} />
               <Route path="/fotografia-inmobiliaria-:city" element={<ServicioCiudad />} />
               <Route path="/fotografia-arquitectura-:city" element={<ServicioCiudad />} />

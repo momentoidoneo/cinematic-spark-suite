@@ -10,6 +10,9 @@ import SEOHead, {
   photographyServiceSchema,
   videoDronServiceSchema,
   tourVirtualServiceSchema,
+  personSchema,
+  serviceCatalogSchema,
+  aiSearchFAQSchema,
 } from "@/components/SEOHead";
 
 const ServicesSection = lazy(() => import("@/components/ServicesSection"));
@@ -39,7 +42,16 @@ const Index = () => {
         title="Silvio Costa Photography | Fotografía y Producción Audiovisual Profesional"
         description="Fotografía profesional, vídeo corporativo, dron y tours virtuales 360° con tecnología Matterport en España y Portugal. Calidad cinematográfica para inmobiliarias, arquitectura, eventos y empresas."
         canonical={`${siteUrl}/`}
-        jsonLd={[localBusinessSchema, websiteSchema, photographyServiceSchema, videoDronServiceSchema, tourVirtualServiceSchema]}
+        jsonLd={[
+          localBusinessSchema,
+          websiteSchema,
+          personSchema,
+          serviceCatalogSchema,
+          aiSearchFAQSchema,
+          photographyServiceSchema,
+          videoDronServiceSchema,
+          tourVirtualServiceSchema,
+        ]}
       />
       <Navbar />
       <HeroSection />

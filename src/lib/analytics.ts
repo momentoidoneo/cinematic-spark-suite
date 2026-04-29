@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { detectAIAttribution } from "@/lib/aiReferrers";
 
 export type Period = "today" | "7d" | "30d" | "90d" | "all";
 
@@ -146,6 +147,31 @@ export const referrerHost = (ref: string | null): string => {
     return ref;
   }
 };
+
+export const aiReferralSource = (row: Pick<PageViewRow, "referrer" | "utm_source" | "utm_medium">) =>
+  detectAIAttribution({
+    referrer: row.referrer,
+    utm_source: row.utm_source,
+    utm_medium: row.utm_medium,
+  });
+
+export const topAIReferrers = (rows: PageViewRow[], limit = 8) => {
+  const counts: Record<string, { label: string; count: number }> = {};
+  rows.forEach((row) => {
+    const source = aiReferralSource(row);
+    if (!source) return;
+    counts[source.source] = counts[source.source] || { label: source.label, count: 0 };
+    counts[source.source].count++;
+  });
+
+  return Object.values(counts)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit)
+    .map(({ label: name, count }) => ({ name, count }));
+};
+
+export const aiReferralCount = (rows: PageViewRow[]) =>
+  rows.reduce((count, row) => count + (aiReferralSource(row) ? 1 : 0), 0);
 
 export const exportCSV = (rows: Record<string, unknown>[], filename: string) => {
   if (!rows.length) return;

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Send, Rss, Map as MapIcon, AlertTriangle, Search } from "lucide-react";
+import { Loader2, Send, Rss, Map as MapIcon, AlertTriangle, Search, Sparkles } from "lucide-react";
 
 interface PingRow {
   id: string;
@@ -17,6 +17,15 @@ interface PingRow {
   created_at: string;
 }
 
+interface SEOMetadataAuditRow {
+  page_path: string;
+  title: string | null;
+  description: string | null;
+}
+
+const errorMessage = (err: unknown, fallback: string) =>
+  err instanceof Error ? err.message : fallback;
+
 const SITE_URL = "https://silviocosta.net";
 const SITEMAPS = [
   { label: "Sitemap Index", path: "/sitemap-index.xml", fn: "sitemap-index" },
@@ -26,6 +35,14 @@ const SITEMAPS = [
   { label: "Sitemap Portfolio", path: "/sitemap-portfolio.xml", fn: "sitemap-portfolio" },
   { label: "Sitemap Images", path: "/sitemap-images.xml", fn: "sitemap-images" },
   { label: "RSS Feed", path: "/rss.xml", fn: "rss-feed" },
+];
+
+const AI_DISCOVERY_RESOURCES = [
+  { label: "LLMs resumen", url: `${SITE_URL}/llms.txt` },
+  { label: "LLMs contexto completo", url: `${SITE_URL}/llms-full.txt` },
+  { label: "Guía textual para IA", url: `${SITE_URL}/ai-context/servicios-audiovisuales.md` },
+  { label: "Manifest IA", url: `${SITE_URL}/ai-sitemap.json` },
+  { label: "Guía de servicios audiovisuales", url: `${SITE_URL}/guia-servicios-audiovisuales` },
 ];
 
 export default function AdminSEOTechnical() {
@@ -53,7 +70,7 @@ export default function AdminSEOTechnical() {
     if (!meta) return;
     const byTitle: Record<string, string[]> = {};
     const byDesc: Record<string, string[]> = {};
-    meta.forEach((m: any) => {
+    (meta as SEOMetadataAuditRow[]).forEach((m) => {
       if (m.title) {
         byTitle[m.title] = byTitle[m.title] || [];
         byTitle[m.title].push(m.page_path);
@@ -84,8 +101,8 @@ export default function AdminSEOTechnical() {
       toast.success(`Notificadas ${list.length} URLs a buscadores`);
       setUrls("");
       loadPings();
-    } catch (e: any) {
-      toast.error(e.message || "Error al notificar");
+    } catch (e: unknown) {
+      toast.error(errorMessage(e, "Error al notificar"));
     } finally {
       setSending(false);
     }
@@ -96,14 +113,17 @@ export default function AdminSEOTechnical() {
     try {
       await supabase.functions.invoke("indexnow", {
         body: {
-          urls: SITEMAPS.map(s => `${SITE_URL}${s.path}`),
-          triggered_by: "admin-sitemaps",
+          urls: [
+            ...SITEMAPS.map(s => `${SITE_URL}${s.path}`),
+            ...AI_DISCOVERY_RESOURCES.map(r => r.url),
+          ],
+          triggered_by: "admin-sitemaps-ai-discovery",
         },
       });
-      toast.success("Sitemaps notificados a buscadores");
+      toast.success("Sitemaps y recursos IA notificados a buscadores");
       loadPings();
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e: unknown) {
+      toast.error(errorMessage(e, "Error al notificar"));
     } finally {
       setSending(false);
     }
@@ -113,7 +133,7 @@ export default function AdminSEOTechnical() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">SEO Técnico</h1>
-        <p className="text-muted-foreground">Indexación, sitemaps, RSS y auditoría de duplicados.</p>
+        <p className="text-muted-foreground">Indexación, sitemaps, RSS, recursos para IA y auditoría de duplicados.</p>
       </div>
 
       <Tabs defaultValue="indexnow">
@@ -145,7 +165,7 @@ export default function AdminSEOTechnical() {
                   Notificar a Bing/Yandex/Google
                 </Button>
                 <Button variant="outline" onClick={notifyAllSitemaps} disabled={sending}>
-                  Notificar todos los sitemaps
+                  Notificar sitemaps + IA
                 </Button>
               </div>
             </CardContent>
@@ -170,6 +190,29 @@ export default function AdminSEOTechnical() {
               </Card>
             );
           })}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Recursos para motores de respuesta e IA
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {AI_DISCOVERY_RESOURCES.map(resource => (
+                <div key={resource.url} className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
+                  <div>
+                    <div className="font-medium text-sm">{resource.label}</div>
+                    <a href={resource.url} target="_blank" rel="noopener" className="text-xs text-primary hover:underline break-all">
+                      {resource.url}
+                    </a>
+                  </div>
+                  <a href={resource.url} target="_blank" rel="noopener">
+                    <Button variant="outline" size="sm">Ver</Button>
+                  </a>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
           <Card>
             <CardContent className="p-4 text-sm text-muted-foreground">
               <strong>Configuración DNS / proxy:</strong> redirige <code>{SITE_URL}/sitemap-*.xml</code> y <code>/rss.xml</code> a las edge functions correspondientes (Cloudflare Worker o reverse-proxy). Mientras tanto, los sitemaps se sirven directamente desde la URL de la edge function de arriba.

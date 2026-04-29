@@ -29,20 +29,25 @@ interface SEOEntry {
   og_image: string | null;
 }
 
+const errorMessage = (err: unknown, fallback: string) =>
+  err instanceof Error ? err.message : fallback;
+
 // Pages we expect to have SEO metadata. Audit flags missing entries.
 const KNOWN_PAGES = [
   "/",
-  "/portafilio",
+  "/portafolio",
   "/blog",
   "/precios",
-  "/legal/aviso-legal",
-  "/legal/politica-privacidad",
+  "/guia-servicios-audiovisuales",
+  "/legal/legal-notice",
+  "/legal/privacy-policy",
   "/legal/cookies",
-  "/servicio/fotografia",
-  "/servicio/video-dron",
-  "/servicio/eventos",
-  "/servicio/tour-virtual",
-  "/servicio/renders",
+  "/legal/terms",
+  "/servicios/fotografia",
+  "/servicios/video-dron",
+  "/servicios/eventos",
+  "/servicios/tour-virtual",
+  "/servicios/renders",
 ];
 
 type Issue = {
@@ -153,8 +158,8 @@ const AdminSEO = () => {
         .update({ title: updated.title, description: updated.description })
         .eq("id", entry.id);
       toast.success("Meta tags generados");
-    } catch (err: any) {
-      toast.error(err.message || "Error generando meta");
+    } catch (err: unknown) {
+      toast.error(errorMessage(err, "Error generando meta"));
     } finally {
       setGeneratingId(null);
     }

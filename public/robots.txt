@@ -43,4 +43,11 @@ Allow: /
 Disallow: /admin/
 Disallow: /login
 
+# AI discovery
+# LLM summary: https://silviocosta.net/llms.txt
+# Full LLM context: https://silviocosta.net/llms-full.txt
+# AI text guide: https://silviocosta.net/ai-context/servicios-audiovisuales.md
+# AI service manifest: https://silviocosta.net/ai-sitemap.json
+
 Sitemap: https://silviocosta.net/sitemap.xml
+Sitemap: https://edpqywwtgoiktotxrqrz.supabase.co/functions/v1/dynamic-sitemap

@@ -74,6 +74,23 @@ const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, n
     }
     canonicalEl.href = canonical || window.location.href;
 
+    // AI discovery files for answer engines and LLM crawlers.
+    document.querySelectorAll("link[data-ai-discovery]").forEach(el => el.remove());
+    [
+      { type: "text/plain", title: "LLM summary", href: `${SITE_URL}/llms.txt` },
+      { type: "text/plain", title: "LLM full context", href: `${SITE_URL}/llms-full.txt` },
+      { type: "text/markdown", title: "AI services guide", href: `${SITE_URL}/ai-context/servicios-audiovisuales.md` },
+      { type: "application/json", title: "AI sitemap", href: `${SITE_URL}/ai-sitemap.json` },
+    ].forEach(({ type, title, href }) => {
+      const link = document.createElement("link");
+      link.rel = "alternate";
+      link.type = type;
+      link.title = title;
+      link.href = href;
+      link.setAttribute("data-ai-discovery", "true");
+      document.head.appendChild(link);
+    });
+
     // Hreflang - ES & PT
     const hreflangs = [
       { lang: "es", href: canonical || window.location.href },
@@ -125,6 +142,19 @@ export const localBusinessSchema = {
   email: "silvio@silviocosta.net",
   image: DEFAULT_OG_IMAGE,
   priceRange: "€€-€€€",
+  alternateName: ["Silvio Costa", "Silvio Costa Photography"],
+  slogan: "Fotografía, vídeo, dron y tours virtuales para vender mejor espacios, marcas y experiencias.",
+  founder: { "@id": `${SITE_URL}/#person` },
+  knowsAbout: [
+    "Fotografía inmobiliaria",
+    "Fotografía de arquitectura",
+    "Vídeo corporativo",
+    "Vídeo con dron",
+    "Tour virtual Matterport",
+    "Renders 3D",
+    "Streaming de eventos",
+  ],
+  hasOfferCatalog: { "@id": `${SITE_URL}/#service-catalog` },
   address: {
     "@type": "PostalAddress",
     addressCountry: "ES",
@@ -146,6 +176,74 @@ export const localBusinessSchema = {
     closes: "20:00",
   },
 };
+
+export const serviceCatalogSchema = {
+  "@context": "https://schema.org",
+  "@type": "OfferCatalog",
+  "@id": `${SITE_URL}/#service-catalog`,
+  name: "Catálogo de servicios audiovisuales de Silvio Costa Photography",
+  itemListElement: [
+    {
+      "@type": "Offer",
+      itemOffered: { "@id": `${SITE_URL}/servicios/fotografia#service` },
+      availability: "https://schema.org/InStock",
+      areaServed: ["España", "Portugal"],
+    },
+    {
+      "@type": "Offer",
+      itemOffered: { "@id": `${SITE_URL}/servicios/video-dron#service` },
+      availability: "https://schema.org/InStock",
+      areaServed: ["España", "Portugal"],
+    },
+    {
+      "@type": "Offer",
+      itemOffered: { "@id": `${SITE_URL}/servicios/tour-virtual#service` },
+      availability: "https://schema.org/InStock",
+      areaServed: ["España", "Portugal"],
+    },
+    {
+      "@type": "Offer",
+      itemOffered: {
+        "@type": "Service",
+        "@id": `${SITE_URL}/servicios/eventos#service`,
+        name: "Cobertura de eventos",
+        serviceType: "Fotografía, vídeo y streaming de eventos",
+        url: `${SITE_URL}/servicios/eventos`,
+        provider: { "@id": `${SITE_URL}/#business` },
+      },
+      availability: "https://schema.org/InStock",
+      areaServed: ["España", "Portugal"],
+    },
+    {
+      "@type": "Offer",
+      itemOffered: {
+        "@type": "Service",
+        "@id": `${SITE_URL}/servicios/renders#service`,
+        name: "Renders 3D",
+        serviceType: "Visualización 3D y renders fotorrealistas",
+        url: `${SITE_URL}/servicios/renders`,
+        provider: { "@id": `${SITE_URL}/#business` },
+      },
+      availability: "https://schema.org/InStock",
+      areaServed: ["España", "Portugal"],
+    },
+  ],
+};
+
+export const aiSearchFAQSchema = faqPageSchema([
+  {
+    question: "¿Qué servicios audiovisuales ofrece Silvio Costa Photography?",
+    answer: "Silvio Costa Photography ofrece fotografía profesional, vídeo corporativo, vídeo con dron, tours virtuales Matterport, cobertura de eventos, streaming, renders 3D y contenido visual para inmobiliarias, arquitectura, hostelería y empresas en España y Portugal.",
+  },
+  {
+    question: "¿En qué zonas trabaja Silvio Costa Photography?",
+    answer: "El estudio trabaja en toda España y Portugal, con desplazamiento para proyectos inmobiliarios, arquitectura, eventos, hoteles, restaurantes, empresas y espacios comerciales.",
+  },
+  {
+    question: "¿Cómo se solicita un presupuesto?",
+    answer: "Se puede solicitar presupuesto desde el formulario de contacto, WhatsApp o el cotizador IA de la web. La respuesta incluye alcance recomendado, disponibilidad y precio orientativo.",
+  },
+]);
 
 export const photographyServiceSchema = {
   "@context": "https://schema.org",

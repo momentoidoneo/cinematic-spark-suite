@@ -15,6 +15,7 @@ const pages = [
   { loc: "/portafolio", changefreq: "weekly", priority: "0.8" },
   { loc: "/blog", changefreq: "weekly", priority: "0.8" },
   { loc: "/precios", changefreq: "monthly", priority: "0.7" },
+  { loc: "/guia-servicios-audiovisuales", changefreq: "monthly", priority: "0.8" },
   { loc: "/legal/privacy-policy", changefreq: "yearly", priority: "0.3" },
   { loc: "/legal/legal-notice", changefreq: "yearly", priority: "0.3" },
   { loc: "/legal/cookies", changefreq: "yearly", priority: "0.3" },
