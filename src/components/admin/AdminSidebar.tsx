@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard, BarChart3, Image, FolderOpen, Layers, HardDrive,
-  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard, Search, Sparkles, MapPin, Rss
+  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard, Search, Sparkles, MapPin, Rss, Plane
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +38,7 @@ const marketingItems = [
 const communicationItems = [
   { title: "Mensajes Contacto", url: "/admin/messages", icon: Mail },
   { title: "Solicitudes IA", url: "/admin/quote-requests", icon: Sparkles },
+  { title: "Permisos Dron", url: "/admin/drone-permits", icon: Plane },
   { title: "Chats WhatsApp", url: "/admin/whatsapp-chats", icon: MessageCircle },
   { title: "Config. WhatsApp", url: "/admin/whatsapp-config", icon: Settings },
 ];
@@ -107,10 +108,11 @@ const AdminSidebar = () => {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadQuoteCount, setUnreadQuoteCount] = useState(0);
+  const [activeDronePermitCount, setActiveDronePermitCount] = useState(0);
 
   useEffect(() => {
     const fetchUnread = async () => {
-      const [messages, quotes] = await Promise.all([
+      const [messages, quotes, dronePermits] = await Promise.all([
         supabase
           .from("contact_messages")
           .select("*", { count: "exact", head: true })
@@ -119,9 +121,14 @@ const AdminSidebar = () => {
           .from("quote_requests")
           .select("*", { count: "exact", head: true })
           .eq("is_read", false),
+        supabase
+          .from("drone_permit_requests")
+          .select("*", { count: "exact", head: true })
+          .not("status", "in", "(completed,rejected)"),
       ]);
       setUnreadCount(messages.count || 0);
       setUnreadQuoteCount(quotes.count || 0);
+      setActiveDronePermitCount(dronePermits.count || 0);
     };
     fetchUnread();
 
@@ -163,12 +170,29 @@ const AdminSidebar = () => {
       )
       .on(
         "postgres_changes",
+        { event: "INSERT", schema: "public", table: "drone_permit_requests" },
+        (payload) => {
+          fetchUnread();
+          const permit = payload.new as { title?: string; location?: string };
+          toast({
+            title: "Nuevo trámite de permisos dron",
+            description: `${permit.title ?? "Permiso dron"} · ${permit.location ?? ""}`,
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
         { event: "UPDATE", schema: "public", table: "contact_messages" },
         () => fetchUnread()
       )
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "quote_requests" },
+        () => fetchUnread()
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "drone_permit_requests" },
         () => fetchUnread()
       )
       .on(
@@ -181,6 +205,11 @@ const AdminSidebar = () => {
         { event: "DELETE", schema: "public", table: "quote_requests" },
         () => fetchUnread()
       )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "drone_permit_requests" },
+        () => fetchUnread()
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -189,6 +218,7 @@ const AdminSidebar = () => {
   const commBadges: Record<string, number> = {
     "/admin/messages": unreadCount,
     "/admin/quote-requests": unreadQuoteCount,
+    "/admin/drone-permits": activeDronePermitCount,
   };
 
   return (

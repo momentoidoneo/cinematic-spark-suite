@@ -460,6 +460,44 @@ const saveQuoteRequest = async (body: QuoteRequest, quote: QuoteResult) => {
   return serviceRoleKey ? data?.id ?? null : null;
 };
 
+const needsDronePermitWorkflow = (body: QuoteRequest, quote: QuoteResult) => {
+  const text = normalize(`${body.service} ${body.scope} ${body.details || ""} ${quote.pricingReferences?.map((item) => item.name).join(" ") || ""}`);
+  return text.includes("dron") || text.includes("aereo") || text.includes("aerea") || text.includes("uas");
+};
+
+const createDronePermitRequest = async (body: QuoteRequest, quote: QuoteResult, requestId: string | null) => {
+  if (!requestId || !needsDronePermitWorkflow(body, quote)) return;
+
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceRoleKey) return;
+
+  try {
+    const supabase = createClient(url, serviceRoleKey);
+    const { error } = await supabase.from("drone_permit_requests").insert({
+      quote_request_id: requestId,
+      title: `Permisos dron · ${body.service}`,
+      client_name: body.name || null,
+      client_email: body.email.toLowerCase(),
+      client_phone: body.phone || null,
+      service: body.service,
+      location: body.location,
+      operation_address: body.location,
+      requested_time_window: body.urgency,
+      status: "needs_data",
+      priority: body.urgency.toLowerCase().includes("semana") ? "urgent" : "normal",
+      operation_category: "pending_review",
+      source: "smart_quoter",
+      internal_notes: body.details || null,
+      risk_notes: "Creado automáticamente desde el cotizador IA. Requiere revisión humana de zona, categoría operacional, documentación y coordinación antes de confirmar el vuelo.",
+    });
+
+    if (error) console.error("[generate-quote] drone_permit_requests insert error:", error);
+  } catch (error) {
+    console.error("[generate-quote] drone permit workflow unavailable:", error);
+  }
+};
+
 const ADMIN_EMAIL = "silvio@silviocosta.net";
 const GMAIL_GATEWAY = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
 
@@ -575,6 +613,7 @@ Deno.serve(async (req) => {
     }
 
     const requestId = await saveQuoteRequest(body, quote);
+    await createDronePermitRequest(body, quote, requestId);
 
     // Notificación admin (no bloquea la respuesta al usuario)
     const emailPromise = sendNotificationEmails(body, quote, requestId).catch((err) =>

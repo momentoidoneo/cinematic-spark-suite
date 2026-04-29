@@ -7,7 +7,7 @@ import {
   LayoutDashboard, FolderOpen, Layers, Image as ImageIcon, BarChart3, HardDrive,
   Megaphone, Tag, FileText, MessageCircle, Settings, FileSignature, Share2,
   Key, Home, Activity, ArrowRightLeft, Mail, DollarSign, Search, Eye, Camera,
-  Globe, Sparkles,
+  Globe, Sparkles, Plane,
 } from "lucide-react";
 
 interface CommandItemDef {
@@ -41,6 +41,7 @@ const CommandPalette = () => {
     { label: "Analíticas", icon: BarChart3, action: go("/admin/analytics"), keywords: "estadisticas visitas trafico" },
     { label: "Mensajes", icon: Mail, action: go("/admin/messages"), keywords: "contactos leads inbox" },
     { label: "Solicitudes IA", icon: Sparkles, action: go("/admin/quote-requests"), keywords: "cotizador presupuestos leads" },
+    { label: "Permisos Dron", icon: Plane, action: go("/admin/drone-permits"), keywords: "uas permisos vuelos enaire aesa" },
     { label: "SEO", icon: Search, action: go("/admin/seo"), keywords: "metadatos posicionamiento" },
   ];
   const portfolio: CommandItemDef[] = [
