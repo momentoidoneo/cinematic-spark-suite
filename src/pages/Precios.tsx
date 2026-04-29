@@ -51,17 +51,53 @@ const Precios = () => {
   }, []);
 
   const categories = [...new Set(services.map(s => s.category).filter(Boolean))] as string[];
+  const pricingItems = [
+    ...plans.map(plan => ({ ...plan, category: "Planes" })),
+    ...services.map(service => ({ ...service, category: service.category || "Servicios" })),
+  ].filter(item => item.price != null);
+  const pricingSchema = pricingItems.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "OfferCatalog",
+        "@id": `${getSiteUrl()}/precios#pricing-catalog`,
+        name: "Precios orientativos de servicios audiovisuales",
+        url: `${getSiteUrl()}/precios`,
+        itemListElement: pricingItems.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          item: {
+            "@type": "Offer",
+            name: item.name,
+            description: item.description || undefined,
+            category: item.category,
+            price: Number(item.price),
+            priceCurrency: "EUR",
+            availability: "https://schema.org/InStock",
+            url: `${getSiteUrl()}/precios`,
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              price: Number(item.price),
+              priceCurrency: "EUR",
+              unitText: item.price_suffix || undefined,
+            },
+          },
+        })),
+      }
+    : null;
 
   return (
     <>
       <SEOHead
         title="Precios | Silvio Costa Photography"
-        description="Descubre nuestros planes y tarifas de fotografía, vídeo, dron, tours virtuales y más. Precios transparentes para cada tipo de proyecto."
+        description="Precios orientativos de fotografía profesional, vídeo, dron, tours virtuales Matterport, renders 3D, streaming y eventos. Tarifas desde y presupuesto personalizado."
         canonical={`${getSiteUrl()}/precios`}
-        jsonLd={[breadcrumbSchema([
-          { name: "Inicio", url: getSiteUrl() },
-          { name: "Precios", url: `${getSiteUrl()}/precios` },
-        ])]}
+        jsonLd={[
+          breadcrumbSchema([
+            { name: "Inicio", url: getSiteUrl() },
+            { name: "Precios", url: `${getSiteUrl()}/precios` },
+          ]),
+          ...(pricingSchema ? [pricingSchema] : []),
+        ]}
       />
       <Navbar />
       <main className="min-h-screen bg-background">
@@ -80,9 +116,16 @@ const Precios = () => {
                 Nuestros <span className="text-gradient-primary italic">Precios</span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Tarifas transparentes adaptadas a cada proyecto. Encuentra el plan perfecto para ti o solicita un presupuesto personalizado.
+                Tarifas orientativas para comparar servicios, calcular alcance y pedir un presupuesto ajustado a tu proyecto.
               </p>
             </motion.div>
+          </div>
+        </section>
+
+        <section className="px-6 pb-12">
+          <div className="max-w-4xl mx-auto rounded-lg border border-primary/15 bg-primary/5 px-5 py-4 text-sm text-muted-foreground leading-relaxed">
+            Los importes son referencias de partida. El precio final puede variar según ubicación, superficie, duración,
+            número de entregables, derechos de uso, permisos, urgencia, desplazamiento e IVA aplicable.
           </div>
         </section>
 
@@ -166,13 +209,13 @@ const Precios = () => {
                         <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-4">{cat}</h3>
                         <div className="rounded-2xl border border-border bg-card/80 overflow-hidden divide-y divide-border">
                           {services.filter(s => s.category === cat).map(s => (
-                            <div key={s.id} className="flex items-center justify-between px-5 py-4 gap-4">
+                            <div key={s.id} className="flex flex-col sm:flex-row sm:items-start sm:justify-between px-5 py-4 gap-3 sm:gap-4">
                               <div className="min-w-0">
                                 <p className="font-medium text-foreground">{s.name}</p>
-                                {s.description && <p className="text-sm text-muted-foreground truncate">{s.description}</p>}
+                                {s.description && <p className="text-sm text-muted-foreground leading-relaxed">{s.description}</p>}
                               </div>
                               {s.price != null && (
-                                <p className="text-lg font-bold text-primary whitespace-nowrap">
+                                <p className="text-lg font-bold text-primary whitespace-nowrap sm:text-right shrink-0">
                                   {s.show_from && <span className="text-xs font-normal text-muted-foreground">desde </span>}
                                   {s.price}€ <span className="text-xs font-normal text-muted-foreground">{s.price_suffix}</span>
                                 </p>
@@ -189,13 +232,13 @@ const Precios = () => {
                         {categories.length > 0 && <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-4">Otros</h3>}
                         <div className="rounded-2xl border border-border bg-card/80 overflow-hidden divide-y divide-border">
                           {services.filter(s => !s.category).map(s => (
-                            <div key={s.id} className="flex items-center justify-between px-5 py-4 gap-4">
+                            <div key={s.id} className="flex flex-col sm:flex-row sm:items-start sm:justify-between px-5 py-4 gap-3 sm:gap-4">
                               <div className="min-w-0">
                                 <p className="font-medium text-foreground">{s.name}</p>
-                                {s.description && <p className="text-sm text-muted-foreground truncate">{s.description}</p>}
+                                {s.description && <p className="text-sm text-muted-foreground leading-relaxed">{s.description}</p>}
                               </div>
                               {s.price != null && (
-                                <p className="text-lg font-bold text-primary whitespace-nowrap">
+                                <p className="text-lg font-bold text-primary whitespace-nowrap sm:text-right shrink-0">
                                   {s.show_from && <span className="text-xs font-normal text-muted-foreground">desde </span>}
                                   {s.price}€ <span className="text-xs font-normal text-muted-foreground">{s.price_suffix}</span>
                                 </p>

@@ -205,7 +205,13 @@ const AdminPricing = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Precios</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Precios</h1>
+        <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+          Los precios publicados en la web salen de estas tablas. Puedes cambiar importes, sufijos, textos,
+          visibilidad y el indicador “desde” sin tocar código.
+        </p>
+      </div>
 
       <Tabs defaultValue="plans">
         <TabsList className="w-full sm:w-auto">

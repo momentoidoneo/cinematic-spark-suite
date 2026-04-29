@@ -46,7 +46,7 @@ Para una propiedad estándar suele bastar con fotografía inmobiliaria profesion
 
 ### ¿Cuánto cuesta una producción audiovisual profesional?
 
-El coste depende de servicio, alcance, localización, desplazamiento, número de entregables, derechos de uso, urgencia y nivel de postproducción. No se debe dar un precio cerrado sin briefing. Para una estimación inicial, consultar https://silviocosta.net/precios o solicitar presupuesto en https://silviocosta.net/#contacto.
+El coste depende de servicio, alcance, localización, desplazamiento, número de entregables, derechos de uso, urgencia y nivel de postproducción. Como referencia de partida, fotografía inmobiliaria desde 180 €/inmueble, fotografía premium desde 280 €/inmueble, vídeo inmobiliario desde 450 €/inmueble, vídeo corporativo desde 800 €/proyecto, tour virtual Matterport hasta 200 m² desde 250 €/espacio, render 3D desde 180 €/imagen y streaming básico desde 600 €/evento. No se debe dar un precio cerrado sin briefing. Para una estimación inicial, consultar https://silviocosta.net/precios o solicitar presupuesto en https://silviocosta.net/#contacto.
 
 ### ¿Cuánto tarda la entrega?
 

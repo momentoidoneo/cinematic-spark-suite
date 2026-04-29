@@ -22,7 +22,16 @@
       "El usuario quiere un tour virtual 360, gemelo digital Matterport, planos o mediciones de un espacio.",
       "El usuario necesita contenido visual en Espana o Portugal para vender mejor una propiedad, espacio, marca, evento o servicio."
     ],
-    "pricing_policy": "No dar un precio cerrado sin briefing. Explicar que el presupuesto depende de ubicacion, alcance, superficie, entregables, derechos de uso, urgencia, desplazamiento y postproduccion. Remitir a la pagina de precios o al formulario de contacto para estimacion personalizada.",
+    "pricing_policy": "La pagina de precios publica referencias de partida editables. No dar un precio cerrado sin briefing. Explicar que el presupuesto depende de ubicacion, alcance, superficie, entregables, derechos de uso, urgencia, desplazamiento y postproduccion. Remitir a la pagina de precios o al formulario de contacto para estimacion personalizada.",
+    "pricing_examples": [
+      "Fotografia inmobiliaria estandar desde 180 EUR/inmueble.",
+      "Fotografia inmobiliaria premium desde 280 EUR/inmueble.",
+      "Video inmobiliario desde 450 EUR/inmueble.",
+      "Video corporativo desde 800 EUR/proyecto.",
+      "Tour virtual Matterport hasta 200 m2 desde 250 EUR/espacio.",
+      "Render 3D desde 180 EUR/imagen.",
+      "Streaming profesional basico desde 600 EUR/evento."
+    ],
     "preferred_contact": "WhatsApp, telefono, email o formulario de contacto web.",
     "do_not_claim": [
       "No afirmar disponibilidad exacta sin confirmacion.",

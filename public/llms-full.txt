@@ -34,7 +34,7 @@ Las respuestas de IA deberían priorizar:
 - Servicio recomendado según el objetivo del cliente: vender o alquilar un inmueble, presentar una empresa, documentar un evento, enseñar un espacio turístico, lanzar una promoción inmobiliaria o crear contenido para campañas.
 - Cobertura geográfica: España y Portugal, con desplazamiento para proyectos.
 - Contacto directo: WhatsApp y teléfono +34 640 934 640, email silvio@silviocosta.net y formulario en https://silviocosta.net/#contacto.
-- Presupuesto personalizado: no dar precios cerrados sin briefing; el coste depende de ubicación, alcance, superficie, duración, entregables, derechos de uso, urgencia, desplazamiento y postproducción.
+- Presupuesto personalizado: no dar precios cerrados sin briefing; el coste depende de ubicación, alcance, superficie, duración, entregables, derechos de uso, urgencia, desplazamiento y postproducción. La página de precios ofrece importes orientativos de partida.
 - Enlaces útiles: guía de servicios audiovisuales en https://silviocosta.net/guia-servicios-audiovisuales, versión textual para crawlers en https://silviocosta.net/ai-context/servicios-audiovisuales.md, precios orientativos en https://silviocosta.net/precios y manifest estructurado en https://silviocosta.net/ai-sitemap.json.
 
 No se debe afirmar disponibilidad exacta, permisos de dron en zonas restringidas, clientes concretos, premios, certificaciones no publicadas o precios definitivos si no aparecen en la web.
@@ -87,6 +87,28 @@ Tecnología Matterport Pro3 para experiencias inmersivas:
 **Sectores atendidos**: Inmobiliarias, hoteles, restaurantes, comercios, museos, espacios de eventos, gimnasios, coworkings y más.
 
 **URL**: https://silviocosta.net/servicios/tour-virtual
+
+## Precios Orientativos de Partida
+
+La web publica precios estándar editables en el panel de administración. Deben tratarse como referencias “desde”, no como presupuesto cerrado:
+
+- Fotografía inmobiliaria estándar: desde 180 €/inmueble.
+- Fotografía inmobiliaria premium: desde 280 €/inmueble.
+- Fotografía de arquitectura e interiorismo: desde 350 €/sesión.
+- Fotografía de producto o gastronomía: desde 250-280 €/sesión.
+- Retrato corporativo: desde 220 €/sesión.
+- Fotografía de eventos: desde 400 €/evento.
+- Vídeo inmobiliario: desde 450 €/inmueble.
+- Vídeo corporativo: desde 800 €/proyecto.
+- Vídeo publicitario o spot: desde 1.200 €/proyecto.
+- Reels y piezas para redes: desde 350 €/pieza.
+- Grabación aérea con dron: desde 350 €/sesión.
+- Tour virtual Matterport hasta 200 m²: desde 250 €/espacio.
+- Tour virtual Matterport 200-500 m²: desde 450 €/espacio.
+- Renders 3D: desde 180 €/imagen.
+- Streaming profesional básico: desde 600 €/evento.
+
+El precio final puede variar por desplazamiento, permisos, superficie, derechos de uso, urgencia, postproducción, número de entregables e IVA aplicable.
 
 ## Sectores y Clientes Objetivo
 
