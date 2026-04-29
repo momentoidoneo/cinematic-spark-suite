@@ -16,6 +16,36 @@ interface QuoteResult {
   source?: "ai" | "fallback";
 }
 
+const EU_COUNTRIES = [
+  ["AT", "Austria"],
+  ["BE", "Bélgica"],
+  ["BG", "Bulgaria"],
+  ["CY", "Chipre"],
+  ["CZ", "Chequia"],
+  ["DE", "Alemania"],
+  ["DK", "Dinamarca"],
+  ["EE", "Estonia"],
+  ["EL", "Grecia"],
+  ["ES", "España"],
+  ["FI", "Finlandia"],
+  ["FR", "Francia"],
+  ["HR", "Croacia"],
+  ["HU", "Hungría"],
+  ["IE", "Irlanda"],
+  ["IT", "Italia"],
+  ["LT", "Lituania"],
+  ["LU", "Luxemburgo"],
+  ["LV", "Letonia"],
+  ["MT", "Malta"],
+  ["NL", "Países Bajos"],
+  ["PL", "Polonia"],
+  ["PT", "Portugal"],
+  ["RO", "Rumanía"],
+  ["SE", "Suecia"],
+  ["SI", "Eslovenia"],
+  ["SK", "Eslovaquia"],
+] as const;
+
 const SERVICES = [
   "Fotografía profesional",
   "Vídeo corporativo",
@@ -28,28 +58,34 @@ const SERVICES = [
 
 const URGENCY = ["Esta semana", "Este mes", "Próximos 3 meses", "Sin prisa"];
 
+const initialForm = {
+  service: "",
+  scope: "",
+  location: "",
+  urgency: "",
+  details: "",
+  name: "",
+  email: "",
+  phone: "",
+  countryCode: "PT",
+  countryName: "Portugal",
+  vatNumber: "",
+};
+
 const SmartQuoter = () => {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({
-    service: "",
-    scope: "",
-    location: "",
-    urgency: "",
-    details: "",
-    name: "",
-    email: "",
-    phone: "",
-  });
+  const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<QuoteResult | null>(null);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
+  const vatValid = form.vatNumber.trim().length >= 3;
 
   const reset = () => {
     setStep(0);
-    setForm({ service: "", scope: "", location: "", urgency: "", details: "", name: "", email: "", phone: "" });
+    setForm(initialForm);
     setResult(null);
     setLoading(false);
   };
@@ -85,6 +121,10 @@ const SmartQuoter = () => {
   const handleGenerate = async () => {
     if (!emailValid) {
       toast.error("Introduce un email válido para guardar la solicitud");
+      return;
+    }
+    if (!vatValid) {
+      toast.error("Introduce el NIF/CIF/VAT para preparar el presupuesto");
       return;
     }
 
@@ -123,7 +163,7 @@ const SmartQuoter = () => {
     (step === 2 && form.location.trim().length > 0) ||
     (step === 3 && form.urgency) ||
     step === 4 ||
-    (step === 5 && emailValid);
+    (step === 5 && emailValid && vatValid);
 
   return (
     <>
@@ -245,7 +285,7 @@ const SmartQuoter = () => {
                     {step === 5 && (
                       <div>
                         <h3 className="font-display text-xl font-bold text-foreground mb-2">¿Dónde enviamos la estimación?</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Guardaremos la solicitud para poder responderte con una propuesta ajustada.</p>
+                        <p className="text-sm text-muted-foreground mb-4">Guardaremos la solicitud para poder preparar una propuesta con los datos fiscales correctos.</p>
                         <div className="space-y-3">
                           <input
                             autoFocus
@@ -256,6 +296,32 @@ const SmartQuoter = () => {
                             autoComplete="email"
                             className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                           />
+                          <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-3">
+                            <select
+                              value={form.countryCode}
+                              onChange={(e) => {
+                                const country = EU_COUNTRIES.find(([code]) => code === e.target.value);
+                                setForm({
+                                  ...form,
+                                  countryCode: e.target.value,
+                                  countryName: country?.[1] || e.target.value,
+                                });
+                              }}
+                              className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                              aria-label="País fiscal"
+                            >
+                              {EU_COUNTRIES.map(([code, name]) => (
+                                <option key={code} value={code}>{code} · {name}</option>
+                              ))}
+                            </select>
+                            <input
+                              value={form.vatNumber}
+                              onChange={(e) => setForm({ ...form, vatNumber: e.target.value.toUpperCase() })}
+                              placeholder="NIF/CIF/VAT *"
+                              autoComplete="organization"
+                              className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            />
+                          </div>
                           <input
                             value={form.name}
                             onChange={(e) => setForm({ ...form, name: e.target.value })}

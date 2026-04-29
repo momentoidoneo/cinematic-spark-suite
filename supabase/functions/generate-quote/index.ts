@@ -17,6 +17,9 @@ interface QuoteRequest {
   email: string;
   name?: string;
   phone?: string;
+  countryCode?: string;
+  countryName?: string;
+  vatNumber?: string;
 }
 
 interface QuoteResult {
@@ -57,7 +60,60 @@ interface PricingServiceRow {
   category: string | null;
 }
 
+interface ViesCheckResult {
+  valid: boolean | null;
+  countryCode: string;
+  vatNumber: string;
+  name: string | null;
+  address: string | null;
+  checked: boolean;
+}
+
+interface ERPSettingsRow {
+  company_name?: string | null;
+  country_code?: string | null;
+  quote_prefix?: string | null;
+  next_quote_number?: number | string | null;
+  default_vat_rate?: number | string | null;
+  currency?: string | null;
+  payment_terms?: string | null;
+}
+
 const MODEL = "google/gemini-2.5-flash";
+
+const EU_COUNTRY_CODES = new Set([
+  "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK",
+]);
+
+const EU_COUNTRY_NAMES: Record<string, string> = {
+  AT: "Austria",
+  BE: "Bélgica",
+  BG: "Bulgaria",
+  CY: "Chipre",
+  CZ: "Chequia",
+  DE: "Alemania",
+  DK: "Dinamarca",
+  EE: "Estonia",
+  EL: "Grecia",
+  ES: "España",
+  FI: "Finlandia",
+  FR: "Francia",
+  HR: "Croacia",
+  HU: "Hungría",
+  IE: "Irlanda",
+  IT: "Italia",
+  LT: "Lituania",
+  LU: "Luxemburgo",
+  LV: "Letonia",
+  MT: "Malta",
+  NL: "Países Bajos",
+  PL: "Polonia",
+  PT: "Portugal",
+  RO: "Rumanía",
+  SE: "Suecia",
+  SI: "Eslovenia",
+  SK: "Eslovaquia",
+};
 
 const DEFAULT_PRICING_REFERENCES: PricingReference[] = [
   { name: "Fotografía inmobiliaria estándar", category: "Fotografía", description: "Sesión para vivienda estándar.", price: 180, priceSuffix: "/inmueble", source: "default" },
@@ -131,6 +187,82 @@ const normalize = (value: string) =>
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+const cleanVat = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+const countryLabel = (code = "PT") => EU_COUNTRY_NAMES[code.toUpperCase()] || code.toUpperCase();
+
+const splitVatNumber = (rawVat: string, fallbackCountry = "PT") => {
+  const cleaned = cleanVat(rawVat);
+  const fallback = cleanVat(fallbackCountry).slice(0, 2) || "PT";
+  const countryCode = /^[A-Z]{2}/.test(cleaned) ? cleaned.slice(0, 2) : fallback;
+  const vatNumber = /^[A-Z]{2}/.test(cleaned) ? cleaned.slice(2) : cleaned;
+  return { countryCode, vatNumber };
+};
+
+const xmlValue = (xml: string, tag: string) => {
+  const match = xml.match(new RegExp(`<(?:\\w+:)?${tag}>([\\s\\S]*?)</(?:\\w+:)?${tag}>`, "i"));
+  return match?.[1]
+    ?.replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .trim() || "";
+};
+
+const checkVies = async (rawVat: string, fallbackCountry = "PT"): Promise<ViesCheckResult> => {
+  const { countryCode, vatNumber } = splitVatNumber(rawVat, fallbackCountry);
+  const fallback: ViesCheckResult = {
+    valid: null,
+    countryCode,
+    vatNumber,
+    name: null,
+    address: null,
+    checked: false,
+  };
+
+  if (!countryCode || !vatNumber || !EU_COUNTRY_CODES.has(countryCode)) return fallback;
+
+  try {
+    const envelope = `<?xml version="1.0" encoding="UTF-8"?>
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <urn:checkVat>
+            <urn:countryCode>${countryCode}</urn:countryCode>
+            <urn:vatNumber>${vatNumber}</urn:vatNumber>
+          </urn:checkVat>
+        </soapenv:Body>
+      </soapenv:Envelope>`;
+
+    const response = await fetch("https://ec.europa.eu/taxation_customs/vies/services/checkVatService", {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/xml; charset=utf-8",
+        SOAPAction: "",
+      },
+      body: envelope,
+    });
+    const xml = await response.text();
+
+    if (!response.ok || xml.includes("<Fault>") || xml.includes(":Fault>")) {
+      console.error("[generate-quote] VIES validation failed:", response.status, xmlValue(xml, "faultstring"));
+      return fallback;
+    }
+
+    return {
+      valid: xmlValue(xml, "valid").toLowerCase() === "true",
+      countryCode: xmlValue(xml, "countryCode") || countryCode,
+      vatNumber: xmlValue(xml, "vatNumber") || vatNumber,
+      name: xmlValue(xml, "name") || null,
+      address: xmlValue(xml, "address") || null,
+      checked: true,
+    };
+  } catch (error) {
+    console.error("[generate-quote] VIES unavailable:", error);
+    return fallback;
+  }
+};
 
 const serviceSignals = (body: QuoteRequest) => {
   const text = normalize(`${body.service} ${body.scope} ${body.details || ""}`);
@@ -372,6 +504,8 @@ const generateWithAI = async (body: QuoteRequest, fallback: QuoteResult): Promis
 - Alcance/Tamaño: ${body.scope}
 - Ubicación: ${body.location}
 - Urgencia: ${body.urgency}
+- País fiscal: ${body.countryCode || "PT"} ${body.countryName ? `· ${body.countryName}` : ""}
+- NIF/CIF/VAT: ${body.vatNumber || "No indicado"}
 ${body.details ? `- Detalles adicionales: ${body.details}` : ""}
 
 Genera el presupuesto orientativo en JSON.`;
@@ -498,6 +632,144 @@ const createDronePermitRequest = async (body: QuoteRequest, quote: QuoteResult, 
   }
 };
 
+const roundCurrency = (value: number) => Math.round(value * 100) / 100;
+
+const commercialQuoteNumber = (settings: ERPSettingsRow) => {
+  const prefix = settings.quote_prefix || "SC";
+  const next = Number(settings.next_quote_number || 1);
+  return `${prefix}-${new Date().getFullYear()}-${String(next).padStart(4, "0")}`;
+};
+
+const commercialVatDecision = (settings: ERPSettingsRow, body: QuoteRequest, vies: ViesCheckResult) => {
+  const supplierCountry = (settings.country_code || "PT").toUpperCase();
+  const clientCountry = (body.countryCode || vies.countryCode || "PT").toUpperCase();
+  const standardRate = Number(settings.default_vat_rate || 23);
+
+  if (clientCountry === supplierCountry) {
+    return { rate: standardRate, rule: "pt_vat", note: null };
+  }
+
+  if (EU_COUNTRY_CODES.has(clientCountry) && vies.valid === true) {
+    return {
+      rate: 0,
+      rule: "eu_reverse_charge",
+      note: "IVA 0% por operación intracomunitaria B2B. Inversión del sujeto pasivo / reverse charge. VAT due by customer.",
+    };
+  }
+
+  if (EU_COUNTRY_CODES.has(clientCountry)) {
+    return {
+      rate: standardRate,
+      rule: "pt_vat_eu_no_vies",
+      note: "Cliente UE sin validación VIES activa: se aplica IVA portugués.",
+    };
+  }
+
+  return {
+    rate: 0,
+    rule: "outside_eu_manual_review",
+    note: "Cliente fuera de la UE: revisar tratamiento fiscal antes de emitir factura.",
+  };
+};
+
+const createCommercialQuoteDraft = async (body: QuoteRequest, quote: QuoteResult, requestId: string | null) => {
+  if (!requestId) return;
+
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceRoleKey) return;
+
+  try {
+    const supabase = createClient(url, serviceRoleKey);
+    const { data: settingsData, error: settingsError } = await supabase
+      .from("erp_settings")
+      .select("company_name,country_code,quote_prefix,next_quote_number,default_vat_rate,currency,payment_terms")
+      .eq("id", "default")
+      .maybeSingle();
+
+    if (settingsError) {
+      console.error("[generate-quote] erp_settings read error:", settingsError);
+    }
+
+    const settings = (settingsData || {
+      company_name: "Silvio Costa Photography",
+      country_code: "PT",
+      quote_prefix: "SC",
+      next_quote_number: 1,
+      default_vat_rate: 23,
+      currency: "EUR",
+      payment_terms: "Validez del presupuesto: 30 días. Forma de pago según condiciones acordadas.",
+    }) as ERPSettingsRow;
+
+    const vatParts = splitVatNumber(body.vatNumber || "", body.countryCode || "PT");
+    const clientCountryCode = (vatParts.countryCode || body.countryCode || "PT").toUpperCase();
+    const vies = body.vatNumber
+      ? await checkVies(body.vatNumber, clientCountryCode)
+      : {
+          valid: null,
+          countryCode: clientCountryCode,
+          vatNumber: "",
+          name: null,
+          address: null,
+          checked: false,
+        };
+    const decision = commercialVatDecision(settings, { ...body, countryCode: clientCountryCode }, vies);
+    const lineItems = [{
+      id: crypto.randomUUID(),
+      description: `${body.service} · ${body.scope} · ${body.location}`,
+      quantity: 1,
+      unitPrice: quote.min,
+    }];
+    const subtotal = roundCurrency(quote.min);
+    const vatAmount = roundCurrency(subtotal * (decision.rate / 100));
+    const total = roundCurrency(subtotal + vatAmount);
+    const validUntil = new Date();
+    validUntil.setDate(validUntil.getDate() + 30);
+
+    const { error: insertError } = await supabase.from("commercial_quotes").insert({
+      quote_number: commercialQuoteNumber(settings),
+      status: "draft",
+      source_quote_request_id: requestId,
+      client_name: body.name || body.email,
+      client_company: vies.name && vies.name !== "---" ? vies.name : null,
+      client_email: body.email.toLowerCase(),
+      client_phone: body.phone || null,
+      client_vat_number: body.vatNumber ? `${vies.countryCode}${vies.vatNumber}` : null,
+      client_country_code: clientCountryCode,
+      client_country: body.countryName || countryLabel(clientCountryCode),
+      is_business: true,
+      vies_valid: vies.valid,
+      vies_name: vies.name,
+      vies_address: vies.address,
+      vies_checked_at: vies.checked ? new Date().toISOString() : null,
+      vat_rule: decision.rule,
+      reverse_charge_note: decision.note,
+      issue_date: new Date().toISOString().slice(0, 10),
+      valid_until: validUntil.toISOString().slice(0, 10),
+      line_items: lineItems,
+      subtotal,
+      vat_rate: decision.rate,
+      vat_amount: vatAmount,
+      total,
+      currency: settings.currency || "EUR",
+      notes: `${quote.summary}\n\nRango orientativo generado por IA: ${quote.min} - ${quote.max} EUR. Revisar alcance antes de enviar presupuesto definitivo.`,
+      payment_terms: settings.payment_terms,
+    });
+
+    if (insertError) {
+      console.error("[generate-quote] commercial_quotes insert error:", insertError);
+      return;
+    }
+
+    await supabase
+      .from("erp_settings")
+      .update({ next_quote_number: Number(settings.next_quote_number || 1) + 1 })
+      .eq("id", "default");
+  } catch (error) {
+    console.error("[generate-quote] commercial quote draft unavailable:", error);
+  }
+};
+
 const ADMIN_EMAIL = "silvio@silviocosta.net";
 const GMAIL_GATEWAY = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
 
@@ -527,6 +799,8 @@ const sendNotificationEmails = async (body: QuoteRequest, quote: QuoteResult, re
 
   const safeName = body.name || "Cliente";
   const safeDetails = (body.details || "—").replace(/</g, "&lt;");
+  const safeVat = (body.vatNumber || "—").replace(/</g, "&lt;");
+  const safeCountry = `${body.countryCode || "PT"} · ${body.countryName || countryLabel(body.countryCode || "PT")}`.replace(/</g, "&lt;");
   const rangeText = `${quote.min} – ${quote.max} €`;
 
   const html = `
@@ -542,6 +816,8 @@ const sendNotificationEmails = async (body: QuoteRequest, quote: QuoteResult, re
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;width:140px;">Cliente</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeName}</td></tr>
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Email</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="mailto:${body.email}">${body.email}</a></td></tr>
         ${body.phone ? `<tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Teléfono</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="tel:${body.phone}">${body.phone}</a></td></tr>` : ""}
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">País fiscal</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeCountry}</td></tr>
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">NIF/CIF/VAT</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeVat}</td></tr>
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Servicio</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.service}</td></tr>
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Alcance</td><td style="padding:12px;border-bottom:1px solid #334155;white-space:pre-wrap;">${body.scope.replace(/</g, "&lt;")}</td></tr>
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Ubicación</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.location}</td></tr>
@@ -590,6 +866,9 @@ Deno.serve(async (req) => {
       email: cleanText(raw.email, 254).toLowerCase(),
       name: cleanText(raw.name, 140),
       phone: cleanText(raw.phone, 60),
+      countryCode: cleanText(raw.countryCode, 2).toUpperCase() || "PT",
+      countryName: cleanText(raw.countryName, 120) || countryLabel(cleanText(raw.countryCode, 2) || "PT"),
+      vatNumber: cleanVat(cleanText(raw.vatNumber, 60)),
     };
 
     if (!body.service || !body.scope || !body.location || !body.urgency) {
@@ -597,6 +876,9 @@ Deno.serve(async (req) => {
     }
     if (!isValidEmail(body.email)) {
       return jsonResponse({ error: "Introduce un email válido para recibir el presupuesto" }, 400);
+    }
+    if (!body.vatNumber) {
+      return jsonResponse({ error: "Introduce el NIF/CIF/VAT para preparar el presupuesto" }, 400);
     }
 
     const pricingCatalog = await loadPricingCatalog();
@@ -614,6 +896,7 @@ Deno.serve(async (req) => {
 
     const requestId = await saveQuoteRequest(body, quote);
     await createDronePermitRequest(body, quote, requestId);
+    await createCommercialQuoteDraft(body, quote, requestId);
 
     // Notificación admin (no bloquea la respuesta al usuario)
     const emailPromise = sendNotificationEmails(body, quote, requestId).catch((err) =>

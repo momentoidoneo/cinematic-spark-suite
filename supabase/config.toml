@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.track-conversion-event]
 verify_jwt = false
+
+[functions.validate-vies]
+verify_jwt = false

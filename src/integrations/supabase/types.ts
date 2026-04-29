@@ -402,6 +402,122 @@ export type Database = {
         }
         Relationships: []
       }
+      commercial_quotes: {
+        Row: {
+          client_address: string | null
+          client_city: string | null
+          client_company: string | null
+          client_country: string
+          client_country_code: string
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          client_postal_code: string | null
+          client_vat_number: string | null
+          created_at: string
+          currency: string
+          id: string
+          is_business: boolean
+          issue_date: string
+          line_items: Json
+          notes: string | null
+          payment_terms: string | null
+          quote_number: string
+          reverse_charge_note: string | null
+          source_quote_request_id: string | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          valid_until: string | null
+          vat_amount: number
+          vat_rate: number
+          vat_rule: string
+          vies_address: string | null
+          vies_checked_at: string | null
+          vies_name: string | null
+          vies_valid: boolean | null
+        }
+        Insert: {
+          client_address?: string | null
+          client_city?: string | null
+          client_company?: string | null
+          client_country?: string
+          client_country_code?: string
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          client_postal_code?: string | null
+          client_vat_number?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          is_business?: boolean
+          issue_date?: string
+          line_items?: Json
+          notes?: string | null
+          payment_terms?: string | null
+          quote_number: string
+          reverse_charge_note?: string | null
+          source_quote_request_id?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+          vat_amount?: number
+          vat_rate?: number
+          vat_rule?: string
+          vies_address?: string | null
+          vies_checked_at?: string | null
+          vies_name?: string | null
+          vies_valid?: boolean | null
+        }
+        Update: {
+          client_address?: string | null
+          client_city?: string | null
+          client_company?: string | null
+          client_country?: string
+          client_country_code?: string
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          client_postal_code?: string | null
+          client_vat_number?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          is_business?: boolean
+          issue_date?: string
+          line_items?: Json
+          notes?: string | null
+          payment_terms?: string | null
+          quote_number?: string
+          reverse_charge_note?: string | null
+          source_quote_request_id?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+          vat_amount?: number
+          vat_rate?: number
+          vat_rule?: string
+          vies_address?: string | null
+          vies_checked_at?: string | null
+          vies_name?: string | null
+          vies_valid?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_quotes_source_quote_request_id_fkey"
+            columns: ["source_quote_request_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drone_permit_requests: {
         Row: {
           airspace_notes: string | null
@@ -502,6 +618,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      erp_settings: {
+        Row: {
+          address: string | null
+          bank_holder: string | null
+          bank_name: string | null
+          bic: string | null
+          city: string | null
+          company_name: string
+          country: string
+          country_code: string
+          created_at: string
+          currency: string
+          default_vat_rate: number
+          email: string | null
+          footer_notes: string | null
+          iban: string | null
+          id: string
+          legal_name: string | null
+          next_quote_number: number
+          payment_terms: string | null
+          phone: string | null
+          postal_code: string | null
+          quote_prefix: string
+          updated_at: string
+          vat_number: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          bank_holder?: string | null
+          bank_name?: string | null
+          bic?: string | null
+          city?: string | null
+          company_name?: string
+          country?: string
+          country_code?: string
+          created_at?: string
+          currency?: string
+          default_vat_rate?: number
+          email?: string | null
+          footer_notes?: string | null
+          iban?: string | null
+          id?: string
+          legal_name?: string | null
+          next_quote_number?: number
+          payment_terms?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          quote_prefix?: string
+          updated_at?: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          bank_holder?: string | null
+          bank_name?: string | null
+          bic?: string | null
+          city?: string | null
+          company_name?: string
+          country?: string
+          country_code?: string
+          created_at?: string
+          currency?: string
+          default_vat_rate?: number
+          email?: string | null
+          footer_notes?: string | null
+          iban?: string | null
+          id?: string
+          legal_name?: string | null
+          next_quote_number?: number
+          payment_terms?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          quote_prefix?: string
+          updated_at?: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Relationships: []
       }
       indexnow_pings: {
         Row: {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard, BarChart3, Image, FolderOpen, Layers, HardDrive,
-  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard, Search, Sparkles, MapPin, Rss, Plane
+  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard, Search, Sparkles, MapPin, Rss, Plane, ReceiptText
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +38,7 @@ const marketingItems = [
 const communicationItems = [
   { title: "Mensajes Contacto", url: "/admin/messages", icon: Mail },
   { title: "Solicitudes IA", url: "/admin/quote-requests", icon: Sparkles },
+  { title: "Presupuestos", url: "/admin/quotes", icon: ReceiptText },
   { title: "Permisos Dron", url: "/admin/drone-permits", icon: Plane },
   { title: "Chats WhatsApp", url: "/admin/whatsapp-chats", icon: MessageCircle },
   { title: "Config. WhatsApp", url: "/admin/whatsapp-config", icon: Settings },
