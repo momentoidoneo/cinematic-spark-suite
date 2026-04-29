@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireAdmin } from "../_shared/adminAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,6 +10,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const adminAuth = await requireAdmin(req, corsHeaders);
+    if ("response" in adminAuth) return adminAuth.response;
+
     const RUNWAY_API_KEY = Deno.env.get("RUNWAY_API_KEY");
     if (!RUNWAY_API_KEY) throw new Error("RUNWAY_API_KEY not configured");
 

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireAdmin } from "../_shared/adminAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,9 @@ function jsonResponse(body: unknown, status = 200) {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    const adminAuth = await requireAdmin(req, corsHeaders);
+    if ("response" in adminAuth) return adminAuth.response;
+
     const body = await req.json();
     const { action } = body;
     if (action === "smart_search") return await handleSmartSearch(body);

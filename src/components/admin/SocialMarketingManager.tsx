@@ -45,9 +45,68 @@ const platformColors: Record<string, string> = {
   facebook: "bg-blue-500/10 text-blue-500",
 };
 
+type GeneratedSocialResult = {
+  title?: string;
+  hook?: string;
+  caption?: string;
+  hashtags?: string[];
+  callToAction?: string;
+  bestTimeToPost?: string;
+  contentTips?: string[];
+  generatedImageUrl?: string;
+};
+
+type RepurposeResult = GeneratedSocialResult & {
+  formatNotes?: string;
+  visualSuggestions?: string;
+  adaptationNotes?: string;
+};
+
+type ContentBankItemType = "text" | "template" | "image" | "video";
+
+type SavedProspect = {
+  id: string;
+  username: string;
+  profile_url: string | null;
+  profile_title: string | null;
+  profile_description: string | null;
+  generated_dms: string | null;
+  created_at: string;
+};
+
+type AnalyticsEntryForm = {
+  platform: string;
+  metric_date: string;
+  followers: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  reach: number;
+  impressions: number;
+  engagement_rate: number;
+  profile_views: number;
+  website_clicks: number;
+};
+
+const analyticsFields: Array<{ key: keyof Omit<AnalyticsEntryForm, "platform" | "metric_date">; label: string }> = [
+  { key: "followers", label: "Seguidores" },
+  { key: "likes", label: "Likes" },
+  { key: "comments", label: "Comentarios" },
+  { key: "shares", label: "Compartidos" },
+  { key: "reach", label: "Alcance" },
+  { key: "impressions", label: "Impresiones" },
+  { key: "engagement_rate", label: "Engagement (%)" },
+  { key: "profile_views", label: "Visitas perfil" },
+  { key: "website_clicks", label: "Clicks web" },
+];
+
+const errorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
+
 const statusIcons: Record<string, React.ReactNode> = {
   draft: <FileText className="w-3.5 h-3.5" />,
   scheduled: <Clock className="w-3.5 h-3.5" />,
+  processing: <RefreshCw className="w-3.5 h-3.5" />,
   published: <CheckCircle2 className="w-3.5 h-3.5" />,
   pending: <Clock className="w-3.5 h-3.5" />,
   failed: <AlertCircle className="w-3.5 h-3.5" />,
@@ -57,10 +116,27 @@ const statusIcons: Record<string, React.ReactNode> = {
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
   scheduled: "bg-blue-500/10 text-blue-500",
+  processing: "bg-primary/10 text-primary",
   published: "bg-green-500/10 text-green-500",
   pending: "bg-yellow-500/10 text-yellow-500",
   failed: "bg-destructive/10 text-destructive",
   cancelled: "bg-muted text-muted-foreground",
+};
+
+const mediaUrlForContent = (content: { image_url?: string | null; video_url?: string | null }) =>
+  content.video_url || content.image_url || null;
+
+const validatePublishReadiness = (
+  content: { image_url?: string | null; video_url?: string | null },
+  platform: string,
+) => {
+  if (platform === "instagram" && !mediaUrlForContent(content)) {
+    return "Instagram necesita una imagen o vídeo antes de publicar.";
+  }
+  if ((platform === "tiktok" || platform === "youtube") && !content.video_url) {
+    return `${platform === "tiktok" ? "TikTok" : "YouTube"} necesita un vídeo antes de publicar.`;
+  }
+  return null;
 };
 
 // ─── Content Calendar ──────────────────────────────
@@ -181,6 +257,15 @@ function ContentCalendar() {
                       {item.status === "draft" ? "Borrador" : item.status === "scheduled" ? "Programado" : "Publicado"}
                     </Badge>
                   </div>
+                  {(item.image_url || item.video_url) && (
+                    <div className="overflow-hidden rounded-md border border-border bg-muted/30">
+                      {item.video_url ? (
+                        <video src={item.video_url} className="h-32 w-full object-cover" muted />
+                      ) : (
+                        <img src={item.image_url || ""} alt={item.title} className="h-32 w-full object-cover" loading="lazy" />
+                      )}
+                    </div>
+                  )}
                   {item.caption && <p className="text-xs text-muted-foreground line-clamp-2">{item.caption}</p>}
                   {item.hashtags?.length > 0 && (
                     <div className="flex flex-wrap gap-1">
@@ -216,13 +301,13 @@ function AIContentGenerator() {
     platform: "instagram", contentType: "post", topic: "", tone: "profesional pero cercano",
     includeHashtags: true, includeEmojis: true, campaignContext: "",
   });
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<GeneratedSocialResult | null>(null);
 
   const handleGenerate = async () => {
     if (!params.topic) return toast.error("Escribe un tema o idea");
     try {
       const data = await generateContent.mutateAsync(params);
-      setResult(data);
+      setResult(data as GeneratedSocialResult);
     } catch { /* handled in hook */ }
   };
 
@@ -235,6 +320,7 @@ function AIContentGenerator() {
       content_type: params.contentType,
       status: "draft",
       hashtags: result.hashtags || [],
+      image_url: result.generatedImageUrl || null,
       ai_generated: true,
     });
     toast.success("Guardado en el calendario");
@@ -244,8 +330,9 @@ function AIContentGenerator() {
     if (!result) return;
     createBankItem.mutate({
       name: result.title || params.topic,
-      type: "text",
+      type: result.generatedImageUrl ? "image" : "text",
       content: JSON.stringify(result),
+      image_url: result.generatedImageUrl || null,
       category: params.platform,
       tags: result.hashtags?.slice(0, 5) || [],
     });
@@ -309,6 +396,12 @@ function AIContentGenerator() {
                 {result.title && <div><Label className="text-xs text-muted-foreground">Título</Label><p className="font-medium">{result.title}</p></div>}
                 {result.hook && <div><Label className="text-xs text-muted-foreground">Hook</Label><p className="text-sm text-primary font-medium">"{result.hook}"</p></div>}
                 {result.caption && <div><Label className="text-xs text-muted-foreground">Caption</Label><p className="text-sm whitespace-pre-wrap">{result.caption}</p></div>}
+                {result.generatedImageUrl && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Imagen generada</Label>
+                    <img src={result.generatedImageUrl} alt={result.title || "Imagen generada"} className="mt-1 rounded-lg border border-border" />
+                  </div>
+                )}
                 {result.hashtags?.length > 0 && (
                   <div>
                     <Label className="text-xs text-muted-foreground">Hashtags</Label>
@@ -347,7 +440,7 @@ function AIContentGenerator() {
 function ContentBank() {
   const { bankItems, isLoading, createBankItem, deleteBankItem } = useSocialContentBank();
   const [showCreate, setShowCreate] = useState(false);
-  const [newItem, setNewItem] = useState({ name: "", type: "text" as const, content: "", category: "", tags: "" });
+  const [newItem, setNewItem] = useState({ name: "", type: "text" as ContentBankItemType, content: "", category: "", tags: "" });
 
   const handleCreate = () => {
     if (!newItem.name) return toast.error("Añade un nombre");
@@ -371,7 +464,7 @@ function ContentBank() {
             <div className="space-y-3">
               <div><Label>Nombre</Label><Input value={newItem.name} onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))} /></div>
               <div><Label>Tipo</Label>
-                <Select value={newItem.type} onValueChange={v => setNewItem(p => ({ ...p, type: v as any }))}>
+                <Select value={newItem.type} onValueChange={v => setNewItem(p => ({ ...p, type: v as ContentBankItemType }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="text">Texto</SelectItem>
@@ -406,6 +499,7 @@ function ContentBank() {
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteBankItem.mutate(item.id)}><Trash2 className="w-3 h-3 text-destructive" /></Button>
                     </div>
                   </div>
+                  {item.image_url && <img src={item.image_url} alt={item.name} className="h-32 w-full rounded-md border border-border object-cover" loading="lazy" />}
                   {parsedContent?.caption && <p className="text-xs text-muted-foreground line-clamp-2">{parsedContent.caption}</p>}
                   {!parsedContent && item.content && <p className="text-xs text-muted-foreground line-clamp-2">{item.content}</p>}
                   {item.tags?.length > 0 && <div className="flex flex-wrap gap-1">{item.tags.map(t => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div>}
@@ -430,7 +524,7 @@ function RepurposingTab() {
   const [targetPlatform, setTargetPlatform] = useState("tiktok");
   const [contentType, setContentType] = useState("post");
   const [customText, setCustomText] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<RepurposeResult | null>(null);
 
   const handleRepurpose = async () => {
     const selectedContent = contents.find(c => c.id === selectedContentId);
@@ -440,7 +534,7 @@ function RepurposingTab() {
     if (!source || (typeof source === "string" && !source.trim())) return toast.error("Selecciona contenido o escribe texto");
     try {
       const data = await repurpose.mutateAsync({ sourceContent: source, sourcePlatform, targetPlatform, contentType });
-      setResult(data);
+      setResult(data as RepurposeResult);
       toast.success("Contenido adaptado");
     } catch { /* handled */ }
   };
@@ -571,6 +665,11 @@ function PublishTab() {
 
   const handleEnqueue = () => {
     if (!selectedContentId) return toast.error("Selecciona un contenido");
+    const selectedContent = contents.find(c => c.id === selectedContentId);
+    if (!selectedContent) return toast.error("Contenido no encontrado");
+    const targetPlatform = publishPlatform || selectedContent.platform;
+    const readinessError = validatePublishReadiness(selectedContent, targetPlatform);
+    if (readinessError) return toast.error(readinessError);
     enqueue.mutate({ contentId: selectedContentId, platform: publishPlatform || undefined }, {
       onSuccess: () => { setShowEnqueue(false); setSelectedContentId(""); },
     });
@@ -764,7 +863,7 @@ function ConnectionsTab() {
 
 // ─── Saved Prospects ───────────────────────────────
 function SavedProspectsTab() {
-  const [prospects, setProspects] = useState<any[]>([]);
+  const [prospects, setProspects] = useState<SavedProspect[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -875,8 +974,8 @@ function VideoTab() {
       setTaskStatus("THROTTLED");
       toast.success("Tarea de vídeo iniciada. Monitorizando...");
       startPolling(data.taskId);
-    } catch (e: any) {
-      toast.error(e.message || "Error generando vídeo");
+    } catch (e: unknown) {
+      toast.error(errorMessage(e, "Error generando vídeo"));
     } finally {
       setIsGenerating(false);
     }
@@ -934,8 +1033,8 @@ function VideoTab() {
       if (data.error) throw new Error(data.error);
       setGeneratedThumbs(prev => [...(data.images || []), ...prev]);
       toast.success("Miniaturas generadas");
-    } catch (e: any) {
-      toast.error(e.message || "Error generando miniatura");
+    } catch (e: unknown) {
+      toast.error(errorMessage(e, "Error generando miniatura"));
     } finally {
       setIsGeneratingThumb(false);
     }
@@ -999,8 +1098,8 @@ function VideoTab() {
                             const { data: urlData } = supabase.storage.from("social-media-assets").getPublicUrl(path);
                             setImageUrl(urlData.publicUrl);
                             toast.success("Imagen subida");
-                          } catch (err: any) {
-                            toast.error(err.message || "Error subiendo imagen");
+                          } catch (err: unknown) {
+                            toast.error(errorMessage(err, "Error subiendo imagen"));
                           } finally {
                             setIsUploadingImage(false);
                           }
@@ -1220,7 +1319,7 @@ function AnalyticsDashboard() {
   const { analytics, isLoading, upsertAnalytics } = useSocialAnalytics();
   const fetchAnalytics = useFetchAnalytics();
   const [showAdd, setShowAdd] = useState(false);
-  const [newEntry, setNewEntry] = useState({
+  const [newEntry, setNewEntry] = useState<AnalyticsEntryForm>({
     platform: "instagram", metric_date: format(new Date(), "yyyy-MM-dd"),
     followers: 0, likes: 0, comments: 0, shares: 0, reach: 0, impressions: 0, engagement_rate: 0, profile_views: 0, website_clicks: 0,
   });
@@ -1230,7 +1329,7 @@ function AnalyticsDashboard() {
   const latestByPlatform = (p: string) => analytics.find(a => a.platform === p);
 
   const handleSave = () => {
-    upsertAnalytics.mutate(newEntry as any, { onSuccess: () => setShowAdd(false) });
+    upsertAnalytics.mutate(newEntry, { onSuccess: () => setShowAdd(false) });
   };
 
   return (
@@ -1322,14 +1421,8 @@ function AnalyticsDashboard() {
                   </div>
                   <div><Label>Fecha</Label><Input type="date" value={newEntry.metric_date} onChange={e => setNewEntry(p => ({ ...p, metric_date: e.target.value }))} /></div>
                 </div>
-                {[
-                  { key: "followers", label: "Seguidores" }, { key: "likes", label: "Likes" },
-                  { key: "comments", label: "Comentarios" }, { key: "shares", label: "Compartidos" },
-                  { key: "reach", label: "Alcance" }, { key: "impressions", label: "Impresiones" },
-                  { key: "engagement_rate", label: "Engagement (%)" }, { key: "profile_views", label: "Visitas perfil" },
-                  { key: "website_clicks", label: "Clicks web" },
-                ].map(({ key, label }) => (
-                  <div key={key}><Label>{label}</Label><Input type="number" value={(newEntry as any)[key]} onChange={e => setNewEntry(p => ({ ...p, [key]: parseFloat(e.target.value) || 0 }))} /></div>
+                {analyticsFields.map(({ key, label }) => (
+                  <div key={key}><Label>{label}</Label><Input type="number" value={newEntry[key]} onChange={e => setNewEntry(p => ({ ...p, [key]: parseFloat(e.target.value) || 0 }))} /></div>
                 ))}
                 <Button onClick={handleSave} disabled={upsertAnalytics.isPending} className="w-full">Guardar</Button>
               </div>

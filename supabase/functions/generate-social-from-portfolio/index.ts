@@ -1,5 +1,5 @@
 // Generates social-ready images from portfolio pieces using Lovable AI (Nano Banana).
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { requireAdmin } from "../_shared/adminAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,15 +18,16 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const adminAuth = await requireAdmin(req, corsHeaders);
+    if ("response" in adminAuth) return adminAuth.response;
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const { image_ids, format = "instagram-square", overlay_text, save_to_bank = true } = await req.json();
     if (!Array.isArray(image_ids) || image_ids.length === 0) throw new Error("image_ids required");
 
-    const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { supabase } = adminAuth;
     const { data: images } = await supabase
       .from("portfolio_images")
       .select("id,image_url,title,description,alt_text,subcategory_id")

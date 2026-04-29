@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface PublishQueueItem {
   id: string;
@@ -17,7 +18,7 @@ export interface PublishQueueItem {
   media_type: string | null;
   platform_post_id: string | null;
   platform_post_url: string | null;
-  platform_response: any;
+  platform_response: Json | null;
   attempt_count: number;
   max_attempts: number;
   last_error: string | null;
@@ -31,14 +32,14 @@ export interface PlatformConnection {
   platform: string;
   account_name: string | null;
   account_id: string | null;
-  access_token: string | null;
-  refresh_token: string | null;
+  access_token?: string | null;
+  refresh_token?: string | null;
   token_expires_at: string | null;
   scopes: string[] | null;
   is_active: boolean;
   connection_status: string;
   last_verified_at: string | null;
-  meta_data: any;
+  meta_data: Json | null;
   created_at: string;
   updated_at: string;
 }
@@ -61,7 +62,10 @@ export function usePlatformConnections() {
   const { data: connections = [], isLoading } = useQuery({
     queryKey: key,
     queryFn: async () => {
-      const { data, error } = await supabase.from("social_platform_connections").select("*").order("platform");
+      const { data, error } = await supabase
+        .from("social_platform_connections")
+        .select("id,platform,account_name,account_id,token_expires_at,scopes,is_active,connection_status,last_verified_at,meta_data,created_at,updated_at")
+        .order("platform");
       if (error) throw error;
       return data as unknown as PlatformConnection[];
     },
@@ -69,11 +73,11 @@ export function usePlatformConnections() {
 
   const upsertConnection = useMutation({
     mutationFn: async (conn: Partial<PlatformConnection> & { platform: string }) => {
-      const { error } = await supabase.from("social_platform_connections").upsert(conn as any, { onConflict: "platform" });
+      const { error } = await supabase.from("social_platform_connections").upsert(conn, { onConflict: "platform" });
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: key }); toast.success("Conexión actualizada"); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Error actualizando conexión"),
   });
 
   const deleteConnection = useMutation({
@@ -82,7 +86,7 @@ export function usePlatformConnections() {
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: key }); toast.success("Conexión eliminada"); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Error eliminando conexión"),
   });
 
   const verifyConnection = useMutation({
@@ -91,8 +95,12 @@ export function usePlatformConnections() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => { qc.invalidateQueries({ queryKey: key }); data.connected ? toast.success("Conexión verificada ✓") : toast.error("Conexión no válida"); },
-    onError: () => toast.error("Error al verificar"),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: key });
+      if (data.connected) toast.success("Conexión verificada ✓");
+      else toast.error("Conexión no válida");
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Error al verificar"),
   });
 
   const getConnection = (platform: string) => connections.find(c => c.platform === platform);
@@ -120,7 +128,7 @@ export function usePublishQueue() {
       return data;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: key }); toast.success("Añadido a la cola"); },
-    onError: () => toast.error("Error al encolar"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Error al encolar"),
   });
 
   const publish = useMutation({
@@ -132,9 +140,10 @@ export function usePublishQueue() {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: key });
       qc.invalidateQueries({ queryKey: ["social_content"] });
-      data.success ? toast.success("¡Publicado!") : toast.error(data.result?.error || "Error al publicar");
+      if (data.success) toast.success("¡Publicado!");
+      else toast.error(data.result?.error || "Error al publicar");
     },
-    onError: () => toast.error("Error al publicar"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Error al publicar"),
   });
 
   const cancel = useMutation({
@@ -144,7 +153,7 @@ export function usePublishQueue() {
       return data;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: key }); toast.success("Cancelado"); },
-    onError: () => toast.error("Error al cancelar"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Error al cancelar"),
   });
 
   return { queue, isLoading, enqueue, publish, cancel };
@@ -172,10 +181,11 @@ export function useFetchAnalytics() {
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["social_analytics"] });
-      const ok = data.results?.filter((r: any) => r.status === "success").length || 0;
-      ok > 0 ? toast.success(`Métricas actualizadas de ${ok} plataforma(s)`) : toast.error("No se pudieron obtener métricas");
+      const ok = data.results?.filter((r: { status: string }) => r.status === "success").length || 0;
+      if (ok > 0) toast.success(`Métricas actualizadas de ${ok} plataforma(s)`);
+      else toast.error("No se pudieron obtener métricas");
     },
-    onError: () => toast.error("Error al obtener métricas"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Error al obtener métricas"),
   });
 }
 
@@ -186,6 +196,6 @@ export function useRepurposeContent() {
       if (error) throw error;
       return data;
     },
-    onError: () => toast.error("Error al adaptar contenido"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Error al adaptar contenido"),
   });
 }

@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdmin } from "../_shared/adminAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -77,22 +77,59 @@ async function publishToYouTube(connection: any, content: any) {
   }
 }
 
+async function publishToFacebook(connection: any, content: any) {
+  const accessToken = connection.access_token;
+  const pageId = connection.account_id;
+  if (!accessToken) return { success: false, error: "No access token configured for Facebook" };
+  if (!pageId) return { success: false, error: "No Facebook Page ID configured" };
+
+  const message = `${content.caption || content.title || ""}\n\n${(content.hashtags || []).map((h: string) => `#${h.replace("#", "")}`).join(" ")}`.trim();
+
+  try {
+    if (content.media_type === "video" || content.media_type === "reel" || content.media_type === "short") {
+      if (!content.media_url) return { success: false, error: "Facebook video publishing requires a video URL" };
+      const res = await fetch(`https://graph.facebook.com/v19.0/${pageId}/videos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: accessToken, file_url: content.media_url, description: message }),
+      });
+      const data = await res.json();
+      if (data.error) return { success: false, error: data.error.message };
+      return { success: true, postId: data.id, postUrl: `https://www.facebook.com/${pageId}/videos/${data.id}` };
+    }
+
+    if (content.media_url) {
+      const res = await fetch(`https://graph.facebook.com/v19.0/${pageId}/photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: accessToken, url: content.media_url, caption: message, published: true }),
+      });
+      const data = await res.json();
+      if (data.error) return { success: false, error: data.error.message };
+      return { success: true, postId: data.post_id || data.id, postUrl: data.post_id ? `https://www.facebook.com/${data.post_id}` : undefined };
+    }
+
+    if (!message) return { success: false, error: "Facebook text publishing requires a caption or title" };
+    const res = await fetch(`https://graph.facebook.com/v19.0/${pageId}/feed`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ access_token: accessToken, message }),
+    });
+    const data = await res.json();
+    if (data.error) return { success: false, error: data.error.message };
+    return { success: true, postId: data.id, postUrl: `https://www.facebook.com/${data.id}` };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const authHeader = req.headers.get("Authorization");
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      const { data: { user } } = await supabase.auth.getUser(token);
-      if (!user) throw new Error("Not authenticated");
-      const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
-      if (!isAdmin) throw new Error("Admin access required");
-    }
+    const adminAuth = await requireAdmin(req, corsHeaders);
+    if ("response" in adminAuth) return adminAuth.response;
+    const { supabase } = adminAuth;
 
     const { action, queueId, contentId, platform, publishMode } = await req.json();
 
@@ -100,9 +137,16 @@ serve(async (req) => {
       const { data: content, error: contentErr } = await supabase.from("social_content").select("*").eq("id", contentId).single();
       if (contentErr) throw new Error("Content not found");
       const targetPlatform = platform || content.platform;
+      const mediaUrl = content.video_url || content.image_url;
+      if (targetPlatform === "instagram" && !mediaUrl) {
+        throw new Error("Instagram requires an image or video before publishing");
+      }
+      if ((targetPlatform === "tiktok" || targetPlatform === "youtube") && !content.video_url) {
+        throw new Error(`${targetPlatform} requires a video before publishing`);
+      }
       const { data: queueItem, error: queueErr } = await supabase.from("social_publish_queue").insert({
         content_id: contentId, platform: targetPlatform, publish_mode: publishMode || "manual", status: "pending",
-        title: content.title, caption: content.caption, hashtags: content.hashtags, media_url: content.image_url || content.video_url, media_type: content.content_type, scheduled_at: content.scheduled_at,
+        title: content.title, caption: content.caption, hashtags: content.hashtags, media_url: mediaUrl, media_type: content.content_type, scheduled_at: content.scheduled_at,
       }).select().single();
       if (queueErr) throw queueErr;
       await supabase.from("social_publish_logs").insert({ queue_id: queueItem.id, platform: targetPlatform, action: "enqueued", status: "success", request_payload: { contentId, publishMode } });
@@ -125,6 +169,7 @@ serve(async (req) => {
         case "instagram": result = await publishToInstagram(connection, queueItem); break;
         case "tiktok": result = await publishToTikTok(connection, queueItem); break;
         case "youtube": result = await publishToYouTube(connection, queueItem); break;
+        case "facebook": result = await publishToFacebook(connection, queueItem); break;
         default: result = { success: false, error: `Unsupported platform: ${queueItem.platform}` };
       }
       const duration = Date.now() - startTime;
