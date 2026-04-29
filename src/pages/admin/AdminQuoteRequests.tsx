@@ -36,6 +36,20 @@ type Status = "new" | "in_progress" | "closed";
 type StatusFilter = "all" | Status;
 type ReadFilter = "all" | "unread" | "read";
 
+type PricingReference = {
+  name: string;
+  category?: string | null;
+  price?: number;
+  priceSuffix?: string | null;
+  source?: string;
+};
+
+type QuoteResponsePayload = {
+  pricingSource?: string;
+  pricingReferences?: PricingReference[];
+  source?: string;
+};
+
 type QuoteRequest = {
   id: string;
   name: string | null;
@@ -53,6 +67,7 @@ type QuoteRequest = {
   includes: string[];
   notes: string | null;
   whatsapp_message: string | null;
+  response_payload: QuoteResponsePayload | null;
   source: string;
   ai_provider: string | null;
   ai_model: string | null;
@@ -85,6 +100,11 @@ const money = (min: number | null, max: number | null, currency = "EUR") => {
   if (min !== null && max !== null) return `${fmt.format(min)} - ${fmt.format(max)}`;
   return fmt.format(min ?? max ?? 0);
 };
+
+const getPricingReferences = (payload: QuoteResponsePayload | null) =>
+  Array.isArray(payload?.pricingReferences)
+    ? payload.pricingReferences.filter((item) => item.name && typeof item.price === "number")
+    : [];
 
 const csvEscape = (v: unknown) => {
   const s = v === null || v === undefined ? "" : String(v);
@@ -147,6 +167,10 @@ const AdminQuoteRequests = () => {
   const selected = useMemo(
     () => requests.find((item) => item.id === selectedId) ?? null,
     [requests, selectedId],
+  );
+  const selectedPricingReferences = useMemo(
+    () => getPricingReferences(selected?.response_payload ?? null),
+    [selected],
   );
 
   const counts = useMemo(() => {
@@ -479,6 +503,33 @@ const AdminQuoteRequests = () => {
                     <p className="text-[11px] text-muted-foreground">
                       Motor: {selected.ai_provider || "sin dato"} · {selected.ai_model || "sin modelo"}
                     </p>
+                    {selectedPricingReferences.length > 0 && (
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                          Referencias de precio usadas
+                        </p>
+                        <div className="grid gap-2">
+                          {selectedPricingReferences.slice(0, 5).map((item, idx) => (
+                            <div key={`${item.name}-${idx}`} className="rounded-md border border-border bg-background/50 px-3 py-2 text-xs">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="font-medium text-foreground">{item.name}</p>
+                                  {item.category && <p className="text-muted-foreground">{item.category}</p>}
+                                </div>
+                                <p className="shrink-0 font-semibold text-primary">
+                                  desde {item.price}€{item.priceSuffix ? ` ${item.priceSuffix}` : ""}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {selected.response_payload?.pricingSource && (
+                          <p className="mt-2 text-[11px] text-muted-foreground">
+                            Fuente de precios: {selected.response_payload.pricingSource === "admin-pricing" ? "panel de precios" : "reglas internas"}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </section>
 

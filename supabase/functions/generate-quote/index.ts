@@ -1,5 +1,7 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+declare const EdgeRuntime: { waitUntil?: (promise: Promise<unknown>) => void } | undefined;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -26,27 +28,75 @@ interface QuoteResult {
   whatsappMessage: string;
   requestId?: string | null;
   source?: "ai" | "fallback";
+  pricingSource?: "admin-pricing" | "default-rules";
+  pricingReferences?: PricingReference[];
+}
+
+interface PricingReference {
+  name: string;
+  category: string | null;
+  description: string | null;
+  price: number;
+  priceSuffix: string | null;
+  source: "plan" | "service" | "default";
+}
+
+interface PricingPlanRow {
+  name: string;
+  description: string | null;
+  price: number | string | null;
+  price_suffix: string | null;
+  features: string[] | null;
+}
+
+interface PricingServiceRow {
+  name: string;
+  description: string | null;
+  price: number | string | null;
+  price_suffix: string | null;
+  category: string | null;
 }
 
 const MODEL = "google/gemini-2.5-flash";
 
-const SYSTEM_PROMPT = `Eres el asistente de presupuestos de Silvio Costa Photography (silviocosta.net), estudio profesional de fotografía, vídeo, dron, tours virtuales Matterport, eventos y renders 3D con base en Portugal/España.
+const DEFAULT_PRICING_REFERENCES: PricingReference[] = [
+  { name: "Fotografía inmobiliaria estándar", category: "Fotografía", description: "Sesión para vivienda estándar.", price: 180, priceSuffix: "/inmueble", source: "default" },
+  { name: "Fotografía inmobiliaria premium", category: "Fotografía", description: "Cobertura ampliada para inmuebles de alto valor.", price: 280, priceSuffix: "/inmueble", source: "default" },
+  { name: "Fotografía de arquitectura e interiorismo", category: "Fotografía", description: "Reportaje para arquitectura, interiorismo y espacios comerciales.", price: 350, priceSuffix: "/sesión", source: "default" },
+  { name: "Vídeo inmobiliario", category: "Vídeo y dron", description: "Pieza audiovisual para venta o alquiler.", price: 450, priceSuffix: "/inmueble", source: "default" },
+  { name: "Vídeo corporativo", category: "Vídeo y dron", description: "Vídeo para presentar empresa, equipo, instalaciones o servicio.", price: 800, priceSuffix: "/proyecto", source: "default" },
+  { name: "Grabación aérea con dron", category: "Vídeo y dron", description: "Tomas aéreas profesionales en 4K.", price: 350, priceSuffix: "/sesión", source: "default" },
+  { name: "Tour virtual Matterport hasta 200 m²", category: "Tours virtuales y 360", description: "Escaneo Matterport para espacio pequeño.", price: 250, priceSuffix: "/espacio", source: "default" },
+  { name: "Tour virtual Matterport 200-500 m²", category: "Tours virtuales y 360", description: "Recorrido virtual para espacios medianos.", price: 450, priceSuffix: "/espacio", source: "default" },
+  { name: "Render 3D fotorrealista", category: "Renders y 3D", description: "Imagen 3D para arquitectura, interiorismo o producto.", price: 180, priceSuffix: "/imagen", source: "default" },
+  { name: "Streaming profesional básico", category: "Streaming y eventos", description: "Retransmisión sencilla para eventos.", price: 600, priceSuffix: "/evento", source: "default" },
+  { name: "Fotografía de eventos 4 horas", category: "Fotografía", description: "Cobertura fotográfica de evento corto.", price: 400, priceSuffix: "/evento", source: "default" },
+  { name: "Fotografía de eventos día completo", category: "Fotografía", description: "Cobertura fotográfica extendida.", price: 800, priceSuffix: "/evento", source: "default" },
+];
+
+const buildSystemPrompt = (pricingReferences: PricingReference[]) => {
+  const pricingContext = pricingReferences.length > 0
+    ? pricingReferences
+        .slice(0, 12)
+        .map((item) => {
+          const suffix = item.priceSuffix ? ` ${item.priceSuffix}` : "";
+          const category = item.category ? ` (${item.category})` : "";
+          return `- ${item.name}${category}: desde ${item.price} €${suffix}${item.description ? ` — ${item.description}` : ""}`;
+        })
+        .join("\n")
+    : DEFAULT_PRICING_REFERENCES.slice(0, 10)
+        .map((item) => `- ${item.name}: desde ${item.price} €${item.priceSuffix ? ` ${item.priceSuffix}` : ""}`)
+        .join("\n");
+
+  return `Eres el asistente de presupuestos de Silvio Costa Photography (silviocosta.net), estudio profesional de fotografía, vídeo, dron, tours virtuales Matterport, eventos y renders 3D con base en Portugal/España.
 
 Tu tarea: dada la información del cliente, generar un presupuesto orientativo en EUR con un rango (mínimo-máximo), explicar qué incluye y qué factores hacen variar el precio. Usa tono profesional, cercano y conciso.
 
-Tarifas de referencia (EUR, sin IVA):
-- Fotografía corporativa/producto: 250-600 €/sesión (4h)
-- Fotografía inmobiliaria estándar (hasta 150m2): 180-280 €
-- Fotografía inmobiliaria premium + dron: 350-550 €
-- Vídeo corporativo (1 día rodaje + edición): 800-2.500 €
-- Vídeo dron: 350-800 €/sesión
-- Tour Virtual Matterport (hasta 200m2): 250-450 €
-- Tour Matterport grandes espacios (>500m2): 600-1.500 €
-- Eventos (cobertura 4h): 400-800 €; día completo: 800-1.800 €
-- Renders 3D: 150-400 € por render fotorrealista
-- Streaming profesional: 600-1.800 €/evento
+Tarifas de referencia visibles en el panel de administración (EUR, sin IVA):
+${pricingContext}
 
 Factores de incremento: urgencia (<48h: +20-30%), desplazamiento >50km, post-producción avanzada, exclusividad de derechos, fines de semana.
+Usa las tarifas visibles del panel como base principal cuando encajen con el servicio solicitado. Ajusta por alcance, superficie, número de piezas, duración, ubicación y urgencia. No presentes el importe como cerrado: siempre es orientativo hasta revisar briefing.
 
 Devuelve SIEMPRE JSON válido con esta estructura exacta:
 {
@@ -57,6 +107,7 @@ Devuelve SIEMPRE JSON válido con esta estructura exacta:
   "notes": "string (1 frase con factores que pueden hacer variar)",
   "whatsappMessage": "string (mensaje listo para enviar por WhatsApp solicitando confirmación de presupuesto, en primera persona)"
 }`;
+};
 
 const jsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -72,7 +123,148 @@ const isValidEmail = (email: string) =>
 
 const roundAmount = (value: number) => Math.max(90, Math.round(value / 10) * 10);
 
-const getBaseRange = (service: string): [number, number] => {
+const normalize = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const serviceSignals = (body: QuoteRequest) => {
+  const text = normalize(`${body.service} ${body.scope} ${body.details || ""}`);
+  if (text.includes("matterport") || text.includes("tour") || text.includes("360")) {
+    return ["matterport", "tour", "360", "plano", "street view", "espacio"];
+  }
+  if (text.includes("stream") || text.includes("directo")) {
+    return ["streaming", "multicamara", "evento", "conferencia"];
+  }
+  if (text.includes("render") || text.includes("3d")) {
+    return ["render", "3d", "visualizacion", "modelo"];
+  }
+  if (text.includes("dron") || text.includes("aereo") || text.includes("aerea")) {
+    return ["dron", "aereo", "fotogrametria", "video"];
+  }
+  if (text.includes("video") || text.includes("reel") || text.includes("spot")) {
+    return ["video", "reel", "spot", "corporativo", "inmobiliario"];
+  }
+  if (text.includes("evento") || text.includes("boda") || text.includes("congreso") || text.includes("feria")) {
+    return ["evento", "boda", "congreso", "feria", "streaming"];
+  }
+  return ["fotografia", "producto", "gastronomia", "arquitectura", "inmobiliaria", "retrato"];
+};
+
+const scorePricingReference = (body: QuoteRequest, item: PricingReference) => {
+  const text = normalize(`${item.name} ${item.category || ""} ${item.description || ""}`);
+  const input = normalize(`${body.service} ${body.scope} ${body.details || ""}`);
+  const signals = serviceSignals(body);
+  let score = 0;
+
+  signals.forEach((signal) => {
+    if (text.includes(signal)) score += 4;
+    if (input.includes(signal) && text.includes(signal)) score += 2;
+  });
+
+  normalize(body.service)
+    .split(" ")
+    .filter((word) => word.length > 3)
+    .forEach((word) => {
+      if (text.includes(word)) score += 1;
+    });
+
+  if (item.source === "plan") score += 0.5;
+  return score;
+};
+
+const matchPricingReferences = (body: QuoteRequest, catalog: PricingReference[]) => {
+  const scored = catalog
+    .map((item) => ({ item, score: scorePricingReference(body, item) }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score || a.item.price - b.item.price)
+    .map(({ item }) => item);
+
+  const unique = new Map<string, PricingReference>();
+  scored.forEach((item) => {
+    const key = normalize(item.name);
+    if (!unique.has(key)) unique.set(key, item);
+  });
+
+  return [...unique.values()].slice(0, 8);
+};
+
+const loadPricingCatalog = async (): Promise<PricingReference[]> => {
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const key = serviceRoleKey || Deno.env.get("SUPABASE_ANON_KEY");
+  if (!url || !key) return [];
+
+  try {
+    const supabase = createClient(url, key);
+    const [plansRes, servicesRes] = await Promise.all([
+      supabase
+        .from("pricing_plans")
+        .select("name,description,price,price_suffix,features,is_highlighted,show_from,order")
+        .eq("is_visible", true)
+        .order("order"),
+      supabase
+        .from("pricing_services")
+        .select("name,description,price,price_suffix,category,show_from,order")
+        .eq("is_visible", true)
+        .order("order"),
+    ]);
+
+    if (plansRes.error) console.error("[generate-quote] pricing_plans read error:", plansRes.error);
+    if (servicesRes.error) console.error("[generate-quote] pricing_services read error:", servicesRes.error);
+
+    const planReferences = ((plansRes.data || []) as PricingPlanRow[])
+      .map((plan) => {
+        const price = Number(plan.price);
+        if (!Number.isFinite(price)) return null;
+        return {
+          name: plan.name,
+          category: "Plan",
+          description: plan.description || plan.features?.slice(0, 2).join(". ") || null,
+          price,
+          priceSuffix: plan.price_suffix,
+          source: "plan" as const,
+        };
+      })
+      .filter(Boolean) as PricingReference[];
+
+    const serviceReferences = ((servicesRes.data || []) as PricingServiceRow[])
+      .map((service) => {
+        const price = Number(service.price);
+        if (!Number.isFinite(price)) return null;
+        return {
+          name: service.name,
+          category: service.category,
+          description: service.description,
+          price,
+          priceSuffix: service.price_suffix,
+          source: "service" as const,
+        };
+      })
+      .filter(Boolean) as PricingReference[];
+
+    return [...planReferences, ...serviceReferences];
+  } catch (error) {
+    console.error("[generate-quote] pricing catalog unavailable:", error);
+    return [];
+  }
+};
+
+const getBaseRange = (service: string, pricingReferences: PricingReference[] = []): [number, number] => {
+  if (pricingReferences.length > 0) {
+    const prices = pricingReferences.map((item) => item.price).filter((price) => Number.isFinite(price));
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    return [
+      min,
+      Math.max(min + 90, max * 1.35, min * 1.6),
+    ];
+  }
+
   const s = service.toLowerCase();
   if (s.includes("matterport") || s.includes("tour")) return [250, 450];
   if (s.includes("dron")) return [350, 800];
@@ -105,11 +297,15 @@ const urgencyMultiplier = (urgency: string) => {
   return 1;
 };
 
-const buildFallbackQuote = (body: QuoteRequest): QuoteResult => {
-  const [baseMin, baseMax] = getBaseRange(body.service);
+const buildFallbackQuote = (body: QuoteRequest, pricingReferences: PricingReference[] = []): QuoteResult => {
+  const [baseMin, baseMax] = getBaseRange(body.service, pricingReferences);
   const multiplier = scopeMultiplier(body.scope, body.service) * urgencyMultiplier(body.urgency);
   const min = roundAmount(baseMin * multiplier);
   const max = Math.max(min + 80, roundAmount(baseMax * multiplier));
+  const referenceNames = pricingReferences.slice(0, 3).map((item) => item.name).join(", ");
+  const pricingSource = pricingReferences.some((item) => item.source !== "default")
+    ? "admin-pricing"
+    : "default-rules";
 
   const includes = [
     "Preparación del proyecto y revisión de necesidades",
@@ -123,9 +319,13 @@ const buildFallbackQuote = (body: QuoteRequest): QuoteResult => {
     max,
     summary: `Para ${body.service.toLowerCase()} en ${body.location}, el alcance indicado encaja en una producción personalizada con entrega profesional.`,
     includes,
-    notes: "El precio final puede variar por desplazamiento, urgencia, derechos de uso, número de piezas finales o necesidades de postproducción.",
+    notes: referenceNames
+      ? `Referencia usada del panel: ${referenceNames}. El precio final puede variar por desplazamiento, urgencia, derechos de uso, número de piezas finales o postproducción.`
+      : "El precio final puede variar por desplazamiento, urgencia, derechos de uso, número de piezas finales o necesidades de postproducción.",
     whatsappMessage: `Hola Silvio, acabo de usar el cotizador IA para ${body.service} en ${body.location}. Me gustaría confirmar disponibilidad y presupuesto para: ${body.scope}.`,
     source: "fallback",
+    pricingSource,
+    pricingReferences,
   };
 };
 
@@ -158,6 +358,8 @@ const normalizeQuote = (value: unknown, fallback: QuoteResult): QuoteResult => {
     notes: cleanText(data.notes, 500) || fallback.notes,
     whatsappMessage: cleanText(data.whatsappMessage, 900) || fallback.whatsappMessage,
     source: "ai",
+    pricingSource: fallback.pricingSource,
+    pricingReferences: fallback.pricingReferences,
   };
 };
 
@@ -183,7 +385,7 @@ Genera el presupuesto orientativo en JSON.`;
     body: JSON.stringify({
       model: MODEL,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: buildSystemPrompt(fallback.pricingReferences || []) },
         { role: "user", content: userPrompt },
       ],
       response_format: { type: "json_object" },
@@ -228,7 +430,11 @@ const saveQuoteRequest = async (body: QuoteRequest, quote: QuoteResult) => {
     response_payload: quote,
     source: "smart_quoter",
     ai_provider: quote.source === "ai" ? "lovable-ai-gateway" : "internal-estimator",
-    ai_model: quote.source === "ai" ? MODEL : "pricing-rules-v1",
+    ai_model: quote.source === "ai"
+      ? `${MODEL}${quote.pricingSource === "admin-pricing" ? " + admin-pricing" : ""}`
+      : quote.pricingSource === "admin-pricing"
+        ? "pricing-table-v2"
+        : "pricing-rules-v1",
   };
 
   const query = supabase.from("quote_requests").insert(payload);
@@ -355,7 +561,12 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Introduce un email válido para recibir el presupuesto" }, 400);
     }
 
-    const fallback = buildFallbackQuote(body);
+    const pricingCatalog = await loadPricingCatalog();
+    const adminPricingReferences = matchPricingReferences(body, pricingCatalog);
+    const pricingReferences = adminPricingReferences.length > 0
+      ? adminPricingReferences
+      : matchPricingReferences(body, DEFAULT_PRICING_REFERENCES);
+    const fallback = buildFallbackQuote(body, pricingReferences);
     let quote = fallback;
     try {
       quote = await generateWithAI(body, fallback);
@@ -370,9 +581,7 @@ Deno.serve(async (req) => {
       console.error("[generate-quote] Notification error:", err),
     );
 
-    // @ts-ignore — EdgeRuntime es global en Supabase Edge Functions
-    if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
-      // @ts-ignore
+    if (typeof EdgeRuntime !== "undefined" && typeof EdgeRuntime.waitUntil === "function") {
       EdgeRuntime.waitUntil(emailPromise);
     }
 
