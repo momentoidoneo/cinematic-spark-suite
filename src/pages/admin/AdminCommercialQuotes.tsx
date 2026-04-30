@@ -5,8 +5,10 @@ import { es } from "date-fns/locale";
 import {
   Building2,
   CheckCircle2,
+  Clipboard,
   Download,
   Euro,
+  FileDown,
   FileText,
   Landmark,
   Loader2,
@@ -15,6 +17,8 @@ import {
   RefreshCw,
   Search,
   Trash2,
+  Upload,
+  Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -44,6 +48,8 @@ import { cn } from "@/lib/utils";
 
 type ERPSettings = Database["public"]["Tables"]["erp_settings"]["Row"];
 type ERPSettingsUpdate = Database["public"]["Tables"]["erp_settings"]["Update"];
+type CommercialClient = Database["public"]["Tables"]["commercial_clients"]["Row"];
+type CommercialClientInsert = Database["public"]["Tables"]["commercial_clients"]["Insert"];
 type CommercialQuote = Database["public"]["Tables"]["commercial_quotes"]["Row"];
 type CommercialQuoteInsert = Database["public"]["Tables"]["commercial_quotes"]["Insert"];
 type QuoteRequest = Database["public"]["Tables"]["quote_requests"]["Row"];
@@ -71,6 +77,7 @@ type ViesResult = {
 };
 
 type QuoteForm = {
+  client_id: string;
   source_quote_request_id: string;
   client_name: string;
   client_company: string;
@@ -91,6 +98,21 @@ type QuoteForm = {
   vies_name: string;
   vies_address: string;
   vies_checked_at: string | null;
+};
+
+type ClientDraft = {
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  vat_number: string;
+  country_code: string;
+  country: string;
+  address: string;
+  postal_code: string;
+  city: string;
+  notes?: string;
+  source?: string;
 };
 
 const EU_COUNTRIES = [
@@ -173,6 +195,7 @@ const plusDays = (days: number) => {
 };
 
 const emptyQuoteForm = (): QuoteForm => ({
+  client_id: "",
   source_quote_request_id: "",
   client_name: "",
   client_company: "",
@@ -220,8 +243,22 @@ const parseLineItems = (value: unknown): QuoteLineItem[] => {
 const subtotalFor = (items: QuoteLineItem[]) =>
   items.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.unitPrice || 0), 0);
 
+const normalizeKey = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+
 const countryName = (code: string) =>
   EU_COUNTRIES.find(([countryCode]) => countryCode === code)?.[1] || code;
+
+const countryCodeFromValue = (value: string) => {
+  const normalized = normalizeKey(value);
+  const match = EU_COUNTRIES.find(([code, name]) => code.toLowerCase() === value.toLowerCase() || normalizeKey(name) === normalized);
+  return match?.[0] || "PT";
+};
 
 const isEuCountry = (code: string) => EU_COUNTRIES.some(([countryCode]) => countryCode === code);
 
@@ -231,6 +268,98 @@ const quoteRequestPayload = (request: QuoteRequest): QuoteRequestPayload => {
     ? payload as QuoteRequestPayload
     : {};
 };
+
+const cleanVat = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+const splitCsvLine = (line: string, delimiter: string) => {
+  const cells: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    const next = line[i + 1];
+    if (char === "\"" && next === "\"") {
+      current += "\"";
+      i += 1;
+    } else if (char === "\"") {
+      inQuotes = !inQuotes;
+    } else if (char === delimiter && !inQuotes) {
+      cells.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  cells.push(current.trim());
+  return cells.map((cell) => cell.replace(/^"|"$/g, ""));
+};
+
+const parseClientCsv = (text: string): CommercialClientInsert[] => {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length < 2) return [];
+
+  const delimiter = (lines[0].match(/;/g) || []).length > (lines[0].match(/,/g) || []).length ? ";" : ",";
+  const headers = splitCsvLine(lines[0], delimiter).map(normalizeKey);
+  const rows = lines.slice(1).map((line) => {
+    const cells = splitCsvLine(line, delimiter);
+    return headers.reduce<Record<string, string>>((row, key, index) => {
+      row[key] = cells[index] || "";
+      return row;
+    }, {});
+  });
+
+  const pick = (row: Record<string, string>, aliases: string[]) => {
+    for (const alias of aliases.map(normalizeKey)) {
+      if (row[alias]) return row[alias].trim();
+    }
+    return "";
+  };
+
+  return rows
+    .map((row) => {
+      const rawCountry = pick(row, ["country_code", "pais_codigo", "codigo_pais", "country", "pais"]);
+      const countryCode = countryCodeFromValue(rawCountry);
+      const company = pick(row, ["company", "empresa", "entidade", "entity", "cliente", "nome_cliente"]);
+      const name = pick(row, ["name", "nome", "contacto", "contact", "client_name", "nome_cliente"]) || company;
+      return {
+        name,
+        company: company || null,
+        email: pick(row, ["email", "e_mail", "mail"]) || null,
+        phone: pick(row, ["phone", "telefone", "telemovel", "mobile", "tlm"]) || null,
+        vat_number: cleanVat(pick(row, ["vat", "nif", "nipc", "cif", "nif_cif", "vat_number", "contribuinte"])) || null,
+        country_code: countryCode,
+        country: pick(row, ["country_name", "pais_nome", "pais"]) || countryName(countryCode),
+        address: pick(row, ["address", "morada", "rua", "direccion", "direccao"]) || null,
+        postal_code: pick(row, ["postal_code", "codigo_postal", "cp", "postcode"]) || null,
+        city: pick(row, ["city", "cidade", "localidade", "poblacion"]) || null,
+        notes: pick(row, ["notes", "notas", "observacoes"]) || null,
+        source: "weoinvoice_import",
+        external_source: pick(row, ["external_source", "origem"]) || "weoinvoice",
+        external_id: pick(row, ["id", "client_id", "cliente_id", "numero"]) || null,
+        last_synced_at: new Date().toISOString(),
+      } satisfies CommercialClientInsert;
+    })
+    .filter((client) => client.name);
+};
+
+const clientDraftFromQuoteForm = (form: QuoteForm): ClientDraft => ({
+  name: form.client_name.trim(),
+  company: form.client_company.trim(),
+  email: form.client_email.trim(),
+  phone: form.client_phone.trim(),
+  vat_number: cleanVat(form.client_vat_number),
+  country_code: form.client_country_code || "PT",
+  country: form.client_country || countryName(form.client_country_code || "PT"),
+  address: form.client_address.trim(),
+  postal_code: form.client_postal_code.trim(),
+  city: form.client_city.trim(),
+  notes: "",
+  source: "quote",
+});
 
 const vatDecision = (settings: ERPSettings, form: QuoteForm) => {
   const supplierCountry = settings.country_code || "PT";
@@ -281,11 +410,63 @@ const quoteTotals = (settings: ERPSettings, form: QuoteForm) => {
 const quoteNumber = (settings: ERPSettings) =>
   `${settings.quote_prefix || "SC"}-${new Date().getFullYear()}-${String(settings.next_quote_number || 1).padStart(4, "0")}`;
 
+const buildWeoInvoiceDraftPayload = (quote: CommercialQuote, items: QuoteLineItem[]) => ({
+  mode: "draft_only",
+  source: "silviocosta-admin-quotes",
+  document_type: "Orçamento",
+  quote_number: quote.quote_number,
+  issue_date: quote.issue_date,
+  valid_until: quote.valid_until,
+  client: {
+    name: quote.client_name || quote.client_company || "Consumidor Final",
+    entity: quote.client_company || "",
+    email: quote.client_email || "",
+    nif: quote.client_vat_number || "",
+    address: quote.client_address || "",
+    postcode: quote.client_postal_code || "",
+    city: quote.client_city || "",
+    country: quote.client_country_code || "PT",
+  },
+  ordercart: items.map((item, index) => ({
+    pid: `${quote.quote_number}-${index + 1}`,
+    quantity: item.quantity,
+    item: item.description,
+    provider_name: "",
+    price: Number(item.unitPrice || 0).toFixed(5),
+    discount: "0.00000",
+    type: "S",
+    tax: Number(quote.vat_rate || 0),
+    taxreason: Number(quote.vat_rate || 0) > 0 ? "" : quote.vat_rule,
+  })),
+  totals: {
+    subtotal: Number(quote.subtotal),
+    vat_rate: Number(quote.vat_rate),
+    vat_amount: Number(quote.vat_amount),
+    total: Number(quote.total),
+    currency: quote.currency,
+  },
+  footer: [quote.reverse_charge_note, quote.notes, quote.payment_terms].filter(Boolean).join("\n\n"),
+  payment_method: "TB",
+  fiscal_review_required: quote.status !== "accepted",
+});
+
+const downloadJson = (filename: string, payload: unknown) => {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
 const AdminCommercialQuotes = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientImportText, setClientImportText] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsForm, setSettingsForm] = useState<ERPSettings>(emptySettings);
   const [quoteForm, setQuoteForm] = useState<QuoteForm>(emptyQuoteForm());
@@ -329,6 +510,19 @@ const AdminCommercialQuotes = () => {
     },
   });
 
+  const { data: clients = [], isFetching: clientsFetching, refetch: refetchClients, error: clientsError } = useQuery({
+    queryKey: ["commercial_clients"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("commercial_clients")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      return data as CommercialClient[];
+    },
+  });
+
   useEffect(() => {
     setSettingsForm(settings);
   }, [settings]);
@@ -348,9 +542,47 @@ const AdminCommercialQuotes = () => {
     onError: () => toast({ title: "No se pudo guardar la configuración", variant: "destructive" }),
   });
 
+  const saveClientDraft = async (draft: ClientDraft, existingId?: string) => {
+    if (!draft.name) return existingId || null;
+    const normalizedVat = cleanVat(draft.vat_number);
+    const normalizedEmail = draft.email.toLowerCase();
+    const existing = existingId
+      ? clients.find((client) => client.id === existingId)
+      : clients.find((client) =>
+          (normalizedVat && cleanVat(client.vat_number || "") === normalizedVat) ||
+          (normalizedEmail && (client.email || "").toLowerCase() === normalizedEmail),
+        );
+
+    const payload: CommercialClientInsert = {
+      name: draft.name,
+      company: draft.company || null,
+      email: draft.email || null,
+      phone: draft.phone || null,
+      vat_number: normalizedVat || null,
+      country_code: draft.country_code || "PT",
+      country: draft.country || countryName(draft.country_code || "PT"),
+      address: draft.address || null,
+      postal_code: draft.postal_code || null,
+      city: draft.city || null,
+      notes: draft.notes || null,
+      source: draft.source || "manual",
+    };
+
+    if (existing) {
+      const { error } = await supabase.from("commercial_clients").update(payload).eq("id", existing.id);
+      if (error) throw error;
+      return existing.id;
+    }
+
+    const { data, error } = await supabase.from("commercial_clients").insert(payload).select("id").single();
+    if (error) throw error;
+    return data.id;
+  };
+
   const createQuote = useMutation({
-    mutationFn: async (payload: CommercialQuoteInsert) => {
-      const { error } = await supabase.from("commercial_quotes").insert(payload);
+    mutationFn: async ({ payload, clientDraft }: { payload: CommercialQuoteInsert; clientDraft: ClientDraft }) => {
+      const clientId = payload.client_id || await saveClientDraft(clientDraft, payload.client_id || undefined);
+      const { error } = await supabase.from("commercial_quotes").insert({ ...payload, client_id: clientId });
       if (error) throw error;
       await supabase
         .from("erp_settings")
@@ -361,6 +593,7 @@ const AdminCommercialQuotes = () => {
       setDialogOpen(false);
       setQuoteForm(emptyQuoteForm());
       queryClient.invalidateQueries({ queryKey: ["commercial_quotes"] });
+      queryClient.invalidateQueries({ queryKey: ["commercial_clients"] });
       queryClient.invalidateQueries({ queryKey: ["erp_settings"] });
       toast({ title: "Presupuesto creado" });
     },
@@ -375,6 +608,46 @@ const AdminCommercialQuotes = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["commercial_quotes"] }),
   });
 
+  const importClients = useMutation({
+    mutationFn: async (text: string) => {
+      const parsed = parseClientCsv(text);
+      if (parsed.length === 0) throw new Error("No se encontraron clientes válidos en el CSV");
+
+      let created = 0;
+      let updated = 0;
+      for (const client of parsed) {
+        const normalizedVat = cleanVat(client.vat_number || "");
+        const normalizedEmail = (client.email || "").toLowerCase();
+        const existing = clients.find((item) =>
+          (normalizedVat && cleanVat(item.vat_number || "") === normalizedVat) ||
+          (normalizedEmail && (item.email || "").toLowerCase() === normalizedEmail) ||
+          (client.external_id && item.external_source === client.external_source && item.external_id === client.external_id),
+        );
+
+        if (existing) {
+          const { error } = await supabase.from("commercial_clients").update(client).eq("id", existing.id);
+          if (error) throw error;
+          updated += 1;
+        } else {
+          const { error } = await supabase.from("commercial_clients").insert(client);
+          if (error) throw error;
+          created += 1;
+        }
+      }
+      return { created, updated };
+    },
+    onSuccess: ({ created, updated }) => {
+      setClientImportText("");
+      queryClient.invalidateQueries({ queryKey: ["commercial_clients"] });
+      toast({ title: "Clientes importados", description: `${created} nuevos · ${updated} actualizados` });
+    },
+    onError: (error) => toast({
+      title: "No se pudo importar clientes",
+      description: error instanceof Error ? error.message : undefined,
+      variant: "destructive",
+    }),
+  });
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return quotes.filter((quote) =>
@@ -387,6 +660,17 @@ const AdminCommercialQuotes = () => {
     );
   }, [quotes, search]);
 
+  const filteredClients = useMemo(() => {
+    const q = clientSearch.trim().toLowerCase();
+    return clients.filter((client) =>
+      !q ||
+      client.name.toLowerCase().includes(q) ||
+      (client.company || "").toLowerCase().includes(q) ||
+      (client.email || "").toLowerCase().includes(q) ||
+      (client.vat_number || "").toLowerCase().includes(q),
+    );
+  }, [clients, clientSearch]);
+
   const selected = useMemo(
     () => quotes.find((quote) => quote.id === selectedId) ?? filtered[0] ?? null,
     [quotes, selectedId, filtered],
@@ -395,6 +679,7 @@ const AdminCommercialQuotes = () => {
   const totals = quoteTotals(settings, quoteForm);
   const quotesErrorMessage = quotesError instanceof Error ? quotesError.message : "";
   const settingsErrorMessage = settingsError instanceof Error ? settingsError.message : "";
+  const clientsErrorMessage = clientsError instanceof Error ? clientsError.message : "";
 
   const applyQuoteRequest = (id: string) => {
     const request = quoteRequests.find((item) => item.id === id);
@@ -404,6 +689,7 @@ const AdminCommercialQuotes = () => {
       const clientCountryCode = (payload.countryCode || form.client_country_code || "PT").toUpperCase();
       return {
         ...form,
+        client_id: "",
         source_quote_request_id: request.id,
         client_name: request.name || request.email,
         client_email: request.email,
@@ -420,6 +706,33 @@ const AdminCommercialQuotes = () => {
         notes: request.summary || request.details || "",
       };
     });
+  };
+
+  const applyClient = (client: CommercialClient) => {
+    setQuoteForm((form) => ({
+      ...form,
+      client_id: client.id,
+      client_name: client.name,
+      client_company: client.company || "",
+      client_email: client.email || "",
+      client_phone: client.phone || "",
+      client_vat_number: client.vat_number || "",
+      client_country_code: client.country_code,
+      client_country: client.country,
+      client_address: client.address || "",
+      client_postal_code: client.postal_code || "",
+      client_city: client.city || "",
+      vies_valid: null,
+      vies_name: "",
+      vies_address: "",
+      vies_checked_at: null,
+    }));
+  };
+
+  const openQuoteForClient = (client: CommercialClient) => {
+    setDialogOpen(true);
+    setQuoteForm(emptyQuoteForm());
+    setTimeout(() => applyClient(client), 0);
   };
 
   const validateVies = async () => {
@@ -470,6 +783,7 @@ const AdminCommercialQuotes = () => {
     const payload: CommercialQuoteInsert = {
       quote_number: quoteNumber(settings),
       status: "draft",
+      client_id: cleanForm.client_id || null,
       source_quote_request_id: cleanForm.source_quote_request_id || null,
       client_name: cleanForm.client_name.trim(),
       client_company: cleanForm.client_company || null,
@@ -499,7 +813,7 @@ const AdminCommercialQuotes = () => {
       notes: cleanForm.notes || null,
       payment_terms: settings.payment_terms,
     };
-    createQuote.mutate(payload);
+    createQuote.mutate({ payload, clientDraft: clientDraftFromQuoteForm(cleanForm) });
   };
 
   const printQuote = (quote: CommercialQuote) => {
@@ -511,6 +825,23 @@ const AdminCommercialQuotes = () => {
     win.document.close();
     win.focus();
     win.print();
+  };
+
+  const exportWeoInvoiceDraft = (quote: CommercialQuote) => {
+    const items = parseLineItems(quote.line_items);
+    downloadJson(`${quote.quote_number}-weoinvoice-draft.json`, buildWeoInvoiceDraftPayload(quote, items));
+    toast({ title: "Borrador WeoInvoice descargado" });
+  };
+
+  const copyWeoInvoiceDraft = async (quote: CommercialQuote) => {
+    const items = parseLineItems(quote.line_items);
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(buildWeoInvoiceDraftPayload(quote, items), null, 2));
+      toast({ title: "Datos copiados para WeoInvoice" });
+    } catch {
+      downloadJson(`${quote.quote_number}-weoinvoice-draft.json`, buildWeoInvoiceDraftPayload(quote, items));
+      toast({ title: "No se pudo copiar; descargué el JSON" });
+    }
   };
 
   return (
@@ -536,15 +867,16 @@ const AdminCommercialQuotes = () => {
         </div>
       </div>
 
-      {(quotesErrorMessage || settingsErrorMessage) && (
+      {(quotesErrorMessage || settingsErrorMessage || clientsErrorMessage) && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          No se pudo cargar el módulo de presupuestos. Es probable que falte aplicar la migración `commercial_quotes` / `erp_settings`.
+          No se pudo cargar todo el módulo comercial. Es probable que falte aplicar la migración `commercial_clients` / `commercial_quotes` / `erp_settings`.
         </div>
       )}
 
       <Tabs defaultValue="quotes">
         <TabsList>
           <TabsTrigger value="quotes">Presupuestos</TabsTrigger>
+          <TabsTrigger value="clients">Clientes</TabsTrigger>
           <TabsTrigger value="settings">Empresa y banco</TabsTrigger>
         </TabsList>
 
@@ -623,11 +955,29 @@ const AdminCommercialQuotes = () => {
                   quote={selected}
                   settings={settings}
                   onPrint={() => printQuote(selected)}
+                  onExportWeo={() => exportWeoInvoiceDraft(selected)}
+                  onCopyWeo={() => copyWeoInvoiceDraft(selected)}
                   onStatus={(status) => updateQuote.mutate({ id: selected.id, patch: { status } })}
                 />
               )}
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="clients">
+          <ClientsPanel
+            clients={filteredClients}
+            totalClients={clients.length}
+            search={clientSearch}
+            onSearch={setClientSearch}
+            importText={clientImportText}
+            onImportText={setClientImportText}
+            onImport={() => importClients.mutate(clientImportText)}
+            importing={importClients.isPending}
+            fetching={clientsFetching}
+            onRefresh={() => refetchClients()}
+            onUseClient={openQuoteForClient}
+          />
         </TabsContent>
 
         <TabsContent value="settings">
@@ -650,6 +1000,32 @@ const AdminCommercialQuotes = () => {
             <section className="rounded-lg border border-border p-4">
               <h3 className="mb-3 text-sm font-semibold text-foreground">Origen y cliente</h3>
               <div className="grid gap-3 md:grid-cols-3">
+                <div className="md:col-span-3">
+                  <Label>Cliente guardado</Label>
+                  <Select
+                    value={quoteForm.client_id || "none"}
+                    onValueChange={(value) => {
+                      if (value === "none") {
+                        setQuoteForm((form) => ({ ...form, client_id: "" }));
+                        return;
+                      }
+                      const client = clients.find((item) => item.id === value);
+                      if (client) applyClient(client);
+                    }}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Seleccionar cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Cliente nuevo o sin seleccionar</SelectItem>
+                      {clients.slice(0, 250).map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.company || client.name} · {client.vat_number || client.email || client.country_code}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="md:col-span-3">
                   <Label>Crear desde solicitud IA</Label>
                   <Select value={quoteForm.source_quote_request_id || "none"} onValueChange={(value) => value !== "none" ? applyQuoteRequest(value) : setQuoteForm((form) => ({ ...form, source_quote_request_id: "" }))}>
@@ -831,6 +1207,135 @@ const FormInput = ({
   </div>
 );
 
+const ClientsPanel = ({
+  clients,
+  totalClients,
+  search,
+  onSearch,
+  importText,
+  onImportText,
+  onImport,
+  importing,
+  fetching,
+  onRefresh,
+  onUseClient,
+}: {
+  clients: CommercialClient[];
+  totalClients: number;
+  search: string;
+  onSearch: (value: string) => void;
+  importText: string;
+  onImportText: (value: string) => void;
+  onImport: () => void;
+  importing: boolean;
+  fetching: boolean;
+  onRefresh: () => void;
+  onUseClient: (client: CommercialClient) => void;
+}) => {
+  const downloadTemplate = () => {
+    const csv = [
+      "name,company,email,phone,vat_number,country_code,country,address,postal_code,city,notes",
+      "Maria Silva,Empresa Exemplo,email@exemplo.pt,+351900000000,PT123456789,PT,Portugal,Rua Exemplo 1,1000-000,Lisboa,Cliente importado",
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "plantilla-clientes-weoinvoice.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="grid gap-4 xl:grid-cols-[minmax(340px,0.85fr)_minmax(0,1.4fr)]">
+      <Card>
+        <CardContent className="space-y-4 py-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
+                <Upload className="h-5 w-5" /> Importar clientes
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Pega o sube un CSV exportado desde WeoInvoice. Se actualiza por NIF/VAT, email o ID externo.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={downloadTemplate}>
+              <FileDown className="mr-1 h-4 w-4" /> Plantilla
+            </Button>
+          </div>
+
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              file.text().then(onImportText);
+            }}
+          />
+          <Textarea
+            value={importText}
+            onChange={(event) => onImportText(event.target.value)}
+            rows={10}
+            placeholder="name,company,email,phone,vat_number,country_code,country,address,postal_code,city..."
+          />
+          <Button onClick={onImport} disabled={importing || !importText.trim()}>
+            {importing ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Upload className="mr-1 h-4 w-4" />}
+            Importar / actualizar clientes
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-4 py-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
+                <Users className="h-5 w-5" /> Clientes
+              </h2>
+              <p className="text-xs text-muted-foreground">{clients.length} de {totalClients} clientes</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={onRefresh} disabled={fetching}>
+              <RefreshCw className={cn("mr-1 h-4 w-4", fetching && "animate-spin")} /> Actualizar
+            </Button>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por cliente, empresa, email o VAT..."
+              value={search}
+              onChange={(event) => onSearch(event.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          <div className="max-h-[58vh] divide-y divide-border overflow-y-auto rounded-lg border border-border">
+            {clients.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">Todavía no hay clientes importados.</p>
+            ) : (
+              clients.map((client) => (
+                <div key={client.id} className="flex flex-wrap items-center justify-between gap-3 p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">{client.company || client.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {client.name} · {client.vat_number || "Sin VAT"} · {client.email || "Sin email"}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => onUseClient(client)}>
+                    <Plus className="mr-1 h-4 w-4" /> Presupuesto
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 const SettingsPanel = ({
   settings,
   onChange,
@@ -913,11 +1418,15 @@ const QuoteDetail = ({
   quote,
   settings,
   onPrint,
+  onExportWeo,
+  onCopyWeo,
   onStatus,
 }: {
   quote: CommercialQuote;
   settings: ERPSettings;
   onPrint: () => void;
+  onExportWeo: () => void;
+  onCopyWeo: () => void;
   onStatus: (status: string) => void;
 }) => {
   const items = parseLineItems(quote.line_items);
@@ -942,6 +1451,12 @@ const QuoteDetail = ({
             </Select>
             <Button variant="outline" size="sm" onClick={onPrint}>
               <Download className="mr-1 h-4 w-4" /> PDF/Imprimir
+            </Button>
+            <Button variant="outline" size="sm" onClick={onExportWeo}>
+              <FileDown className="mr-1 h-4 w-4" /> Weo JSON
+            </Button>
+            <Button variant="outline" size="sm" onClick={onCopyWeo}>
+              <Clipboard className="mr-1 h-4 w-4" /> Copiar
             </Button>
           </div>
         </div>

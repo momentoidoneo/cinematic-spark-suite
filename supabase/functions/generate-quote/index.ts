@@ -640,6 +640,73 @@ const commercialQuoteNumber = (settings: ERPSettingsRow) => {
   return `${prefix}-${new Date().getFullYear()}-${String(next).padStart(4, "0")}`;
 };
 
+const findOrCreateCommercialClient = async (
+  supabase: ReturnType<typeof createClient>,
+  body: QuoteRequest,
+  vies: ViesCheckResult,
+  clientCountryCode: string,
+) => {
+  try {
+    const vat = body.vatNumber ? `${vies.countryCode}${vies.vatNumber}` : null;
+    let existingId: string | null = null;
+
+    if (vat) {
+      const { data } = await supabase
+        .from("commercial_clients")
+        .select("id")
+        .eq("vat_number", vat)
+        .maybeSingle();
+      existingId = data?.id || null;
+    }
+
+    if (!existingId) {
+      const { data } = await supabase
+        .from("commercial_clients")
+        .select("id")
+        .eq("email", body.email.toLowerCase())
+        .maybeSingle();
+      existingId = data?.id || null;
+    }
+
+    const payload = {
+      name: body.name || body.email,
+      company: vies.name && vies.name !== "---" ? vies.name : null,
+      email: body.email.toLowerCase(),
+      phone: body.phone || null,
+      vat_number: vat,
+      country_code: clientCountryCode,
+      country: body.countryName || countryLabel(clientCountryCode),
+      address: null,
+      postal_code: null,
+      city: null,
+      notes: `Creado desde cotizador IA. Servicio: ${body.service}.`,
+      source: "smart_quoter",
+      external_source: null,
+      external_id: null,
+      last_synced_at: new Date().toISOString(),
+    };
+
+    if (existingId) {
+      await supabase.from("commercial_clients").update(payload).eq("id", existingId);
+      return existingId;
+    }
+
+    const { data, error } = await supabase
+      .from("commercial_clients")
+      .insert(payload)
+      .select("id")
+      .single();
+    if (error) {
+      console.error("[generate-quote] commercial_clients insert error:", error);
+      return null;
+    }
+    return data?.id || null;
+  } catch (error) {
+    console.error("[generate-quote] commercial client sync unavailable:", error);
+    return null;
+  }
+};
+
 const commercialVatDecision = (settings: ERPSettingsRow, body: QuoteRequest, vies: ViesCheckResult) => {
   const supplierCountry = (settings.country_code || "PT").toUpperCase();
   const clientCountry = (body.countryCode || vies.countryCode || "PT").toUpperCase();
@@ -714,6 +781,7 @@ const createCommercialQuoteDraft = async (body: QuoteRequest, quote: QuoteResult
           checked: false,
         };
     const decision = commercialVatDecision(settings, { ...body, countryCode: clientCountryCode }, vies);
+    const clientId = await findOrCreateCommercialClient(supabase, body, vies, clientCountryCode);
     const lineItems = [{
       id: crypto.randomUUID(),
       description: `${body.service} · ${body.scope} · ${body.location}`,
@@ -729,6 +797,7 @@ const createCommercialQuoteDraft = async (body: QuoteRequest, quote: QuoteResult
     const { error: insertError } = await supabase.from("commercial_quotes").insert({
       quote_number: commercialQuoteNumber(settings),
       status: "draft",
+      client_id: clientId,
       source_quote_request_id: requestId,
       client_name: body.name || body.email,
       client_company: vies.name && vies.name !== "---" ? vies.name : null,

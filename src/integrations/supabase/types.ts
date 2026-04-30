@@ -402,8 +402,75 @@ export type Database = {
         }
         Relationships: []
       }
+      commercial_clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          company: string | null
+          country: string
+          country_code: string
+          created_at: string
+          email: string | null
+          external_id: string | null
+          external_source: string | null
+          id: string
+          last_synced_at: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          source: string
+          tags: string[]
+          updated_at: string
+          vat_number: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company?: string | null
+          country?: string
+          country_code?: string
+          created_at?: string
+          email?: string | null
+          external_id?: string | null
+          external_source?: string | null
+          id?: string
+          last_synced_at?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          source?: string
+          tags?: string[]
+          updated_at?: string
+          vat_number?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company?: string | null
+          country?: string
+          country_code?: string
+          created_at?: string
+          email?: string | null
+          external_id?: string | null
+          external_source?: string | null
+          id?: string
+          last_synced_at?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          source?: string
+          tags?: string[]
+          updated_at?: string
+          vat_number?: string | null
+        }
+        Relationships: []
+      }
       commercial_quotes: {
         Row: {
+          client_id: string | null
           client_address: string | null
           client_city: string | null
           client_company: string | null
@@ -439,6 +506,7 @@ export type Database = {
           vies_valid: boolean | null
         }
         Insert: {
+          client_id?: string | null
           client_address?: string | null
           client_city?: string | null
           client_company?: string | null
@@ -474,6 +542,7 @@ export type Database = {
           vies_valid?: boolean | null
         }
         Update: {
+          client_id?: string | null
           client_address?: string | null
           client_city?: string | null
           client_company?: string | null
@@ -509,6 +578,13 @@ export type Database = {
           vies_valid?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "commercial_quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "commercial_quotes_source_quote_request_id_fkey"
             columns: ["source_quote_request_id"]
