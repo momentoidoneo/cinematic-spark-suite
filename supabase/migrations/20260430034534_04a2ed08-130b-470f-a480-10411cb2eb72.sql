@@ -1,6 +1,6 @@
 
 -- 1) ERP settings (singleton row id='default')
-CREATE TABLE public.erp_settings (
+CREATE TABLE IF NOT EXISTS public.erp_settings (
   id TEXT PRIMARY KEY DEFAULT 'default',
   company_name TEXT NOT NULL DEFAULT 'Silvio Costa Photography',
   legal_name TEXT,
@@ -29,11 +29,13 @@ CREATE TABLE public.erp_settings (
 
 ALTER TABLE public.erp_settings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admins full access erp_settings" ON public.erp_settings;
 CREATE POLICY "Admins full access erp_settings"
   ON public.erp_settings FOR ALL TO authenticated
   USING (public.has_role(auth.uid(), 'admin'))
   WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
+DROP TRIGGER IF EXISTS erp_settings_set_updated_at ON public.erp_settings;
 CREATE TRIGGER erp_settings_set_updated_at
   BEFORE UPDATE ON public.erp_settings
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
@@ -54,10 +56,11 @@ VALUES (
   'https://silviocosta.net',
   'Validez del presupuesto: 30 días. Forma de pago según condiciones acordadas.',
   'Presupuesto emitido sin IVA en la base. El IVA aplicable se calcula según país, NIF/CIF/VAT y validación VIES cuando corresponda.'
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- 2) Commercial clients
-CREATE TABLE public.commercial_clients (
+CREATE TABLE IF NOT EXISTS public.commercial_clients (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   company TEXT,
@@ -80,20 +83,22 @@ CREATE TABLE public.commercial_clients (
 
 ALTER TABLE public.commercial_clients ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admins full access commercial_clients" ON public.commercial_clients;
 CREATE POLICY "Admins full access commercial_clients"
   ON public.commercial_clients FOR ALL TO authenticated
   USING (public.has_role(auth.uid(), 'admin'))
   WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
+DROP TRIGGER IF EXISTS commercial_clients_set_updated_at ON public.commercial_clients;
 CREATE TRIGGER commercial_clients_set_updated_at
   BEFORE UPDATE ON public.commercial_clients
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
-CREATE INDEX idx_commercial_clients_vat ON public.commercial_clients(vat_number);
-CREATE INDEX idx_commercial_clients_email ON public.commercial_clients(email);
+CREATE INDEX IF NOT EXISTS idx_commercial_clients_vat ON public.commercial_clients(vat_number);
+CREATE INDEX IF NOT EXISTS idx_commercial_clients_email ON public.commercial_clients(email);
 
 -- 3) Commercial quotes
-CREATE TABLE public.commercial_quotes (
+CREATE TABLE IF NOT EXISTS public.commercial_quotes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   quote_number TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'draft',
@@ -132,15 +137,17 @@ CREATE TABLE public.commercial_quotes (
 
 ALTER TABLE public.commercial_quotes ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admins full access commercial_quotes" ON public.commercial_quotes;
 CREATE POLICY "Admins full access commercial_quotes"
   ON public.commercial_quotes FOR ALL TO authenticated
   USING (public.has_role(auth.uid(), 'admin'))
   WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
+DROP TRIGGER IF EXISTS commercial_quotes_set_updated_at ON public.commercial_quotes;
 CREATE TRIGGER commercial_quotes_set_updated_at
   BEFORE UPDATE ON public.commercial_quotes
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
-CREATE INDEX idx_commercial_quotes_client ON public.commercial_quotes(client_id);
-CREATE INDEX idx_commercial_quotes_status ON public.commercial_quotes(status);
-CREATE INDEX idx_commercial_quotes_issue_date ON public.commercial_quotes(issue_date DESC);
+CREATE INDEX IF NOT EXISTS idx_commercial_quotes_client ON public.commercial_quotes(client_id);
+CREATE INDEX IF NOT EXISTS idx_commercial_quotes_status ON public.commercial_quotes(status);
+CREATE INDEX IF NOT EXISTS idx_commercial_quotes_issue_date ON public.commercial_quotes(issue_date DESC);
