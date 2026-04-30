@@ -305,11 +305,12 @@ const splitCsvLine = (line: string, delimiter: string) => {
     }
   }
   cells.push(current.trim());
-  return cells.map((cell) => cell.replace(/^"|"$/g, ""));
+  return cells.map((cell) => cell.replace(/^"|"$/g, "").replace(/""/g, "\"").trim());
 };
 
 const parseClientCsv = (text: string): CommercialClientInsert[] => {
   const lines = text
+    .replace(/^\uFEFF/, "")
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
@@ -336,27 +337,68 @@ const parseClientCsv = (text: string): CommercialClientInsert[] => {
     .map((row) => {
       const rawCountry = pick(row, ["country_code", "pais_codigo", "codigo_pais", "country", "pais"]);
       const countryCode = countryCodeFromValue(rawCountry);
-      const company = pick(row, ["company", "empresa", "entidade", "entity", "cliente", "nome_cliente"]);
-      const name = pick(row, ["name", "nome", "contacto", "contact", "client_name", "nome_cliente"]) || company;
+      const company = pick(row, [
+        "company",
+        "empresa",
+        "entidade",
+        "entity",
+        "cliente",
+        "nome_cliente",
+        "nome_fiscal",
+        "razao_social",
+        "razon_social",
+        "denominacao",
+        "denominacion",
+      ]);
+      const name = pick(row, [
+        "name",
+        "nome",
+        "contacto",
+        "contato",
+        "contact",
+        "client_name",
+        "cliente_nome",
+        "nome_cliente",
+        "nome_comercial",
+      ]) || company;
       return {
         name,
         company: company || null,
         email: pick(row, ["email", "e_mail", "mail"]) || null,
-        phone: pick(row, ["phone", "telefone", "telemovel", "mobile", "tlm"]) || null,
-        vat_number: cleanVat(pick(row, ["vat", "nif", "nipc", "cif", "nif_cif", "vat_number", "contribuinte"])) || null,
+        phone: pick(row, ["phone", "telefone", "telefono", "telemovel", "movil", "mobile", "tlm"]) || null,
+        vat_number: cleanVat(pick(row, ["vat", "nif", "nipc", "cif", "nif_cif", "vat_number", "contribuinte", "num_contribuinte", "numero_contribuinte"])) || null,
         country_code: countryCode,
         country: pick(row, ["country_name", "pais_nome", "pais"]) || countryName(countryCode),
-        address: pick(row, ["address", "morada", "rua", "direccion", "direccao"]) || null,
-        postal_code: pick(row, ["postal_code", "codigo_postal", "cp", "postcode"]) || null,
-        city: pick(row, ["city", "cidade", "localidade", "poblacion"]) || null,
-        notes: pick(row, ["notes", "notas", "observacoes"]) || null,
+        address: pick(row, ["address", "morada", "morada_fiscal", "rua", "direccion", "direccao", "endereco", "endereco_fiscal"]) || null,
+        postal_code: pick(row, ["postal_code", "codigo_postal", "cod_postal", "cp", "postcode"]) || null,
+        city: pick(row, ["city", "cidade", "localidade", "poblacion", "localidad"]) || null,
+        notes: pick(row, ["notes", "notas", "observacoes", "observaciones"]) || null,
         source: "weoinvoice_import",
         external_source: pick(row, ["external_source", "origem"]) || "weoinvoice",
-        external_id: pick(row, ["id", "client_id", "cliente_id", "numero"]) || null,
+        external_id: pick(row, ["id", "client_id", "cliente_id", "numero", "numero_cliente", "n_cliente", "codigo", "cod_cliente"]) || null,
         last_synced_at: new Date().toISOString(),
       } satisfies CommercialClientInsert;
     })
     .filter((client) => client.name);
+};
+
+const clientMatchKeys = (client: {
+  email?: string | null;
+  external_id?: string | null;
+  external_source?: string | null;
+  vat_number?: string | null;
+}) => {
+  const keys: string[] = [];
+  const vat = cleanVat(client.vat_number || "");
+  const email = (client.email || "").trim().toLowerCase();
+  const externalId = (client.external_id || "").trim();
+  const externalSource = (client.external_source || "weoinvoice").trim().toLowerCase();
+
+  if (vat) keys.push(`vat:${vat}`);
+  if (email) keys.push(`email:${email}`);
+  if (externalId) keys.push(`external:${externalSource}:${externalId}`);
+
+  return keys;
 };
 
 const clientDraftFromQuoteForm = (form: QuoteForm): ClientDraft => ({
@@ -668,31 +710,44 @@ const AdminCommercialQuotes = () => {
 
       let created = 0;
       let updated = 0;
+      const clientIndex = new Map<string, CommercialClient>();
+      clients.forEach((client) => {
+        clientMatchKeys(client).forEach((key) => clientIndex.set(key, client));
+      });
+
       for (const client of parsed) {
-        const normalizedVat = cleanVat(client.vat_number || "");
-        const normalizedEmail = (client.email || "").toLowerCase();
-        const existing = clients.find((item) =>
-          (normalizedVat && cleanVat(item.vat_number || "") === normalizedVat) ||
-          (normalizedEmail && (item.email || "").toLowerCase() === normalizedEmail) ||
-          (client.external_id && item.external_source === client.external_source && item.external_id === client.external_id),
-        );
+        const keys = clientMatchKeys(client);
+        const existing = keys.map((key) => clientIndex.get(key)).find(Boolean);
 
         if (existing) {
-          const { error } = await supabase.from("commercial_clients").update(client).eq("id", existing.id);
+          const { data, error } = await supabase
+            .from("commercial_clients")
+            .update(client)
+            .eq("id", existing.id)
+            .select("*")
+            .single();
           if (error) throw error;
+          const saved = data as CommercialClient;
+          clientMatchKeys(saved).forEach((key) => clientIndex.set(key, saved));
           updated += 1;
         } else {
-          const { error } = await supabase.from("commercial_clients").insert(client);
+          const { data, error } = await supabase
+            .from("commercial_clients")
+            .insert(client)
+            .select("*")
+            .single();
           if (error) throw error;
+          const saved = data as CommercialClient;
+          clientMatchKeys(saved).forEach((key) => clientIndex.set(key, saved));
           created += 1;
         }
       }
-      return { created, updated };
+      return { created, updated, total: parsed.length };
     },
-    onSuccess: ({ created, updated }) => {
+    onSuccess: ({ created, updated, total }) => {
       setClientImportText("");
       queryClient.invalidateQueries({ queryKey: ["commercial_clients"] });
-      toast({ title: "Clientes importados", description: `${created} nuevos · ${updated} actualizados` });
+      toast({ title: "Clientes importados", description: `${total} procesados · ${created} nuevos · ${updated} actualizados` });
     },
     onError: (error) => toast({
       title: "No se pudo importar clientes",
@@ -1352,10 +1407,12 @@ const ClientsPanel = ({
   onRefresh: () => void;
   onUseClient: (client: CommercialClient) => void;
 }) => {
+  const importPreview = useMemo(() => parseClientCsv(importText), [importText]);
+
   const downloadTemplate = () => {
     const csv = [
-      "name,company,email,phone,vat_number,country_code,country,address,postal_code,city,notes",
-      "Maria Silva,Empresa Exemplo,email@exemplo.pt,+351900000000,PT123456789,PT,Portugal,Rua Exemplo 1,1000-000,Lisboa,Cliente importado",
+      "id;nome;nome_fiscal;email;telefone;nif;pais;morada;codigo_postal;cidade;observacoes",
+      "123;Maria Silva;Empresa Exemplo Lda.;email@exemplo.pt;+351900000000;PT123456789;Portugal;Rua Exemplo 1;1000-000;Lisboa;Cliente importado",
     ].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -1400,6 +1457,14 @@ const ClientsPanel = ({
             rows={10}
             placeholder="name,company,email,phone,vat_number,country_code,country,address,postal_code,city..."
           />
+          {importText.trim() && (
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+              <Badge variant={importPreview.length ? "outline" : "destructive"}>
+                {importPreview.length} clientes detectados
+              </Badge>
+              <span>Actualiza coincidencias por NIF/VAT, email o ID externo.</span>
+            </div>
+          )}
           <Button onClick={onImport} disabled={importing || !importText.trim()}>
             {importing ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Upload className="mr-1 h-4 w-4" />}
             Importar / actualizar clientes
