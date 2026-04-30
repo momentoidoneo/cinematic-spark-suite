@@ -76,6 +76,19 @@ type ViesResult = {
   error?: string;
 };
 
+type WeoBridgeStatus = {
+  configured: boolean;
+  store_url?: string;
+  issue_enabled?: boolean;
+  ok?: boolean;
+  status?: number;
+  company?: number | string | null;
+  exclusive?: boolean | number | null;
+  message?: string | null;
+  error?: string;
+  payload?: unknown;
+};
+
 type QuoteForm = {
   client_id: string;
   source_quote_request_id: string;
@@ -436,7 +449,7 @@ const buildWeoInvoiceDraftPayload = (quote: CommercialQuote, items: QuoteLineIte
     discount: "0.00000",
     type: "S",
     tax: Number(quote.vat_rate || 0),
-    taxreason: Number(quote.vat_rate || 0) > 0 ? "" : quote.vat_rule,
+    taxreason: Number(quote.vat_rate || 0) > 0 ? "" : "M07",
   })),
   totals: {
     subtotal: Number(quote.subtotal),
@@ -471,6 +484,8 @@ const AdminCommercialQuotes = () => {
   const [settingsForm, setSettingsForm] = useState<ERPSettings>(emptySettings);
   const [quoteForm, setQuoteForm] = useState<QuoteForm>(emptyQuoteForm());
   const [validatingVies, setValidatingVies] = useState(false);
+  const [weoStatus, setWeoStatus] = useState<WeoBridgeStatus | null>(null);
+  const [weoLoading, setWeoLoading] = useState(false);
 
   const { data: settings = emptySettings, error: settingsError } = useQuery({
     queryKey: ["erp_settings"],
@@ -526,6 +541,25 @@ const AdminCommercialQuotes = () => {
   useEffect(() => {
     setSettingsForm(settings);
   }, [settings]);
+
+  const loadWeoStatus = async () => {
+    setWeoLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("weoinvoice-bridge", {
+        body: { action: "status" },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message || "No disponible");
+      setWeoStatus(data as WeoBridgeStatus);
+    } catch (error) {
+      setWeoStatus({ configured: false, error: error instanceof Error ? error.message : "No disponible" });
+    } finally {
+      setWeoLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadWeoStatus();
+  }, []);
 
   const saveSettings = useMutation({
     mutationFn: async (payload: ERPSettingsUpdate) => {
@@ -646,6 +680,31 @@ const AdminCommercialQuotes = () => {
       description: error instanceof Error ? error.message : undefined,
       variant: "destructive",
     }),
+  });
+
+  const verifyWeoInvoice = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("weoinvoice-bridge", {
+        body: { action: "verify" },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message || "No se pudo verificar");
+      return data as WeoBridgeStatus;
+    },
+    onSuccess: (data) => {
+      setWeoStatus(data);
+      toast({
+        title: data.ok ? "WeoInvoice conectado" : "WeoInvoice respondió con aviso",
+        description: data.company ? `Empresa detectada: ${data.company}` : data.message || data.store_url,
+        variant: data.ok ? "default" : "destructive",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "No se pudo verificar WeoInvoice",
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive",
+      });
+    },
   });
 
   const filtered = useMemo(() => {
@@ -827,19 +886,44 @@ const AdminCommercialQuotes = () => {
     win.print();
   };
 
-  const exportWeoInvoiceDraft = (quote: CommercialQuote) => {
+  const prepareWeoInvoicePayload = async (quote: CommercialQuote) => {
     const items = parseLineItems(quote.line_items);
-    downloadJson(`${quote.quote_number}-weoinvoice-draft.json`, buildWeoInvoiceDraftPayload(quote, items));
+    const fallback = buildWeoInvoiceDraftPayload(quote, items);
+    try {
+      const { data, error } = await supabase.functions.invoke("weoinvoice-bridge", {
+        body: { action: "prepare", payload: fallback },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message || "No se pudo preparar");
+      const result = data as WeoBridgeStatus;
+      setWeoStatus({
+        configured: result.configured,
+        store_url: result.store_url,
+        issue_enabled: result.issue_enabled,
+      });
+      return result.payload || fallback;
+    } catch (error) {
+      toast({
+        title: "Puente WeoInvoice no disponible",
+        description: "Uso el JSON local para que no pierdas el flujo.",
+        variant: "destructive",
+      });
+      return fallback;
+    }
+  };
+
+  const exportWeoInvoiceDraft = async (quote: CommercialQuote) => {
+    const payload = await prepareWeoInvoicePayload(quote);
+    downloadJson(`${quote.quote_number}-weoinvoice-draft.json`, payload);
     toast({ title: "Borrador WeoInvoice descargado" });
   };
 
   const copyWeoInvoiceDraft = async (quote: CommercialQuote) => {
-    const items = parseLineItems(quote.line_items);
+    const payload = await prepareWeoInvoicePayload(quote);
     try {
-      await navigator.clipboard.writeText(JSON.stringify(buildWeoInvoiceDraftPayload(quote, items), null, 2));
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
       toast({ title: "Datos copiados para WeoInvoice" });
     } catch {
-      downloadJson(`${quote.quote_number}-weoinvoice-draft.json`, buildWeoInvoiceDraftPayload(quote, items));
+      downloadJson(`${quote.quote_number}-weoinvoice-draft.json`, payload);
       toast({ title: "No se pudo copiar; descargué el JSON" });
     }
   };
@@ -856,6 +940,10 @@ const AdminCommercialQuotes = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => verifyWeoInvoice.mutate()} disabled={verifyWeoInvoice.isPending || weoLoading}>
+            {verifyWeoInvoice.isPending || weoLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+            WeoInvoice
+          </Button>
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
             <RefreshCw className={cn("h-4 w-4 mr-1", isFetching && "animate-spin")} />
             Actualizar
@@ -865,6 +953,19 @@ const AdminCommercialQuotes = () => {
             Nuevo presupuesto
           </Button>
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <span>Puente WeoInvoice:</span>
+        <Badge variant="outline" className={cn(weoStatus?.configured ? "border-emerald-500/30 text-emerald-500" : "border-amber-500/30 text-amber-500")}>
+          {weoStatus?.configured ? "API Key configurada" : "API Key pendiente"}
+        </Badge>
+        {weoStatus?.store_url && <span>{weoStatus.store_url}</span>}
+        {weoStatus?.issue_enabled ? (
+          <Badge variant="outline" className="border-destructive/30 text-destructive">Emisión real activa</Badge>
+        ) : (
+          <Badge variant="outline">Solo preparación</Badge>
+        )}
       </div>
 
       {(quotesErrorMessage || settingsErrorMessage || clientsErrorMessage) && (

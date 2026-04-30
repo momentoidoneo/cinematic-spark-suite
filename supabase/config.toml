@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.validate-vies]
 verify_jwt = false
+
+[functions.weoinvoice-bridge]
+verify_jwt = false

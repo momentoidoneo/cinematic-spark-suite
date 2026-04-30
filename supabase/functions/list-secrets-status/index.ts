@@ -16,6 +16,10 @@ const TRACKED_SECRETS = [
   "WHATSAPP_API_KEY",
   "MAPS_API_KEY",
   "OPENAI_API_KEY",
+  "WEOINVOICE_API_KEY",
+  "WEOINVOICE_STORE_URL",
+  "WEOINVOICE_TAX_REASON",
+  "WEOINVOICE_ENABLE_ISSUE",
 ] as const;
 
 const jsonResponse = (body: unknown, status = 200) =>

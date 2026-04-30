@@ -69,6 +69,34 @@ const REGISTRY: ApiKeyInfo[] = [
     docsUrl: "https://platform.openai.com/api-keys",
     required: false,
   },
+  {
+    name: "WEOINVOICE_API_KEY",
+    service: "WeoInvoice WooCommerce API",
+    description: "Clave privada del puente WeoInvoice. Solo se usa desde edge functions para preparar o validar la integración, nunca desde el navegador.",
+    docsUrl: "https://wordpress.org/plugins/weoinvoice/",
+    required: false,
+  },
+  {
+    name: "WEOINVOICE_STORE_URL",
+    service: "WeoInvoice Store URL",
+    description: "URL asociada a la integración WooCommerce/WeoInvoice. Si no se configura, se usa https://silviocosta.net.",
+    docsUrl: "https://wordpress.org/plugins/weoinvoice/",
+    required: false,
+  },
+  {
+    name: "WEOINVOICE_TAX_REASON",
+    service: "WeoInvoice motivo IVA 0%",
+    description: "Código de motivo de exención/autoliquidación para líneas con IVA 0%. Por defecto se usa M07.",
+    docsUrl: "https://wordpress.org/plugins/weoinvoice/",
+    required: false,
+  },
+  {
+    name: "WEOINVOICE_ENABLE_ISSUE",
+    service: "WeoInvoice emisión real",
+    description: "Interruptor de seguridad para emisión real. Debe estar en true para permitir llamadas que creen documentos fiscales.",
+    docsUrl: "https://wordpress.org/plugins/weoinvoice/",
+    required: false,
+  },
 ];
 
 const AdminApiKeys = () => {
