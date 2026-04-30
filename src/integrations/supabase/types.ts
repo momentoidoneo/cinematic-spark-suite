@@ -584,6 +584,93 @@ export type Database = {
         }
         Relationships: []
       }
+      drone_permit_requests: {
+        Row: {
+          airspace_notes: string
+          client_email: string
+          client_name: string
+          client_phone: string
+          completed_actions: string[]
+          created_at: string
+          drone_model: string
+          id: string
+          internal_notes: string
+          latitude: number | null
+          location: string
+          longitude: number | null
+          operation_address: string
+          operation_category: string
+          operator_registration: string
+          pilot_name: string
+          priority: string
+          requested_flight_date: string | null
+          requested_time_window: string
+          required_actions: string[]
+          risk_notes: string
+          service: string
+          source: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          airspace_notes?: string
+          client_email?: string
+          client_name?: string
+          client_phone?: string
+          completed_actions?: string[]
+          created_at?: string
+          drone_model?: string
+          id?: string
+          internal_notes?: string
+          latitude?: number | null
+          location?: string
+          longitude?: number | null
+          operation_address?: string
+          operation_category?: string
+          operator_registration?: string
+          pilot_name?: string
+          priority?: string
+          requested_flight_date?: string | null
+          requested_time_window?: string
+          required_actions?: string[]
+          risk_notes?: string
+          service?: string
+          source?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          airspace_notes?: string
+          client_email?: string
+          client_name?: string
+          client_phone?: string
+          completed_actions?: string[]
+          created_at?: string
+          drone_model?: string
+          id?: string
+          internal_notes?: string
+          latitude?: number | null
+          location?: string
+          longitude?: number | null
+          operation_address?: string
+          operation_category?: string
+          operator_registration?: string
+          pilot_name?: string
+          priority?: string
+          requested_flight_date?: string | null
+          requested_time_window?: string
+          required_actions?: string[]
+          risk_notes?: string
+          service?: string
+          source?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       erp_settings: {
         Row: {
           address: string | null
