@@ -223,6 +223,188 @@ export type Database = {
         }
         Relationships: []
       }
+      commercial_clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          company: string | null
+          country: string | null
+          country_code: string | null
+          created_at: string
+          email: string | null
+          external_id: string | null
+          external_source: string | null
+          id: string
+          last_synced_at: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          source: string | null
+          updated_at: string
+          vat_number: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          country_code?: string | null
+          created_at?: string
+          email?: string | null
+          external_id?: string | null
+          external_source?: string | null
+          id?: string
+          last_synced_at?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          source?: string | null
+          updated_at?: string
+          vat_number?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          country_code?: string | null
+          created_at?: string
+          email?: string | null
+          external_id?: string | null
+          external_source?: string | null
+          id?: string
+          last_synced_at?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          source?: string | null
+          updated_at?: string
+          vat_number?: string | null
+        }
+        Relationships: []
+      }
+      commercial_quotes: {
+        Row: {
+          client_address: string | null
+          client_city: string | null
+          client_company: string | null
+          client_country: string | null
+          client_country_code: string | null
+          client_email: string | null
+          client_id: string | null
+          client_name: string | null
+          client_phone: string | null
+          client_postal_code: string | null
+          client_vat_number: string | null
+          created_at: string
+          currency: string
+          id: string
+          is_business: boolean
+          issue_date: string
+          line_items: Json
+          notes: string | null
+          payment_terms: string | null
+          quote_number: string
+          reverse_charge_note: string | null
+          source_quote_request_id: string | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          valid_until: string | null
+          vat_amount: number
+          vat_rate: number
+          vat_rule: string | null
+          vies_address: string | null
+          vies_checked_at: string | null
+          vies_name: string | null
+          vies_valid: boolean | null
+        }
+        Insert: {
+          client_address?: string | null
+          client_city?: string | null
+          client_company?: string | null
+          client_country?: string | null
+          client_country_code?: string | null
+          client_email?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          client_postal_code?: string | null
+          client_vat_number?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          is_business?: boolean
+          issue_date?: string
+          line_items?: Json
+          notes?: string | null
+          payment_terms?: string | null
+          quote_number: string
+          reverse_charge_note?: string | null
+          source_quote_request_id?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+          vat_amount?: number
+          vat_rate?: number
+          vat_rule?: string | null
+          vies_address?: string | null
+          vies_checked_at?: string | null
+          vies_name?: string | null
+          vies_valid?: boolean | null
+        }
+        Update: {
+          client_address?: string | null
+          client_city?: string | null
+          client_company?: string | null
+          client_country?: string | null
+          client_country_code?: string | null
+          client_email?: string | null
+          client_id?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          client_postal_code?: string | null
+          client_vat_number?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          is_business?: boolean
+          issue_date?: string
+          line_items?: Json
+          notes?: string | null
+          payment_terms?: string | null
+          quote_number?: string
+          reverse_charge_note?: string | null
+          source_quote_request_id?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+          vat_amount?: number
+          vat_rate?: number
+          vat_rule?: string | null
+          vies_address?: string | null
+          vies_checked_at?: string | null
+          vies_name?: string | null
+          vies_valid?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       competitor_snapshots: {
         Row: {
           changes_summary: string | null
@@ -399,6 +581,87 @@ export type Database = {
           utm_campaign?: string | null
           utm_medium?: string | null
           utm_source?: string | null
+        }
+        Relationships: []
+      }
+      erp_settings: {
+        Row: {
+          address: string | null
+          bank_holder: string | null
+          bank_name: string | null
+          bic: string | null
+          city: string | null
+          company_name: string
+          country: string | null
+          country_code: string | null
+          created_at: string
+          currency: string
+          default_vat_rate: number
+          email: string | null
+          footer_notes: string | null
+          iban: string | null
+          id: string
+          legal_name: string | null
+          next_quote_number: number
+          payment_terms: string | null
+          phone: string | null
+          postal_code: string | null
+          quote_prefix: string | null
+          updated_at: string
+          vat_number: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          bank_holder?: string | null
+          bank_name?: string | null
+          bic?: string | null
+          city?: string | null
+          company_name?: string
+          country?: string | null
+          country_code?: string | null
+          created_at?: string
+          currency?: string
+          default_vat_rate?: number
+          email?: string | null
+          footer_notes?: string | null
+          iban?: string | null
+          id?: string
+          legal_name?: string | null
+          next_quote_number?: number
+          payment_terms?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          quote_prefix?: string | null
+          updated_at?: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          bank_holder?: string | null
+          bank_name?: string | null
+          bic?: string | null
+          city?: string | null
+          company_name?: string
+          country?: string | null
+          country_code?: string | null
+          created_at?: string
+          currency?: string
+          default_vat_rate?: number
+          email?: string | null
+          footer_notes?: string | null
+          iban?: string | null
+          id?: string
+          legal_name?: string | null
+          next_quote_number?: number
+          payment_terms?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          quote_prefix?: string | null
+          updated_at?: string
+          vat_number?: string | null
+          website?: string | null
         }
         Relationships: []
       }
