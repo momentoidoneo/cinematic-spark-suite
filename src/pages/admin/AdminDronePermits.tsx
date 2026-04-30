@@ -142,6 +142,17 @@ const priorityValues = Object.keys(PRIORITY_META) as Priority[];
 
 const normalize = (value: string | null | undefined) => (value ?? "").toLowerCase();
 
+const errorDescription = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object") {
+    const details = error as { code?: string; details?: string; hint?: string; message?: string };
+    return [details.message, details.details, details.hint, details.code ? `Código: ${details.code}` : ""]
+      .filter(Boolean)
+      .join(" · ");
+  }
+  return "Revisa permisos de administrador y migraciones de Supabase.";
+};
+
 const progressFor = (permit: DronePermit) => {
   const required = permit.required_actions.length > 0 ? permit.required_actions : CHECKLIST.map((item) => item.id);
   const done = required.filter((id) => permit.completed_actions.includes(id)).length;
@@ -175,7 +186,11 @@ const AdminDronePermits = () => {
       if (updateError) throw updateError;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["drone_permit_requests"] }),
-    onError: () => toast({ title: "No se pudo guardar el cambio", variant: "destructive" }),
+    onError: (error) => toast({
+      title: "No se pudo guardar el cambio",
+      description: errorDescription(error),
+      variant: "destructive",
+    }),
   });
 
   const createPermit = useMutation({
@@ -189,7 +204,11 @@ const AdminDronePermits = () => {
       queryClient.invalidateQueries({ queryKey: ["drone_permit_requests"] });
       toast({ title: "Trámite de dron creado" });
     },
-    onError: () => toast({ title: "No se pudo crear el trámite", variant: "destructive" }),
+    onError: (error) => toast({
+      title: "No se pudo crear el trámite",
+      description: errorDescription(error),
+      variant: "destructive",
+    }),
   });
 
   const deletePermit = useMutation({
@@ -202,6 +221,11 @@ const AdminDronePermits = () => {
       queryClient.invalidateQueries({ queryKey: ["drone_permit_requests"] });
       toast({ title: "Trámite eliminado" });
     },
+    onError: (error) => toast({
+      title: "No se pudo eliminar el trámite",
+      description: errorDescription(error),
+      variant: "destructive",
+    }),
   });
 
   const filtered = useMemo(() => {
@@ -267,7 +291,7 @@ const AdminDronePermits = () => {
   };
 
   const selectedProgress = selected ? progressFor(selected) : null;
-  const errorMessage = error instanceof Error ? error.message : "";
+  const errorMessage = error ? errorDescription(error) : "";
 
   return (
     <div className="space-y-4">
@@ -325,7 +349,7 @@ const AdminDronePermits = () => {
 
       {errorMessage && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          No se pudieron cargar los permisos de dron. Es probable que falte aplicar la migración de Supabase `drone_permit_requests`.
+          No se pudieron cargar los permisos de dron. {errorMessage}
         </div>
       )}
 
