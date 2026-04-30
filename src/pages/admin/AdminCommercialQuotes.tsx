@@ -564,16 +564,35 @@ const AdminCommercialQuotes = () => {
   const saveSettings = useMutation({
     mutationFn: async (payload: ERPSettingsUpdate) => {
       const cleanPayload = { ...payload };
+      delete cleanPayload.id;
       delete cleanPayload.created_at;
       delete cleanPayload.updated_at;
-      const { error } = await supabase.from("erp_settings").upsert({ ...cleanPayload, id: "default" });
+
+      const { data, error } = await supabase
+        .from("erp_settings")
+        .update(cleanPayload)
+        .eq("id", "default")
+        .select("id")
+        .maybeSingle();
+
       if (error) throw error;
+      if (data) return;
+
+      const { error: insertError } = await supabase
+        .from("erp_settings")
+        .insert({ ...cleanPayload, id: "default" });
+      if (insertError) throw insertError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["erp_settings"] });
       toast({ title: "Datos de empresa guardados" });
     },
-    onError: () => toast({ title: "No se pudo guardar la configuración", variant: "destructive" }),
+    onError: (error) =>
+      toast({
+        title: "No se pudo guardar la configuración",
+        description: error instanceof Error ? error.message : "Revisa permisos de administrador y migraciones de Supabase.",
+        variant: "destructive",
+      }),
   });
 
   const saveClientDraft = async (draft: ClientDraft, existingId?: string) => {
