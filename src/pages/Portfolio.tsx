@@ -28,6 +28,18 @@ const getGridColumnsClass = (columns: number) => {
   return "grid-cols-1 sm:grid-cols-2";
 };
 
+const PODCAST_SUBCATEGORY_ID = "45ce2248-ec61-4e62-8f4e-6caa95d211d5";
+
+const getSubcategoryCoverClass = (sub: Subcategory) => {
+  const baseClass = "w-full h-full object-cover transition-transform duration-500";
+
+  if (sub.id === PODCAST_SUBCATEGORY_ID) {
+    return `${baseClass} scale-[1.14] group-hover:scale-[1.2]`;
+  }
+
+  return `${baseClass} group-hover:scale-105`;
+};
+
 function orderItemsByGridPosition<T extends { id: string; grid_row: number | null; grid_col: number | null }>(
   items: T[],
   columns: number,
@@ -299,7 +311,7 @@ const Portfolio = () => {
                     sizes="(min-width: 1024px) 31vw, (min-width: 768px) 48vw, 50vw"
                     alt={sub.name}
                     title=""
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className={getSubcategoryCoverClass(sub)}
                     style={{ objectPosition: sub.cover_position || "center" }}
                     loading={i < 3 ? "eager" : "lazy"}
                     decoding="async"
