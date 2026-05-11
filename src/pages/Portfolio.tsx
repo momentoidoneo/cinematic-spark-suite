@@ -22,6 +22,60 @@ const getEmbedUrl = (url: string): string => {
 };
 
 // Helper: render items in a free grid if positions are set, otherwise auto grid
+const getGridColumnsClass = (columns: number) => {
+  if (columns === 4) return "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
+  if (columns === 3) return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+  return "grid-cols-1 sm:grid-cols-2";
+};
+
+function orderItemsByGridPosition<T extends { id: string; grid_row: number | null; grid_col: number | null }>(
+  items: T[],
+  columns: number,
+) {
+  const positioned = new Map<number, T>();
+  const overflow: T[] = [];
+  let lastSlot = 0;
+
+  items.forEach((item) => {
+    const row = item.grid_row;
+    const col = item.grid_col;
+
+    if (row && col && row > 0 && col > 0 && col <= columns) {
+      const slot = (row - 1) * columns + (col - 1);
+
+      if (!positioned.has(slot)) {
+        positioned.set(slot, item);
+        lastSlot = Math.max(lastSlot, slot);
+        return;
+      }
+    }
+
+    overflow.push(item);
+  });
+
+  const ordered: T[] = [];
+  let overflowIndex = 0;
+  const minimumSlots = Math.max(items.length, lastSlot + 1);
+
+  for (let slot = 0; ordered.length < items.length && slot < minimumSlots; slot += 1) {
+    const positionedItem = positioned.get(slot);
+
+    if (positionedItem) {
+      ordered.push(positionedItem);
+    } else if (overflowIndex < overflow.length) {
+      ordered.push(overflow[overflowIndex]);
+      overflowIndex += 1;
+    }
+  }
+
+  while (overflowIndex < overflow.length) {
+    ordered.push(overflow[overflowIndex]);
+    overflowIndex += 1;
+  }
+
+  return ordered;
+}
+
 function FreeGrid<T extends { id: string; grid_row: number | null; grid_col: number | null }>({
   items,
   columns,
@@ -40,38 +94,19 @@ function FreeGrid<T extends { id: string; grid_row: number | null; grid_col: num
   }
 
   if (hasGridPositions) {
-    const placed = items.filter(i => i.grid_row != null && i.grid_col != null);
-    const unplaced = items.filter(i => i.grid_row == null || i.grid_col == null);
-    const maxRow = placed.reduce((max, i) => Math.max(max, i.grid_row!), 0);
+    const orderedItems = orderItemsByGridPosition(items, columns);
 
     return (
-      <>
-        <div
-          className="grid gap-6"
-          style={{
-            gridTemplateColumns: `repeat(${columns}, 1fr)`,
-            gridTemplateRows: `repeat(${maxRow}, 1fr)`,
-          }}
-        >
-          {placed.map((item, i) => (
-            <div key={item.id} style={{ gridRow: item.grid_row!, gridColumn: item.grid_col! }}>
-              {renderItem(item, i)}
-            </div>
-          ))}
-        </div>
-        {unplaced.length > 0 && (
-          <div className={`grid gap-6 mt-6`} style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
-            {unplaced.map((item, i) => (
-              <div key={item.id}>{renderItem(item, placed.length + i)}</div>
-            ))}
-          </div>
-        )}
-      </>
+      <div className={`grid gap-3 md:gap-6 ${getGridColumnsClass(columns)}`}>
+        {orderedItems.map((item, i) => (
+          <div key={item.id}>{renderItem(item, i)}</div>
+        ))}
+      </div>
     );
   }
 
   return (
-    <div className={`grid gap-3 md:gap-6 grid-cols-2 md:grid-cols-${columns}`}>
+    <div className={`grid gap-3 md:gap-6 ${getGridColumnsClass(columns)}`}>
       {items.map((item, i) => (
         <div key={item.id}>{renderItem(item, i)}</div>
       ))}
