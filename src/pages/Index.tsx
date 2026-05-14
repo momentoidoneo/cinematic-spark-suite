@@ -39,8 +39,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Silvio Costa Photography | Fotografía y Producción Audiovisual Profesional"
-        description="Fotografía profesional, vídeo corporativo, dron y tours virtuales 360° con tecnología Matterport en España y Portugal. Calidad cinematográfica para inmobiliarias, arquitectura, eventos y empresas."
+        title="Silvio Costa Photography | Fotografía y Audiovisual"
+        description="Fotografía, vídeo, dron y tours 360° Matterport en España y Portugal. Calidad cinematográfica para inmobiliaria, arquitectura y eventos."
         canonical={`${siteUrl}/`}
         jsonLd={[
           localBusinessSchema,

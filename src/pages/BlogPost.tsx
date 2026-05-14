@@ -43,8 +43,14 @@ const BlogPost = () => {
     <div className="min-h-screen bg-background">
       {post && (
         <SEOHead
-          title={`${post.title} | Silvio Costa Photography`}
-          description={post.excerpt || post.title}
+          title={`${post.title} | Silvio Costa`.slice(0, 60)}
+          description={(() => {
+            const base = (post.excerpt || post.title || "").trim();
+            const padded = base.length < 50
+              ? `${base} — Silvio Costa Photography, fotografía y audiovisual profesional en España y Portugal.`.slice(0, 160)
+              : base;
+            return padded.length > 160 ? padded.slice(0, 157).trimEnd() + "..." : padded;
+          })()}
           canonical={`${siteUrl}/blog/${slug}`}
           ogImage={post.cover_image || undefined}
           ogType="article"

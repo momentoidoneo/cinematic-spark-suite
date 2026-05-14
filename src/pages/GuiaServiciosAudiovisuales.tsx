@@ -84,7 +84,7 @@ const GuiaServiciosAudiovisuales = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Guía de servicios audiovisuales: fotografía, vídeo, dron y Matterport"
+        title="Guía de servicios audiovisuales | Silvio Costa"
         description="Guía rápida para elegir entre fotografía profesional, vídeo, dron, tour virtual Matterport, eventos o renders 3D. Precios orientativos, plazos, entregables y recomendación por caso."
         canonical={canonical}
         jsonLd={[

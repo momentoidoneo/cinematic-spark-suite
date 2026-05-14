@@ -40,7 +40,7 @@ const Blog = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Blog de Fotografía y Producción Audiovisual | Silvio Costa Photography"
+        title="Blog de Fotografía y Audiovisual | Silvio Costa"
         description="Artículos sobre fotografía profesional, drones, tours virtuales Matterport, vídeo corporativo y tendencias del sector audiovisual en España y Portugal."
         canonical={`${siteUrl}/blog`}
         jsonLd={breadcrumbSchema([

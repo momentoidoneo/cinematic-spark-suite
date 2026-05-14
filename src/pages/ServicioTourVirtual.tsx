@@ -61,7 +61,7 @@ const ServicioTourVirtual = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Tours Virtuales 360° y Matterport en España y Portugal | Silvio Costa Photography"
+        title="Tours Virtuales 360° Matterport España | Silvio Costa"
         description="Tours virtuales 360° con tecnología Matterport Pro3. Gemelos digitales, planos de planta, medición de espacios y Google Street View para inmobiliarias, hostelería y comercios en España y Portugal."
         canonical={`${siteUrl}/servicios/tour-virtual`}
         jsonLd={[
