@@ -56,7 +56,7 @@ const ServicioFotografia = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Fotografía Profesional en España y Portugal | Silvio Costa Photography"
+        title="Fotografía Profesional España y Portugal | Silvio Costa"
         description="Servicios de fotografía profesional: inmobiliaria, arquitectura, producto, gastronomía, moda y eventos. +10 especialidades con calidad cinematográfica en toda España y Portugal."
         canonical={`${siteUrl}/servicios/fotografia`}
         jsonLd={[

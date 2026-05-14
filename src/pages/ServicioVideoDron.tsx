@@ -91,7 +91,7 @@ const ServicioVideoDron = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Vídeo Profesional y Dron en España y Portugal | Silvio Costa Photography"
+        title="Vídeo Profesional y Dron España y Portugal | Silvio Costa"
         description="Producción audiovisual profesional y grabación con drones: vídeos corporativos, aéreos, streaming, fotogrametría y timelapse. Calidad 4K en toda España y Portugal."
         canonical={`${siteUrl}/servicios/video-dron`}
         jsonLd={[
