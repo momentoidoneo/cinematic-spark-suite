@@ -47,8 +47,8 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="font-display text-5xl md:text-7xl lg:text-8xl font-bold leading-tight"
         >
-          Fotografía, vídeo, dron, tours 360 y renders 3D{" "}
-          <span className="text-gradient-primary italic">que hacen vender tus espacios e historia</span>
+          Fotografía, vídeo, dron, tours 360 y renders 3D:{" "}
+          <span className="text-gradient-primary italic">imagen que vende, emociona y permanece</span>
         </motion.h1>
 
         <motion.p
