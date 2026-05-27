@@ -47,8 +47,8 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="font-display text-5xl md:text-7xl lg:text-8xl font-bold leading-tight"
         >
-          Fotografía, vídeo y tours 360{" "}
-          <span className="text-gradient-primary italic">para vender mejor tus espacios</span>
+          Fotografía, vídeo, dron, tours 360 y renders 3D{" "}
+          <span className="text-gradient-primary italic">que hacen vender tus espacios e historia</span>
         </motion.h1>
 
         <motion.p
@@ -57,7 +57,7 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.5 }}
           className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground"
         >
-          Producción visual profesional para inmobiliarias, arquitectura, hoteles, restaurantes, eventos y marcas que necesitan generar confianza antes de la primera llamada.
+          Producción audiovisual integral —imagen, vídeo cinematográfico, dron AESA, tours Matterport, cobertura de eventos y renders arquitectónicos— para inmobiliarias, arquitectura, hoteles, restaurantes y marcas que necesitan generar confianza antes de la primera llamada.
         </motion.p>
 
         <motion.div
