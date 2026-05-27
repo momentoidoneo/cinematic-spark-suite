@@ -39,6 +39,8 @@ const KNOWN_PAGES = [
   "/blog",
   "/precios",
   "/guia-servicios-audiovisuales",
+  "/glosario",
+  "/casos-estudio",
   "/legal/legal-notice",
   "/legal/privacy-policy",
   "/legal/cookies",
@@ -131,6 +133,18 @@ const AdminSEO = () => {
     if (error) toast.error(error.message);
     else {
       toast.success(`Añadida ${path}`);
+      fetchEntries();
+    }
+  };
+
+  const handleAddAllMissing = async (paths: string[]) => {
+    if (paths.length === 0) return;
+    const { error } = await supabase
+      .from("seo_metadata")
+      .insert(paths.map((p) => ({ page_path: p, title: "", description: "" })));
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`${paths.length} páginas añadidas`);
       fetchEntries();
     }
   };
@@ -426,10 +440,17 @@ const AdminSEO = () => {
         <TabsContent value="audit" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
-                Páginas conocidas sin meta ({audit.missing.length})
-              </CardTitle>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  Páginas conocidas sin meta ({audit.missing.length})
+                </CardTitle>
+                {audit.missing.length > 0 && (
+                  <Button size="sm" onClick={() => handleAddAllMissing(audit.missing)}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Añadir todas
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {audit.missing.length === 0 ? (
