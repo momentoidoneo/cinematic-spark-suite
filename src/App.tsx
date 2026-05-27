@@ -30,7 +30,6 @@ const ServicioCiudad = lazy(() => import("./pages/ServicioCiudad"));
 const Legal = lazy(() => import("./pages/Legal"));
 const Precios = lazy(() => import("./pages/Precios"));
 const GuiaServiciosAudiovisuales = lazy(() => import("./pages/GuiaServiciosAudiovisuales"));
-const LicenciasSeguros = lazy(() => import("./pages/LicenciasSeguros"));
 const Glosario = lazy(() => import("./pages/Glosario"));
 
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
