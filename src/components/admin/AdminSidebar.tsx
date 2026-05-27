@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard, BarChart3, Image, FolderOpen, Layers, HardDrive,
-  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard, Search, Sparkles, MapPin, Rss, Plane, ReceiptText, Building2
+  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard, Search, Sparkles, MapPin, Rss, Plane, ReceiptText, Building2, Quote, BookOpen, Calculator, Download
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +33,9 @@ const marketingItems = [
   { title: "Herramientas Marketing", url: "/admin/marketing-tools", icon: Sparkles },
   { title: "Promociones", url: "/admin/promotions", icon: Tag },
   { title: "Blog", url: "/admin/blog", icon: FileText },
+  { title: "Testimonios", url: "/admin/testimonials", icon: Quote },
+  { title: "Casos de Estudio", url: "/admin/case-studies", icon: BookOpen },
+  { title: "Lead Magnets", url: "/admin/lead-magnets", icon: Download },
 ];
 
 const communicationItems = [
@@ -51,6 +54,7 @@ const settingsItems = [
   { title: "SEO Técnico", url: "/admin/seo-technical", icon: Rss },
   { title: "Ciudades SEO", url: "/admin/cities", icon: MapPin },
   { title: "Precios", url: "/admin/pricing", icon: CreditCard },
+  { title: "Calculadora Presup.", url: "/admin/quote-calculator", icon: Calculator },
   { title: "Tracking & Ads", url: "/admin/tracking", icon: Target },
   { title: "Textos Legales", url: "/admin/legal", icon: Scale },
   { title: "Redes Sociales", url: "/admin/social", icon: Share2 },

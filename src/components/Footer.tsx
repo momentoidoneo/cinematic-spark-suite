@@ -92,6 +92,7 @@ const Footer = () => {
                 { label: "Servicios", href: "/#servicios" },
                 { label: "Guía audiovisual", href: "/guia-servicios-audiovisuales" },
                 { label: "Portafolio", href: "/portafolio" },
+                { label: "Casos de estudio", href: "/casos-estudio" },
                 { label: "Glosario", href: "/glosario" },
                 { label: "Contacto", href: "/#contacto" },
               ].map((item) => (

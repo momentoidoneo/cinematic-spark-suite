@@ -5,6 +5,8 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import FloatingCTA from "@/components/FloatingCTA";
 import SEOHead, { getSiteUrl, breadcrumbSchema } from "@/components/SEOHead";
+import { lazy, Suspense } from "react";
+const QuoteCalculator = lazy(() => import("@/components/QuoteCalculator"));
 import { motion } from "framer-motion";
 import { CheckCircle, Sparkles, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -290,6 +292,7 @@ const Precios = () => {
           </>
         )}
       </main>
+      <Suspense fallback={null}><QuoteCalculator /></Suspense>
       <Footer />
       <WhatsAppButton />
       <FloatingCTA />
