@@ -30,7 +30,6 @@ const ServicioCiudad = lazy(() => import("./pages/ServicioCiudad"));
 const Legal = lazy(() => import("./pages/Legal"));
 const Precios = lazy(() => import("./pages/Precios"));
 const GuiaServiciosAudiovisuales = lazy(() => import("./pages/GuiaServiciosAudiovisuales"));
-const LicenciasSeguros = lazy(() => import("./pages/LicenciasSeguros"));
 const Glosario = lazy(() => import("./pages/Glosario"));
 
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
@@ -97,7 +96,6 @@ const App = () => (
               <Route path="/servicios/renders" element={<ServicioRenders />} />
               <Route path="/precios" element={<Precios />} />
               <Route path="/guia-servicios-audiovisuales" element={<GuiaServiciosAudiovisuales />} />
-              <Route path="/licencias-y-seguros" element={<LicenciasSeguros />} />
               <Route path="/glosario" element={<Glosario />} />
               <Route path="/fotografia-:city" element={<FotografiaCiudad />} />
               <Route path="/fotografia-inmobiliaria-:city" element={<ServicioCiudad />} />
