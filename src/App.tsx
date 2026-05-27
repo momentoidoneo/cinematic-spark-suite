@@ -60,6 +60,12 @@ const AdminPricing = lazy(() => import("./pages/admin/AdminPricing"));
 const AdminSEO = lazy(() => import("./pages/admin/AdminSEO"));
 const AdminSEOTechnical = lazy(() => import("./pages/admin/AdminSEOTechnical"));
 const AdminClientLogos = lazy(() => import("./pages/admin/AdminClientLogos"));
+const AdminTestimonials = lazy(() => import("./pages/admin/AdminTestimonials"));
+const AdminCaseStudies = lazy(() => import("./pages/admin/AdminCaseStudies"));
+const AdminQuoteCalculator = lazy(() => import("./pages/admin/AdminQuoteCalculator"));
+const AdminLeadMagnets = lazy(() => import("./pages/admin/AdminLeadMagnets"));
+const CasosEstudio = lazy(() => import("./pages/CasosEstudio"));
+const CasoEstudio = lazy(() => import("./pages/CasoEstudio"));
 
 const RouteFallback = () => (
   <div className="min-h-screen bg-background" aria-label="Cargando" />
@@ -98,6 +104,8 @@ const App = () => (
               <Route path="/precios" element={<Precios />} />
               <Route path="/guia-servicios-audiovisuales" element={<GuiaServiciosAudiovisuales />} />
               <Route path="/glosario" element={<Glosario />} />
+              <Route path="/casos-estudio" element={<CasosEstudio />} />
+              <Route path="/casos-estudio/:slug" element={<CasoEstudio />} />
               <Route path="/fotografia-:city" element={<FotografiaCiudad />} />
               <Route path="/fotografia-inmobiliaria-:city" element={<ServicioCiudad />} />
               <Route path="/fotografia-arquitectura-:city" element={<ServicioCiudad />} />
@@ -134,6 +142,10 @@ const App = () => (
                 <Route path="marketing-tools" element={<AdminMarketingTools />} />
                 <Route path="cities" element={<AdminCities />} />
                 <Route path="client-logos" element={<AdminClientLogos />} />
+                <Route path="testimonials" element={<AdminTestimonials />} />
+                <Route path="case-studies" element={<AdminCaseStudies />} />
+                <Route path="quote-calculator" element={<AdminQuoteCalculator />} />
+                <Route path="lead-magnets" element={<AdminLeadMagnets />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
