@@ -19,6 +19,7 @@ const ServicesSection = lazy(() => import("@/components/ServicesSection"));
 const MatterportSection = lazy(() => import("@/components/MatterportSection"));
 const PortfolioSection = lazy(() => import("@/components/PortfolioSection"));
 const CTASection = lazy(() => import("@/components/CTASection"));
+const ClientLogosStrip = lazy(() => import("@/components/ClientLogosStrip"));
 
 const Index = () => {
   const siteUrl = getSiteUrl();
@@ -56,6 +57,7 @@ const Index = () => {
       <Navbar />
       <HeroSection />
       <Suspense fallback={null}>
+        <ClientLogosStrip />
         <ServicesSection />
         <MatterportSection />
         <PortfolioSection />
