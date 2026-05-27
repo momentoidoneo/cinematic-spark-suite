@@ -223,6 +223,75 @@ export type Database = {
         }
         Relationships: []
       }
+      case_studies: {
+        Row: {
+          after_image: string | null
+          before_image: string | null
+          client: string | null
+          content: string
+          cover_image: string | null
+          created_at: string
+          gallery: Json
+          id: string
+          is_featured: boolean
+          is_published: boolean
+          location: string | null
+          metrics: Json
+          order: number
+          published_at: string | null
+          services: string[]
+          slug: string
+          summary: string | null
+          testimonial_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          after_image?: string | null
+          before_image?: string | null
+          client?: string | null
+          content?: string
+          cover_image?: string | null
+          created_at?: string
+          gallery?: Json
+          id?: string
+          is_featured?: boolean
+          is_published?: boolean
+          location?: string | null
+          metrics?: Json
+          order?: number
+          published_at?: string | null
+          services?: string[]
+          slug: string
+          summary?: string | null
+          testimonial_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          after_image?: string | null
+          before_image?: string | null
+          client?: string | null
+          content?: string
+          cover_image?: string | null
+          created_at?: string
+          gallery?: Json
+          id?: string
+          is_featured?: boolean
+          is_published?: boolean
+          location?: string | null
+          metrics?: Json
+          order?: number
+          published_at?: string | null
+          services?: string[]
+          slug?: string
+          summary?: string | null
+          testimonial_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_logos: {
         Row: {
           created_at: string
@@ -818,6 +887,89 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_magnet_downloads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          lead_magnet_id: string
+          name: string | null
+          source: string | null
+          utm_campaign: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          lead_magnet_id: string
+          name?: string | null
+          source?: string | null
+          utm_campaign?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          lead_magnet_id?: string
+          name?: string | null
+          source?: string | null
+          utm_campaign?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_magnet_downloads_lead_magnet_id_fkey"
+            columns: ["lead_magnet_id"]
+            isOneToOne: false
+            referencedRelation: "lead_magnets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_magnets: {
+        Row: {
+          cover_image: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          order: number
+          pages: number | null
+          pdf_url: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          order?: number
+          pages?: number | null
+          pdf_url: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          order?: number
+          pages?: number | null
+          pdf_url?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       legal_texts: {
         Row: {
           content: string
@@ -1358,6 +1510,57 @@ export type Database = {
           is_active?: boolean
           starts_at?: string | null
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quote_calculator_options: {
+        Row: {
+          base_price: number
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_visible: boolean
+          label: string
+          max_qty: number
+          min_qty: number
+          multiplier: number
+          option_type: string
+          order: number
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_price?: number
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_visible?: boolean
+          label: string
+          max_qty?: number
+          min_qty?: number
+          multiplier?: number
+          option_type?: string
+          order?: number
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_visible?: boolean
+          label?: string
+          max_qty?: number
+          min_qty?: number
+          multiplier?: number
+          option_type?: string
+          order?: number
+          unit?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1956,6 +2159,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      testimonials: {
+        Row: {
+          author_company: string | null
+          author_name: string
+          author_role: string | null
+          avatar_url: string | null
+          content: string
+          created_at: string
+          id: string
+          is_featured: boolean
+          is_visible: boolean
+          order: number
+          rating: number
+          service_tag: string | null
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          author_company?: string | null
+          author_name: string
+          author_role?: string | null
+          avatar_url?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_featured?: boolean
+          is_visible?: boolean
+          order?: number
+          rating?: number
+          service_tag?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          author_company?: string | null
+          author_name?: string
+          author_role?: string | null
+          avatar_url?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_featured?: boolean
+          is_visible?: boolean
+          order?: number
+          rating?: number
+          service_tag?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
