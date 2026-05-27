@@ -223,6 +223,39 @@ export type Database = {
         }
         Relationships: []
       }
+      client_logos: {
+        Row: {
+          created_at: string
+          id: string
+          is_visible: boolean
+          link_url: string | null
+          logo_url: string
+          name: string
+          order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          link_url?: string | null
+          logo_url: string
+          name: string
+          order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          link_url?: string | null
+          logo_url?: string
+          name?: string
+          order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       commercial_clients: {
         Row: {
           address: string | null
