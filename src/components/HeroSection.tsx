@@ -57,7 +57,7 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.5 }}
           className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground"
         >
-          Producción audiovisual integral —imagen, vídeo cinematográfico, dron AESA, tours Matterport, cobertura de eventos y renders arquitectónicos— para inmobiliarias, arquitectura, hoteles, restaurantes y marcas que necesitan generar confianza antes de la primera llamada.
+          Foto, vídeo, dron AESA, tours 360° Matterport, cobertura de eventos y renders 3D bajo un mismo estándar cinematográfico. Para marcas, espacios y proyectos que se juegan la primera impresión.
         </motion.p>
 
         <motion.div
