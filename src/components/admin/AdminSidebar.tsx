@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard, BarChart3, Image, FolderOpen, Layers, HardDrive,
-  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard, Search, Sparkles, MapPin, Rss, Plane, ReceiptText
+  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard, Search, Sparkles, MapPin, Rss, Plane, ReceiptText, Building2
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -46,6 +46,7 @@ const communicationItems = [
 
 const settingsItems = [
   { title: "Landing Page", url: "/admin/landing", icon: Monitor },
+  { title: "Logos Clientes", url: "/admin/client-logos", icon: Building2 },
   { title: "SEO & Meta Tags", url: "/admin/seo", icon: Search },
   { title: "SEO Técnico", url: "/admin/seo-technical", icon: Rss },
   { title: "Ciudades SEO", url: "/admin/cities", icon: MapPin },

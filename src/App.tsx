@@ -59,6 +59,7 @@ const AdminCities = lazy(() => import("./pages/admin/AdminCities"));
 const AdminPricing = lazy(() => import("./pages/admin/AdminPricing"));
 const AdminSEO = lazy(() => import("./pages/admin/AdminSEO"));
 const AdminSEOTechnical = lazy(() => import("./pages/admin/AdminSEOTechnical"));
+const AdminClientLogos = lazy(() => import("./pages/admin/AdminClientLogos"));
 
 const RouteFallback = () => (
   <div className="min-h-screen bg-background" aria-label="Cargando" />
@@ -132,6 +133,7 @@ const App = () => (
                 <Route path="seo-technical" element={<AdminSEOTechnical />} />
                 <Route path="marketing-tools" element={<AdminMarketingTools />} />
                 <Route path="cities" element={<AdminCities />} />
+                <Route path="client-logos" element={<AdminClientLogos />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
