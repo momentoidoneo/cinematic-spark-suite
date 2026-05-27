@@ -71,7 +71,7 @@ const AdminCaseStudies = () => {
       cover_image: form.cover_image || null,
       before_image: form.before_image || null,
       after_image: form.after_image || null,
-      metrics: form.metrics,
+      metrics: form.metrics as unknown as never,
       services: form.services.split(",").map(s => s.trim()).filter(Boolean),
       location: form.location.trim() || null,
       is_featured: form.is_featured,
