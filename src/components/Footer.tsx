@@ -94,6 +94,7 @@ const Footer = () => {
                 { label: "Portafolio", href: "/portafolio" },
                 { label: "Casos de estudio", href: "/casos-estudio" },
                 { label: "Glosario", href: "/glosario" },
+                { label: "Trabaja con nosotros", href: "/trabaja-con-nosotros" },
                 { label: "Contacto", href: "/#contacto" },
               ].map((item) => (
                 <li key={item.label}>

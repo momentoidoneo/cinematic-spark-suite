@@ -7,7 +7,7 @@ import {
   LayoutDashboard, FolderOpen, Layers, Image as ImageIcon, BarChart3, HardDrive,
   Megaphone, Tag, FileText, MessageCircle, Settings, FileSignature, Share2,
   Key, Home, Activity, ArrowRightLeft, Mail, DollarSign, Search, Eye, Camera,
-  Globe, Sparkles, Plane, ReceiptText,
+  Globe, Sparkles, Plane, ReceiptText, UserPlus,
 } from "lucide-react";
 
 interface CommandItemDef {
@@ -43,6 +43,7 @@ const CommandPalette = () => {
     { label: "Solicitudes IA", icon: Sparkles, action: go("/admin/quote-requests"), keywords: "cotizador presupuestos leads" },
     { label: "Presupuestos", icon: ReceiptText, action: go("/admin/quotes"), keywords: "erp iva vies banco presupuestos" },
     { label: "Permisos Dron", icon: Plane, action: go("/admin/drone-permits"), keywords: "uas permisos vuelos enaire aesa" },
+    { label: "Colaboradores", icon: UserPlus, action: go("/admin/collaborators"), keywords: "trabaja con nosotros colaboradores freelance equipo" },
     { label: "SEO", icon: Search, action: go("/admin/seo"), keywords: "metadatos posicionamiento" },
   ];
   const portfolio: CommandItemDef[] = [

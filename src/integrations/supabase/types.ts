@@ -599,6 +599,84 @@ export type Database = {
         }
         Relationships: []
       }
+      collaborator_applications: {
+        Row: {
+          address: string
+          camera_360: string
+          cameras: string[]
+          city: string
+          comments: string | null
+          country: string
+          created_at: string
+          drones: string[]
+          email: string
+          full_name: string
+          has_gimbal: boolean
+          id: string
+          internal_notes: string | null
+          is_read: boolean
+          lenses: string[]
+          matterport_compatible: boolean
+          offers_video: boolean
+          phone: string
+          privacy_accepted: boolean
+          privacy_accepted_at: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string
+          camera_360?: string
+          cameras?: string[]
+          city?: string
+          comments?: string | null
+          country?: string
+          created_at?: string
+          drones?: string[]
+          email: string
+          full_name: string
+          has_gimbal?: boolean
+          id?: string
+          internal_notes?: string | null
+          is_read?: boolean
+          lenses?: string[]
+          matterport_compatible?: boolean
+          offers_video?: boolean
+          phone?: string
+          privacy_accepted?: boolean
+          privacy_accepted_at?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          camera_360?: string
+          cameras?: string[]
+          city?: string
+          comments?: string | null
+          country?: string
+          created_at?: string
+          drones?: string[]
+          email?: string
+          full_name?: string
+          has_gimbal?: boolean
+          id?: string
+          internal_notes?: string | null
+          is_read?: boolean
+          lenses?: string[]
+          matterport_compatible?: boolean
+          offers_video?: boolean
+          phone?: string
+          privacy_accepted?: boolean
+          privacy_accepted_at?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string

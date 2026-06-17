@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard, BarChart3, Image, FolderOpen, Layers, HardDrive,
-  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard, Search, Sparkles, MapPin, Rss, Plane, ReceiptText, Building2, Quote, BookOpen, Calculator, Download
+  Megaphone, Tag, FileText, MessageCircle, Settings, Scale, Share2, Key, Monitor, Target, ArrowRightLeft, Mail, CreditCard, Search, Sparkles, MapPin, Rss, Plane, ReceiptText, Building2, Quote, BookOpen, Calculator, Download, UserPlus
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,6 +43,7 @@ const communicationItems = [
   { title: "Solicitudes IA", url: "/admin/quote-requests", icon: Sparkles },
   { title: "Presupuestos", url: "/admin/quotes", icon: ReceiptText },
   { title: "Permisos Dron", url: "/admin/drone-permits", icon: Plane },
+  { title: "Colaboradores", url: "/admin/collaborators", icon: UserPlus },
   { title: "Chats WhatsApp", url: "/admin/whatsapp-chats", icon: MessageCircle },
   { title: "Config. WhatsApp", url: "/admin/whatsapp-config", icon: Settings },
 ];
@@ -115,10 +116,11 @@ const AdminSidebar = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadQuoteCount, setUnreadQuoteCount] = useState(0);
   const [activeDronePermitCount, setActiveDronePermitCount] = useState(0);
+  const [unreadCollaboratorCount, setUnreadCollaboratorCount] = useState(0);
 
   useEffect(() => {
     const fetchUnread = async () => {
-      const [messages, quotes, dronePermits] = await Promise.all([
+      const [messages, quotes, dronePermits, collaborators] = await Promise.all([
         supabase
           .from("contact_messages")
           .select("*", { count: "exact", head: true })
@@ -131,10 +133,15 @@ const AdminSidebar = () => {
           .from("drone_permit_requests")
           .select("*", { count: "exact", head: true })
           .not("status", "in", "(completed,rejected)"),
+        supabase
+          .from("collaborator_applications")
+          .select("*", { count: "exact", head: true })
+          .eq("is_read", false),
       ]);
       setUnreadCount(messages.count || 0);
       setUnreadQuoteCount(quotes.count || 0);
       setActiveDronePermitCount(dronePermits.count || 0);
+      setUnreadCollaboratorCount(collaborators.count || 0);
     };
     fetchUnread();
 
@@ -188,6 +195,18 @@ const AdminSidebar = () => {
       )
       .on(
         "postgres_changes",
+        { event: "INSERT", schema: "public", table: "collaborator_applications" },
+        (payload) => {
+          fetchUnread();
+          const collaborator = payload.new as { full_name?: string; email?: string };
+          toast({
+            title: "Nueva solicitud de colaborador",
+            description: `${collaborator.full_name ?? "Colaborador"} · ${collaborator.email ?? ""}`,
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
         { event: "UPDATE", schema: "public", table: "contact_messages" },
         () => fetchUnread()
       )
@@ -199,6 +218,11 @@ const AdminSidebar = () => {
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "drone_permit_requests" },
+        () => fetchUnread()
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "collaborator_applications" },
         () => fetchUnread()
       )
       .on(
@@ -216,6 +240,11 @@ const AdminSidebar = () => {
         { event: "DELETE", schema: "public", table: "drone_permit_requests" },
         () => fetchUnread()
       )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "collaborator_applications" },
+        () => fetchUnread()
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -225,6 +254,7 @@ const AdminSidebar = () => {
     "/admin/messages": unreadCount,
     "/admin/quote-requests": unreadQuoteCount,
     "/admin/drone-permits": activeDronePermitCount,
+    "/admin/collaborators": unreadCollaboratorCount,
   };
 
   return (

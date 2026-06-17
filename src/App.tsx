@@ -31,6 +31,7 @@ const Legal = lazy(() => import("./pages/Legal"));
 const Precios = lazy(() => import("./pages/Precios"));
 const GuiaServiciosAudiovisuales = lazy(() => import("./pages/GuiaServiciosAudiovisuales"));
 const Glosario = lazy(() => import("./pages/Glosario"));
+const WorkWithUs = lazy(() => import("./pages/WorkWithUs"));
 
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -54,6 +55,7 @@ const AdminMessages = lazy(() => import("./pages/admin/AdminMessages"));
 const AdminQuoteRequests = lazy(() => import("./pages/admin/AdminQuoteRequests"));
 const AdminCommercialQuotes = lazy(() => import("./pages/admin/AdminCommercialQuotes"));
 const AdminDronePermits = lazy(() => import("./pages/admin/AdminDronePermits"));
+const AdminCollaborators = lazy(() => import("./pages/admin/AdminCollaborators"));
 const AdminMarketingTools = lazy(() => import("./pages/admin/AdminMarketingTools"));
 const AdminCities = lazy(() => import("./pages/admin/AdminCities"));
 const AdminPricing = lazy(() => import("./pages/admin/AdminPricing"));
@@ -102,6 +104,7 @@ const App = () => (
               <Route path="/servicios/eventos" element={<ServicioEventos />} />
               <Route path="/servicios/renders" element={<ServicioRenders />} />
               <Route path="/precios" element={<Precios />} />
+              <Route path="/trabaja-con-nosotros" element={<WorkWithUs />} />
               <Route path="/guia-servicios-audiovisuales" element={<GuiaServiciosAudiovisuales />} />
               <Route path="/glosario" element={<Glosario />} />
               <Route path="/casos-estudio" element={<CasosEstudio />} />
@@ -136,6 +139,7 @@ const App = () => (
                 <Route path="quote-requests" element={<AdminQuoteRequests />} />
                 <Route path="quotes" element={<AdminCommercialQuotes />} />
                 <Route path="drone-permits" element={<AdminDronePermits />} />
+                <Route path="collaborators" element={<AdminCollaborators />} />
                 <Route path="pricing" element={<AdminPricing />} />
                 <Route path="seo" element={<AdminSEO />} />
                 <Route path="seo-technical" element={<AdminSEOTechnical />} />

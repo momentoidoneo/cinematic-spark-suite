@@ -31,6 +31,7 @@ const staticNavItems: NavItem[] = [
   },
   { label: "Precios", href: "/precios", isAnchor: false },
   { label: "Blog", href: "/blog", isAnchor: false },
+  { label: "Trabaja con nosotros", href: "/trabaja-con-nosotros", isAnchor: false },
   { label: "Contacto", href: "/#contacto", isAnchor: true },
 ];
 
@@ -292,7 +293,7 @@ const Navbar = () => {
         <div className="lg:hidden w-10" /> {/* spacer for symmetry */}
 
         {/* Desktop */}
-        <div className="hidden lg:flex items-center gap-5">
+        <div className="hidden lg:flex items-center gap-3">
           {navItems.map((item) => (
             <DesktopDropdown
               key={item.label}
