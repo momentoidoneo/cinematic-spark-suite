@@ -1,10 +1,18 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import {
+  callLovableChat,
+  getAssistantText,
+  parseJsonFromText,
+} from "../_shared/lovableAi.ts";
 
-declare const EdgeRuntime: { waitUntil?: (promise: Promise<unknown>) => void } | undefined;
+declare const EdgeRuntime:
+  | { waitUntil?: (promise: Promise<unknown>) => void }
+  | undefined;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -82,7 +90,33 @@ interface ERPSettingsRow {
 const MODEL = "google/gemini-2.5-flash";
 
 const EU_COUNTRY_CODES = new Set([
-  "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK",
+  "AT",
+  "BE",
+  "BG",
+  "CY",
+  "CZ",
+  "DE",
+  "DK",
+  "EE",
+  "EL",
+  "ES",
+  "FI",
+  "FR",
+  "HR",
+  "HU",
+  "IE",
+  "IT",
+  "LT",
+  "LU",
+  "LV",
+  "MT",
+  "NL",
+  "PL",
+  "PT",
+  "RO",
+  "SE",
+  "SI",
+  "SK",
 ]);
 
 const EU_COUNTRY_NAMES: Record<string, string> = {
@@ -116,33 +150,125 @@ const EU_COUNTRY_NAMES: Record<string, string> = {
 };
 
 const DEFAULT_PRICING_REFERENCES: PricingReference[] = [
-  { name: "Fotografía inmobiliaria estándar", category: "Fotografía", description: "Sesión para vivienda estándar.", price: 180, priceSuffix: "/inmueble", source: "default" },
-  { name: "Fotografía inmobiliaria premium", category: "Fotografía", description: "Cobertura ampliada para inmuebles de alto valor.", price: 280, priceSuffix: "/inmueble", source: "default" },
-  { name: "Fotografía de arquitectura e interiorismo", category: "Fotografía", description: "Reportaje para arquitectura, interiorismo y espacios comerciales.", price: 350, priceSuffix: "/sesión", source: "default" },
-  { name: "Vídeo inmobiliario", category: "Vídeo y dron", description: "Pieza audiovisual para venta o alquiler.", price: 450, priceSuffix: "/inmueble", source: "default" },
-  { name: "Vídeo corporativo", category: "Vídeo y dron", description: "Vídeo para presentar empresa, equipo, instalaciones o servicio.", price: 800, priceSuffix: "/proyecto", source: "default" },
-  { name: "Grabación aérea con dron", category: "Vídeo y dron", description: "Tomas aéreas profesionales en 4K.", price: 350, priceSuffix: "/sesión", source: "default" },
-  { name: "Tour virtual Matterport hasta 200 m²", category: "Tours virtuales y 360", description: "Escaneo Matterport para espacio pequeño.", price: 250, priceSuffix: "/espacio", source: "default" },
-  { name: "Tour virtual Matterport 200-500 m²", category: "Tours virtuales y 360", description: "Recorrido virtual para espacios medianos.", price: 450, priceSuffix: "/espacio", source: "default" },
-  { name: "Render 3D fotorrealista", category: "Renders y 3D", description: "Imagen 3D para arquitectura, interiorismo o producto.", price: 180, priceSuffix: "/imagen", source: "default" },
-  { name: "Streaming profesional básico", category: "Streaming y eventos", description: "Retransmisión sencilla para eventos.", price: 600, priceSuffix: "/evento", source: "default" },
-  { name: "Fotografía de eventos 4 horas", category: "Fotografía", description: "Cobertura fotográfica de evento corto.", price: 400, priceSuffix: "/evento", source: "default" },
-  { name: "Fotografía de eventos día completo", category: "Fotografía", description: "Cobertura fotográfica extendida.", price: 800, priceSuffix: "/evento", source: "default" },
+  {
+    name: "Fotografía inmobiliaria estándar",
+    category: "Fotografía",
+    description: "Sesión para vivienda estándar.",
+    price: 180,
+    priceSuffix: "/inmueble",
+    source: "default",
+  },
+  {
+    name: "Fotografía inmobiliaria premium",
+    category: "Fotografía",
+    description: "Cobertura ampliada para inmuebles de alto valor.",
+    price: 280,
+    priceSuffix: "/inmueble",
+    source: "default",
+  },
+  {
+    name: "Fotografía de arquitectura e interiorismo",
+    category: "Fotografía",
+    description:
+      "Reportaje para arquitectura, interiorismo y espacios comerciales.",
+    price: 350,
+    priceSuffix: "/sesión",
+    source: "default",
+  },
+  {
+    name: "Vídeo inmobiliario",
+    category: "Vídeo y dron",
+    description: "Pieza audiovisual para venta o alquiler.",
+    price: 450,
+    priceSuffix: "/inmueble",
+    source: "default",
+  },
+  {
+    name: "Vídeo corporativo",
+    category: "Vídeo y dron",
+    description:
+      "Vídeo para presentar empresa, equipo, instalaciones o servicio.",
+    price: 800,
+    priceSuffix: "/proyecto",
+    source: "default",
+  },
+  {
+    name: "Grabación aérea con dron",
+    category: "Vídeo y dron",
+    description: "Tomas aéreas profesionales en 4K.",
+    price: 350,
+    priceSuffix: "/sesión",
+    source: "default",
+  },
+  {
+    name: "Tour virtual Matterport hasta 200 m²",
+    category: "Tours virtuales y 360",
+    description: "Escaneo Matterport para espacio pequeño.",
+    price: 250,
+    priceSuffix: "/espacio",
+    source: "default",
+  },
+  {
+    name: "Tour virtual Matterport 200-500 m²",
+    category: "Tours virtuales y 360",
+    description: "Recorrido virtual para espacios medianos.",
+    price: 450,
+    priceSuffix: "/espacio",
+    source: "default",
+  },
+  {
+    name: "Render 3D fotorrealista",
+    category: "Renders y 3D",
+    description: "Imagen 3D para arquitectura, interiorismo o producto.",
+    price: 180,
+    priceSuffix: "/imagen",
+    source: "default",
+  },
+  {
+    name: "Streaming profesional básico",
+    category: "Streaming y eventos",
+    description: "Retransmisión sencilla para eventos.",
+    price: 600,
+    priceSuffix: "/evento",
+    source: "default",
+  },
+  {
+    name: "Fotografía de eventos 4 horas",
+    category: "Fotografía",
+    description: "Cobertura fotográfica de evento corto.",
+    price: 400,
+    priceSuffix: "/evento",
+    source: "default",
+  },
+  {
+    name: "Fotografía de eventos día completo",
+    category: "Fotografía",
+    description: "Cobertura fotográfica extendida.",
+    price: 800,
+    priceSuffix: "/evento",
+    source: "default",
+  },
 ];
 
 const buildSystemPrompt = (pricingReferences: PricingReference[]) => {
   const pricingContext = pricingReferences.length > 0
     ? pricingReferences
-        .slice(0, 12)
-        .map((item) => {
-          const suffix = item.priceSuffix ? ` ${item.priceSuffix}` : "";
-          const category = item.category ? ` (${item.category})` : "";
-          return `- ${item.name}${category}: desde ${item.price} €${suffix}${item.description ? ` — ${item.description}` : ""}`;
-        })
-        .join("\n")
+      .slice(0, 12)
+      .map((item) => {
+        const suffix = item.priceSuffix ? ` ${item.priceSuffix}` : "";
+        const category = item.category ? ` (${item.category})` : "";
+        return `- ${item.name}${category}: desde ${item.price} €${suffix}${
+          item.description ? ` — ${item.description}` : ""
+        }`;
+      })
+      .join("\n")
     : DEFAULT_PRICING_REFERENCES.slice(0, 10)
-        .map((item) => `- ${item.name}: desde ${item.price} €${item.priceSuffix ? ` ${item.priceSuffix}` : ""}`)
-        .join("\n");
+      .map((item) =>
+        `- ${item.name}: desde ${item.price} €${
+          item.priceSuffix ? ` ${item.priceSuffix}` : ""
+        }`
+      )
+      .join("\n");
 
   return `Eres el asistente de presupuestos de Silvio Costa Photography (silviocosta.net), estudio profesional de fotografía, vídeo, dron, tours virtuales Matterport, eventos y renders 3D con base en Portugal/España.
 
@@ -177,7 +303,8 @@ const cleanText = (value: unknown, max = 500) =>
 const isValidEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254;
 
-const roundAmount = (value: number) => Math.max(90, Math.round(value / 10) * 10);
+const roundAmount = (value: number) =>
+  Math.max(90, Math.round(value / 10) * 10);
 
 const normalize = (value: string) =>
   value
@@ -188,29 +315,38 @@ const normalize = (value: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
-const cleanVat = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+const cleanVat = (value: string) =>
+  value.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
-const countryLabel = (code = "PT") => EU_COUNTRY_NAMES[code.toUpperCase()] || code.toUpperCase();
+const countryLabel = (code = "PT") =>
+  EU_COUNTRY_NAMES[code.toUpperCase()] || code.toUpperCase();
 
 const splitVatNumber = (rawVat: string, fallbackCountry = "PT") => {
   const cleaned = cleanVat(rawVat);
   const fallback = cleanVat(fallbackCountry).slice(0, 2) || "PT";
-  const countryCode = /^[A-Z]{2}/.test(cleaned) ? cleaned.slice(0, 2) : fallback;
+  const countryCode = /^[A-Z]{2}/.test(cleaned)
+    ? cleaned.slice(0, 2)
+    : fallback;
   const vatNumber = /^[A-Z]{2}/.test(cleaned) ? cleaned.slice(2) : cleaned;
   return { countryCode, vatNumber };
 };
 
 const xmlValue = (xml: string, tag: string) => {
-  const match = xml.match(new RegExp(`<(?:\\w+:)?${tag}>([\\s\\S]*?)</(?:\\w+:)?${tag}>`, "i"));
+  const match = xml.match(
+    new RegExp(`<(?:\\w+:)?${tag}>([\\s\\S]*?)</(?:\\w+:)?${tag}>`, "i"),
+  );
   return match?.[1]
     ?.replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, "\"")
+    .replace(/&quot;/g, '"')
     .trim() || "";
 };
 
-const checkVies = async (rawVat: string, fallbackCountry = "PT"): Promise<ViesCheckResult> => {
+const checkVies = async (
+  rawVat: string,
+  fallbackCountry = "PT",
+): Promise<ViesCheckResult> => {
   const { countryCode, vatNumber } = splitVatNumber(rawVat, fallbackCountry);
   const fallback: ViesCheckResult = {
     valid: null,
@@ -221,7 +357,9 @@ const checkVies = async (rawVat: string, fallbackCountry = "PT"): Promise<ViesCh
     checked: false,
   };
 
-  if (!countryCode || !vatNumber || !EU_COUNTRY_CODES.has(countryCode)) return fallback;
+  if (!countryCode || !vatNumber || !EU_COUNTRY_CODES.has(countryCode)) {
+    return fallback;
+  }
 
   try {
     const envelope = `<?xml version="1.0" encoding="UTF-8"?>
@@ -235,18 +373,25 @@ const checkVies = async (rawVat: string, fallbackCountry = "PT"): Promise<ViesCh
         </soapenv:Body>
       </soapenv:Envelope>`;
 
-    const response = await fetch("https://ec.europa.eu/taxation_customs/vies/services/checkVatService", {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/xml; charset=utf-8",
-        SOAPAction: "",
+    const response = await fetch(
+      "https://ec.europa.eu/taxation_customs/vies/services/checkVatService",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/xml; charset=utf-8",
+          SOAPAction: "",
+        },
+        body: envelope,
       },
-      body: envelope,
-    });
+    );
     const xml = await response.text();
 
     if (!response.ok || xml.includes("<Fault>") || xml.includes(":Fault>")) {
-      console.error("[generate-quote] VIES validation failed:", response.status, xmlValue(xml, "faultstring"));
+      console.error(
+        "[generate-quote] VIES validation failed:",
+        response.status,
+        xmlValue(xml, "faultstring"),
+      );
       return fallback;
     }
 
@@ -266,7 +411,9 @@ const checkVies = async (rawVat: string, fallbackCountry = "PT"): Promise<ViesCh
 
 const serviceSignals = (body: QuoteRequest) => {
   const text = normalize(`${body.service} ${body.scope} ${body.details || ""}`);
-  if (text.includes("matterport") || text.includes("tour") || text.includes("360")) {
+  if (
+    text.includes("matterport") || text.includes("tour") || text.includes("360")
+  ) {
     return ["matterport", "tour", "360", "plano", "street view", "espacio"];
   }
   if (text.includes("stream") || text.includes("directo")) {
@@ -275,21 +422,39 @@ const serviceSignals = (body: QuoteRequest) => {
   if (text.includes("render") || text.includes("3d")) {
     return ["render", "3d", "visualizacion", "modelo"];
   }
-  if (text.includes("dron") || text.includes("aereo") || text.includes("aerea")) {
+  if (
+    text.includes("dron") || text.includes("aereo") || text.includes("aerea")
+  ) {
     return ["dron", "aereo", "fotogrametria", "video"];
   }
-  if (text.includes("video") || text.includes("reel") || text.includes("spot")) {
+  if (
+    text.includes("video") || text.includes("reel") || text.includes("spot")
+  ) {
     return ["video", "reel", "spot", "corporativo", "inmobiliario"];
   }
-  if (text.includes("evento") || text.includes("boda") || text.includes("congreso") || text.includes("feria")) {
+  if (
+    text.includes("evento") || text.includes("boda") ||
+    text.includes("congreso") || text.includes("feria")
+  ) {
     return ["evento", "boda", "congreso", "feria", "streaming"];
   }
-  return ["fotografia", "producto", "gastronomia", "arquitectura", "inmobiliaria", "retrato"];
+  return [
+    "fotografia",
+    "producto",
+    "gastronomia",
+    "arquitectura",
+    "inmobiliaria",
+    "retrato",
+  ];
 };
 
 const scorePricingReference = (body: QuoteRequest, item: PricingReference) => {
-  const text = normalize(`${item.name} ${item.category || ""} ${item.description || ""}`);
-  const input = normalize(`${body.service} ${body.scope} ${body.details || ""}`);
+  const text = normalize(
+    `${item.name} ${item.category || ""} ${item.description || ""}`,
+  );
+  const input = normalize(
+    `${body.service} ${body.scope} ${body.details || ""}`,
+  );
   const signals = serviceSignals(body);
   let score = 0;
 
@@ -309,7 +474,10 @@ const scorePricingReference = (body: QuoteRequest, item: PricingReference) => {
   return score;
 };
 
-const matchPricingReferences = (body: QuoteRequest, catalog: PricingReference[]) => {
+const matchPricingReferences = (
+  body: QuoteRequest,
+  catalog: PricingReference[],
+) => {
   const scored = catalog
     .map((item) => ({ item, score: scorePricingReference(body, item) }))
     .filter(({ score }) => score > 0)
@@ -336,7 +504,9 @@ const loadPricingCatalog = async (): Promise<PricingReference[]> => {
     const [plansRes, servicesRes] = await Promise.all([
       supabase
         .from("pricing_plans")
-        .select("name,description,price,price_suffix,features,is_highlighted,show_from,order")
+        .select(
+          "name,description,price,price_suffix,features,is_highlighted,show_from,order",
+        )
         .eq("is_visible", true)
         .order("order"),
       supabase
@@ -346,8 +516,18 @@ const loadPricingCatalog = async (): Promise<PricingReference[]> => {
         .order("order"),
     ]);
 
-    if (plansRes.error) console.error("[generate-quote] pricing_plans read error:", plansRes.error);
-    if (servicesRes.error) console.error("[generate-quote] pricing_services read error:", servicesRes.error);
+    if (plansRes.error) {
+      console.error(
+        "[generate-quote] pricing_plans read error:",
+        plansRes.error,
+      );
+    }
+    if (servicesRes.error) {
+      console.error(
+        "[generate-quote] pricing_services read error:",
+        servicesRes.error,
+      );
+    }
 
     const planReferences = ((plansRes.data || []) as PricingPlanRow[])
       .map((plan) => {
@@ -356,7 +536,8 @@ const loadPricingCatalog = async (): Promise<PricingReference[]> => {
         return {
           name: plan.name,
           category: "Plan",
-          description: plan.description || plan.features?.slice(0, 2).join(". ") || null,
+          description: plan.description ||
+            plan.features?.slice(0, 2).join(". ") || null,
           price,
           priceSuffix: plan.price_suffix,
           source: "plan" as const,
@@ -386,9 +567,14 @@ const loadPricingCatalog = async (): Promise<PricingReference[]> => {
   }
 };
 
-const getBaseRange = (service: string, pricingReferences: PricingReference[] = []): [number, number] => {
+const getBaseRange = (
+  service: string,
+  pricingReferences: PricingReference[] = [],
+): [number, number] => {
   if (pricingReferences.length > 0) {
-    const prices = pricingReferences.map((item) => item.price).filter((price) => Number.isFinite(price));
+    const prices = pricingReferences.map((item) => item.price).filter((price) =>
+      Number.isFinite(price)
+    );
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     return [
@@ -414,10 +600,19 @@ const scopeMultiplier = (scope: string, service: string) => {
     .filter((n) => Number.isFinite(n));
   const maxNumber = numbers.length ? Math.max(...numbers) : 0;
 
-  if ((s.includes("m2") || s.includes("m²") || s.includes("metros")) && maxNumber > 500) return 2.2;
-  if ((s.includes("m2") || s.includes("m²") || s.includes("metros")) && maxNumber > 250) return 1.55;
+  if (
+    (s.includes("m2") || s.includes("m²") || s.includes("metros")) &&
+    maxNumber > 500
+  ) return 2.2;
+  if (
+    (s.includes("m2") || s.includes("m²") || s.includes("metros")) &&
+    maxNumber > 250
+  ) return 1.55;
   if ((s.includes("hora") || s.includes("h")) && maxNumber >= 8) return 1.75;
-  if ((s.includes("render") || s.includes("foto") || s.includes("pieza")) && maxNumber >= 10) return 1.7;
+  if (
+    (s.includes("render") || s.includes("foto") || s.includes("pieza")) &&
+    maxNumber >= 10
+  ) return 1.7;
   if (maxNumber >= 5) return 1.25;
   return 1;
 };
@@ -429,15 +624,21 @@ const urgencyMultiplier = (urgency: string) => {
   return 1;
 };
 
-const buildFallbackQuote = (body: QuoteRequest, pricingReferences: PricingReference[] = []): QuoteResult => {
+const buildFallbackQuote = (
+  body: QuoteRequest,
+  pricingReferences: PricingReference[] = [],
+): QuoteResult => {
   const [baseMin, baseMax] = getBaseRange(body.service, pricingReferences);
-  const multiplier = scopeMultiplier(body.scope, body.service) * urgencyMultiplier(body.urgency);
+  const multiplier = scopeMultiplier(body.scope, body.service) *
+    urgencyMultiplier(body.urgency);
   const min = roundAmount(baseMin * multiplier);
   const max = Math.max(min + 80, roundAmount(baseMax * multiplier));
-  const referenceNames = pricingReferences.slice(0, 3).map((item) => item.name).join(", ");
-  const pricingSource = pricingReferences.some((item) => item.source !== "default")
-    ? "admin-pricing"
-    : "default-rules";
+  const referenceNames = pricingReferences.slice(0, 3).map((item) => item.name)
+    .join(", ");
+  const pricingSource =
+    pricingReferences.some((item) => item.source !== "default")
+      ? "admin-pricing"
+      : "default-rules";
 
   const includes = [
     "Preparación del proyecto y revisión de necesidades",
@@ -449,29 +650,18 @@ const buildFallbackQuote = (body: QuoteRequest, pricingReferences: PricingRefere
   return {
     min,
     max,
-    summary: `Para ${body.service.toLowerCase()} en ${body.location}, el alcance indicado encaja en una producción personalizada con entrega profesional.`,
+    summary:
+      `Para ${body.service.toLowerCase()} en ${body.location}, el alcance indicado encaja en una producción personalizada con entrega profesional.`,
     includes,
     notes: referenceNames
       ? `Referencia usada del panel: ${referenceNames}. El precio final puede variar por desplazamiento, urgencia, derechos de uso, número de piezas finales o postproducción.`
       : "El precio final puede variar por desplazamiento, urgencia, derechos de uso, número de piezas finales o necesidades de postproducción.",
-    whatsappMessage: `Hola Silvio, acabo de usar el cotizador IA para ${body.service} en ${body.location}. Me gustaría confirmar disponibilidad y presupuesto para: ${body.scope}.`,
+    whatsappMessage:
+      `Hola Silvio, acabo de usar el cotizador IA para ${body.service} en ${body.location}. Me gustaría confirmar disponibilidad y presupuesto para: ${body.scope}.`,
     source: "fallback",
     pricingSource,
     pricingReferences,
   };
-};
-
-const extractJson = (content: string) => {
-  try {
-    return JSON.parse(content);
-  } catch {
-    const start = content.indexOf("{");
-    const end = content.lastIndexOf("}");
-    if (start >= 0 && end > start) {
-      return JSON.parse(content.slice(start, end + 1));
-    }
-    throw new Error("La IA no devolvió JSON válido");
-  }
 };
 
 const normalizeQuote = (value: unknown, fallback: QuoteResult): QuoteResult => {
@@ -485,17 +675,24 @@ const normalizeQuote = (value: unknown, fallback: QuoteResult): QuoteResult => {
     max: Math.max(roundAmount(min), roundAmount(max)),
     summary: cleanText(data.summary, 500) || fallback.summary,
     includes: Array.isArray(data.includes)
-      ? data.includes.map((item) => cleanText(item, 180)).filter(Boolean).slice(0, 5)
+      ? data.includes.map((item) => cleanText(item, 180)).filter(Boolean).slice(
+        0,
+        5,
+      )
       : fallback.includes,
     notes: cleanText(data.notes, 500) || fallback.notes,
-    whatsappMessage: cleanText(data.whatsappMessage, 900) || fallback.whatsappMessage,
+    whatsappMessage: cleanText(data.whatsappMessage, 900) ||
+      fallback.whatsappMessage,
     source: "ai",
     pricingSource: fallback.pricingSource,
     pricingReferences: fallback.pricingReferences,
   };
 };
 
-const generateWithAI = async (body: QuoteRequest, fallback: QuoteResult): Promise<QuoteResult> => {
+const generateWithAI = async (
+  body: QuoteRequest,
+  fallback: QuoteResult,
+): Promise<QuoteResult> => {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) return fallback;
 
@@ -504,37 +701,32 @@ const generateWithAI = async (body: QuoteRequest, fallback: QuoteResult): Promis
 - Alcance/Tamaño: ${body.scope}
 - Ubicación: ${body.location}
 - Urgencia: ${body.urgency}
-- País fiscal: ${body.countryCode || "PT"} ${body.countryName ? `· ${body.countryName}` : ""}
+- País fiscal: ${body.countryCode || "PT"} ${
+    body.countryName ? `· ${body.countryName}` : ""
+  }
 - NIF/CIF/VAT: ${body.vatNumber || "No indicado"}
 ${body.details ? `- Detalles adicionales: ${body.details}` : ""}
 
 Genera el presupuesto orientativo en JSON.`;
 
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  try {
+    const data = await callLovableChat(LOVABLE_API_KEY, {
       model: MODEL,
       messages: [
-        { role: "system", content: buildSystemPrompt(fallback.pricingReferences || []) },
+        {
+          role: "system",
+          content: buildSystemPrompt(fallback.pricingReferences || []),
+        },
         { role: "user", content: userPrompt },
       ],
       response_format: { type: "json_object" },
-    }),
-  });
-
-  if (!response.ok) {
-    const txt = await response.text();
-    console.error("[generate-quote] AI fallback:", response.status, txt.slice(0, 300));
+    });
+    const content = getAssistantText(data) || "{}";
+    return normalizeQuote(parseJsonFromText(content, "object"), fallback);
+  } catch (error) {
+    console.error("[generate-quote] AI fallback:", error);
     return fallback;
   }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || "{}";
-  return normalizeQuote(extractJson(content), fallback);
 };
 
 const saveQuoteRequest = async (body: QuoteRequest, quote: QuoteResult) => {
@@ -563,12 +755,16 @@ const saveQuoteRequest = async (body: QuoteRequest, quote: QuoteResult) => {
     request_payload: body,
     response_payload: quote,
     source: "smart_quoter",
-    ai_provider: quote.source === "ai" ? "lovable-ai-gateway" : "internal-estimator",
+    ai_provider: quote.source === "ai"
+      ? "lovable-ai-gateway"
+      : "internal-estimator",
     ai_model: quote.source === "ai"
-      ? `${MODEL}${quote.pricingSource === "admin-pricing" ? " + admin-pricing" : ""}`
+      ? `${MODEL}${
+        quote.pricingSource === "admin-pricing" ? " + admin-pricing" : ""
+      }`
       : quote.pricingSource === "admin-pricing"
-        ? "pricing-table-v2"
-        : "pricing-rules-v1",
+      ? "pricing-table-v2"
+      : "pricing-rules-v1",
   };
 
   const query = supabase.from("quote_requests").insert(payload);
@@ -595,11 +791,20 @@ const saveQuoteRequest = async (body: QuoteRequest, quote: QuoteResult) => {
 };
 
 const needsDronePermitWorkflow = (body: QuoteRequest, quote: QuoteResult) => {
-  const text = normalize(`${body.service} ${body.scope} ${body.details || ""} ${quote.pricingReferences?.map((item) => item.name).join(" ") || ""}`);
-  return text.includes("dron") || text.includes("aereo") || text.includes("aerea") || text.includes("uas");
+  const text = normalize(
+    `${body.service} ${body.scope} ${body.details || ""} ${
+      quote.pricingReferences?.map((item) => item.name).join(" ") || ""
+    }`,
+  );
+  return text.includes("dron") || text.includes("aereo") ||
+    text.includes("aerea") || text.includes("uas");
 };
 
-const createDronePermitRequest = async (body: QuoteRequest, quote: QuoteResult, requestId: string | null) => {
+const createDronePermitRequest = async (
+  body: QuoteRequest,
+  quote: QuoteResult,
+  requestId: string | null,
+) => {
   if (!requestId || !needsDronePermitWorkflow(body, quote)) return;
 
   const url = Deno.env.get("SUPABASE_URL");
@@ -619,14 +824,22 @@ const createDronePermitRequest = async (body: QuoteRequest, quote: QuoteResult, 
       operation_address: body.location,
       requested_time_window: body.urgency,
       status: "needs_data",
-      priority: body.urgency.toLowerCase().includes("semana") ? "urgent" : "normal",
+      priority: body.urgency.toLowerCase().includes("semana")
+        ? "urgent"
+        : "normal",
       operation_category: "pending_review",
       source: "smart_quoter",
       internal_notes: body.details || null,
-      risk_notes: "Creado automáticamente desde el cotizador IA. Requiere revisión humana de zona, categoría operacional, documentación y coordinación antes de confirmar el vuelo.",
+      risk_notes:
+        "Creado automáticamente desde el cotizador IA. Requiere revisión humana de zona, categoría operacional, documentación y coordinación antes de confirmar el vuelo.",
     });
 
-    if (error) console.error("[generate-quote] drone_permit_requests insert error:", error);
+    if (error) {
+      console.error(
+        "[generate-quote] drone_permit_requests insert error:",
+        error,
+      );
+    }
   } catch (error) {
     console.error("[generate-quote] drone permit workflow unavailable:", error);
   }
@@ -637,11 +850,13 @@ const roundCurrency = (value: number) => Math.round(value * 100) / 100;
 const commercialQuoteNumber = (settings: ERPSettingsRow) => {
   const prefix = settings.quote_prefix || "SC";
   const next = Number(settings.next_quote_number || 1);
-  return `${prefix}-${new Date().getFullYear()}-${String(next).padStart(4, "0")}`;
+  return `${prefix}-${new Date().getFullYear()}-${
+    String(next).padStart(4, "0")
+  }`;
 };
 
 const findOrCreateCommercialClient = async (
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   body: QuoteRequest,
   vies: ViesCheckResult,
   clientCountryCode: string,
@@ -687,7 +902,10 @@ const findOrCreateCommercialClient = async (
     };
 
     if (existingId) {
-      await supabase.from("commercial_clients").update(payload).eq("id", existingId);
+      await supabase.from("commercial_clients").update(payload).eq(
+        "id",
+        existingId,
+      );
       return existingId;
     }
 
@@ -702,14 +920,22 @@ const findOrCreateCommercialClient = async (
     }
     return data?.id || null;
   } catch (error) {
-    console.error("[generate-quote] commercial client sync unavailable:", error);
+    console.error(
+      "[generate-quote] commercial client sync unavailable:",
+      error,
+    );
     return null;
   }
 };
 
-const commercialVatDecision = (settings: ERPSettingsRow, body: QuoteRequest, vies: ViesCheckResult) => {
+const commercialVatDecision = (
+  settings: ERPSettingsRow,
+  body: QuoteRequest,
+  vies: ViesCheckResult,
+) => {
   const supplierCountry = (settings.country_code || "PT").toUpperCase();
-  const clientCountry = (body.countryCode || vies.countryCode || "PT").toUpperCase();
+  const clientCountry = (body.countryCode || vies.countryCode || "PT")
+    .toUpperCase();
   const standardRate = Number(settings.default_vat_rate || 23);
 
   if (clientCountry === supplierCountry) {
@@ -720,7 +946,8 @@ const commercialVatDecision = (settings: ERPSettingsRow, body: QuoteRequest, vie
     return {
       rate: 0,
       rule: "eu_reverse_charge",
-      note: "IVA 0% por operación intracomunitaria B2B. Inversión del sujeto pasivo / reverse charge. VAT due by customer.",
+      note:
+        "IVA 0% por operación intracomunitaria B2B. Inversión del sujeto pasivo / reverse charge. VAT due by customer.",
     };
   }
 
@@ -735,11 +962,16 @@ const commercialVatDecision = (settings: ERPSettingsRow, body: QuoteRequest, vie
   return {
     rate: 0,
     rule: "outside_eu_manual_review",
-    note: "Cliente fuera de la UE: revisar tratamiento fiscal antes de emitir factura.",
+    note:
+      "Cliente fuera de la UE: revisar tratamiento fiscal antes de emitir factura.",
   };
 };
 
-const createCommercialQuoteDraft = async (body: QuoteRequest, quote: QuoteResult, requestId: string | null) => {
+const createCommercialQuoteDraft = async (
+  body: QuoteRequest,
+  quote: QuoteResult,
+  requestId: string | null,
+) => {
   if (!requestId) return;
 
   const url = Deno.env.get("SUPABASE_URL");
@@ -750,7 +982,9 @@ const createCommercialQuoteDraft = async (body: QuoteRequest, quote: QuoteResult
     const supabase = createClient(url, serviceRoleKey);
     const { data: settingsData, error: settingsError } = await supabase
       .from("erp_settings")
-      .select("company_name,country_code,quote_prefix,next_quote_number,default_vat_rate,currency,payment_terms")
+      .select(
+        "company_name,country_code,quote_prefix,next_quote_number,default_vat_rate,currency,payment_terms",
+      )
       .eq("id", "default")
       .maybeSingle();
 
@@ -765,23 +999,36 @@ const createCommercialQuoteDraft = async (body: QuoteRequest, quote: QuoteResult
       next_quote_number: 1,
       default_vat_rate: 23,
       currency: "EUR",
-      payment_terms: "Validez del presupuesto: 30 días. Forma de pago según condiciones acordadas.",
+      payment_terms:
+        "Validez del presupuesto: 30 días. Forma de pago según condiciones acordadas.",
     }) as ERPSettingsRow;
 
-    const vatParts = splitVatNumber(body.vatNumber || "", body.countryCode || "PT");
-    const clientCountryCode = (vatParts.countryCode || body.countryCode || "PT").toUpperCase();
+    const vatParts = splitVatNumber(
+      body.vatNumber || "",
+      body.countryCode || "PT",
+    );
+    const clientCountryCode = (vatParts.countryCode || body.countryCode || "PT")
+      .toUpperCase();
     const vies = body.vatNumber
       ? await checkVies(body.vatNumber, clientCountryCode)
       : {
-          valid: null,
-          countryCode: clientCountryCode,
-          vatNumber: "",
-          name: null,
-          address: null,
-          checked: false,
-        };
-    const decision = commercialVatDecision(settings, { ...body, countryCode: clientCountryCode }, vies);
-    const clientId = await findOrCreateCommercialClient(supabase, body, vies, clientCountryCode);
+        valid: null,
+        countryCode: clientCountryCode,
+        vatNumber: "",
+        name: null,
+        address: null,
+        checked: false,
+      };
+    const decision = commercialVatDecision(settings, {
+      ...body,
+      countryCode: clientCountryCode,
+    }, vies);
+    const clientId = await findOrCreateCommercialClient(
+      supabase,
+      body,
+      vies,
+      clientCountryCode,
+    );
     const lineItems = [{
       id: crypto.randomUUID(),
       description: `${body.service} · ${body.scope} · ${body.location}`,
@@ -794,55 +1041,70 @@ const createCommercialQuoteDraft = async (body: QuoteRequest, quote: QuoteResult
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + 30);
 
-    const { error: insertError } = await supabase.from("commercial_quotes").insert({
-      quote_number: commercialQuoteNumber(settings),
-      status: "draft",
-      client_id: clientId,
-      source_quote_request_id: requestId,
-      client_name: body.name || body.email,
-      client_company: vies.name && vies.name !== "---" ? vies.name : null,
-      client_email: body.email.toLowerCase(),
-      client_phone: body.phone || null,
-      client_vat_number: body.vatNumber ? `${vies.countryCode}${vies.vatNumber}` : null,
-      client_country_code: clientCountryCode,
-      client_country: body.countryName || countryLabel(clientCountryCode),
-      is_business: true,
-      vies_valid: vies.valid,
-      vies_name: vies.name,
-      vies_address: vies.address,
-      vies_checked_at: vies.checked ? new Date().toISOString() : null,
-      vat_rule: decision.rule,
-      reverse_charge_note: decision.note,
-      issue_date: new Date().toISOString().slice(0, 10),
-      valid_until: validUntil.toISOString().slice(0, 10),
-      line_items: lineItems,
-      subtotal,
-      vat_rate: decision.rate,
-      vat_amount: vatAmount,
-      total,
-      currency: settings.currency || "EUR",
-      notes: `${quote.summary}\n\nRango orientativo generado por IA: ${quote.min} - ${quote.max} EUR. Revisar alcance antes de enviar presupuesto definitivo.`,
-      payment_terms: settings.payment_terms,
-    });
+    const { error: insertError } = await supabase.from("commercial_quotes")
+      .insert({
+        quote_number: commercialQuoteNumber(settings),
+        status: "draft",
+        client_id: clientId,
+        source_quote_request_id: requestId,
+        client_name: body.name || body.email,
+        client_company: vies.name && vies.name !== "---" ? vies.name : null,
+        client_email: body.email.toLowerCase(),
+        client_phone: body.phone || null,
+        client_vat_number: body.vatNumber
+          ? `${vies.countryCode}${vies.vatNumber}`
+          : null,
+        client_country_code: clientCountryCode,
+        client_country: body.countryName || countryLabel(clientCountryCode),
+        is_business: true,
+        vies_valid: vies.valid,
+        vies_name: vies.name,
+        vies_address: vies.address,
+        vies_checked_at: vies.checked ? new Date().toISOString() : null,
+        vat_rule: decision.rule,
+        reverse_charge_note: decision.note,
+        issue_date: new Date().toISOString().slice(0, 10),
+        valid_until: validUntil.toISOString().slice(0, 10),
+        line_items: lineItems,
+        subtotal,
+        vat_rate: decision.rate,
+        vat_amount: vatAmount,
+        total,
+        currency: settings.currency || "EUR",
+        notes:
+          `${quote.summary}\n\nRango orientativo generado por IA: ${quote.min} - ${quote.max} EUR. Revisar alcance antes de enviar presupuesto definitivo.`,
+        payment_terms: settings.payment_terms,
+      });
 
     if (insertError) {
-      console.error("[generate-quote] commercial_quotes insert error:", insertError);
+      console.error(
+        "[generate-quote] commercial_quotes insert error:",
+        insertError,
+      );
       return;
     }
 
     await supabase
       .from("erp_settings")
-      .update({ next_quote_number: Number(settings.next_quote_number || 1) + 1 })
+      .update({
+        next_quote_number: Number(settings.next_quote_number || 1) + 1,
+      })
       .eq("id", "default");
   } catch (error) {
-    console.error("[generate-quote] commercial quote draft unavailable:", error);
+    console.error(
+      "[generate-quote] commercial quote draft unavailable:",
+      error,
+    );
   }
 };
 
 const ADMIN_EMAIL = "silvio@silviocosta.net";
-const GMAIL_GATEWAY = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
+const GMAIL_GATEWAY =
+  "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
 
-const buildRawEmail = (opts: { to: string; subject: string; html: string; replyTo?: string }) => {
+const buildRawEmail = (
+  opts: { to: string; subject: string; html: string; replyTo?: string },
+) => {
   const headers = [
     `To: ${opts.to}`,
     `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(opts.subject)))}?=`,
@@ -858,18 +1120,26 @@ const buildRawEmail = (opts: { to: string; subject: string; html: string; replyT
     .replace(/=+$/, "");
 };
 
-const sendNotificationEmails = async (body: QuoteRequest, quote: QuoteResult, requestId: string | null) => {
+const sendNotificationEmails = async (
+  body: QuoteRequest,
+  quote: QuoteResult,
+  requestId: string | null,
+) => {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const GOOGLE_MAIL_API_KEY = Deno.env.get("GOOGLE_MAIL_API_KEY");
   if (!LOVABLE_API_KEY || !GOOGLE_MAIL_API_KEY) {
-    console.log("[generate-quote] Gmail connector not configured, skipping email");
+    console.log(
+      "[generate-quote] Gmail connector not configured, skipping email",
+    );
     return;
   }
 
   const safeName = body.name || "Cliente";
   const safeDetails = (body.details || "—").replace(/</g, "&lt;");
   const safeVat = (body.vatNumber || "—").replace(/</g, "&lt;");
-  const safeCountry = `${body.countryCode || "PT"} · ${body.countryName || countryLabel(body.countryCode || "PT")}`.replace(/</g, "&lt;");
+  const safeCountry = `${body.countryCode || "PT"} · ${
+    body.countryName || countryLabel(body.countryCode || "PT")
+  }`.replace(/</g, "&lt;");
   const rangeText = `${quote.min} – ${quote.max} €`;
 
   const html = `
@@ -879,21 +1149,33 @@ const sendNotificationEmails = async (body: QuoteRequest, quote: QuoteResult, re
       <div style="background:#1E293B;border-radius:8px;padding:16px;margin:0 0 16px;border-left:3px solid #5EEAD4;">
         <p style="margin:0;color:#94A3B8;font-size:13px;">Presupuesto orientativo IA</p>
         <p style="margin:6px 0 0;color:#5EEAD4;font-size:22px;font-weight:700;">${rangeText}</p>
-        <p style="margin:8px 0 0;color:#CBD5E1;font-size:14px;">${quote.summary.replace(/</g, "&lt;")}</p>
+        <p style="margin:8px 0 0;color:#CBD5E1;font-size:14px;">${
+    quote.summary.replace(/</g, "&lt;")
+  }</p>
       </div>
       <table style="width:100%;border-collapse:collapse;background:#1E293B;border-radius:8px;overflow:hidden;">
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;width:140px;">Cliente</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeName}</td></tr>
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Email</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="mailto:${body.email}">${body.email}</a></td></tr>
-        ${body.phone ? `<tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Teléfono</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="tel:${body.phone}">${body.phone}</a></td></tr>` : ""}
+        ${
+    body.phone
+      ? `<tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Teléfono</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="tel:${body.phone}">${body.phone}</a></td></tr>`
+      : ""
+  }
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">País fiscal</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeCountry}</td></tr>
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">NIF/CIF/VAT</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeVat}</td></tr>
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Servicio</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.service}</td></tr>
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Alcance</td><td style="padding:12px;border-bottom:1px solid #334155;white-space:pre-wrap;">${body.scope.replace(/</g, "&lt;")}</td></tr>
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Alcance</td><td style="padding:12px;border-bottom:1px solid #334155;white-space:pre-wrap;">${
+    body.scope.replace(/</g, "&lt;")
+  }</td></tr>
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Ubicación</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.location}</td></tr>
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Urgencia</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.urgency}</td></tr>
         <tr><td style="padding:12px;color:#94A3B8;vertical-align:top;">Detalles</td><td style="padding:12px;white-space:pre-wrap;">${safeDetails}</td></tr>
       </table>
-      ${requestId ? `<p style="margin-top:20px;color:#94A3B8;font-size:13px;">ID de solicitud: <code style="color:#5EEAD4;">${requestId}</code></p>` : ""}
+      ${
+    requestId
+      ? `<p style="margin-top:20px;color:#94A3B8;font-size:13px;">ID de solicitud: <code style="color:#5EEAD4;">${requestId}</code></p>`
+      : ""
+  }
       <p style="margin-top:8px;color:#94A3B8;font-size:13px;">Responde directamente a este email o entra al panel de administración.</p>
     </div>
   `;
@@ -916,13 +1198,21 @@ const sendNotificationEmails = async (body: QuoteRequest, quote: QuoteResult, re
   });
   if (!res.ok) {
     const txt = await res.text();
-    console.error(`[generate-quote] Gmail send failed [${res.status}]: ${txt.slice(0, 300)}`);
+    console.error(
+      `[generate-quote] Gmail send failed [${res.status}]: ${
+        txt.slice(0, 300)
+      }`,
+    );
   }
 };
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (req.method !== "POST") return jsonResponse({ error: "Método no permitido" }, 405);
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Método no permitido" }, 405);
+  }
 
   try {
     const raw = await req.json();
@@ -936,18 +1226,26 @@ Deno.serve(async (req) => {
       name: cleanText(raw.name, 140),
       phone: cleanText(raw.phone, 60),
       countryCode: cleanText(raw.countryCode, 2).toUpperCase() || "PT",
-      countryName: cleanText(raw.countryName, 120) || countryLabel(cleanText(raw.countryCode, 2) || "PT"),
+      countryName: cleanText(raw.countryName, 120) ||
+        countryLabel(cleanText(raw.countryCode, 2) || "PT"),
       vatNumber: cleanVat(cleanText(raw.vatNumber, 60)),
     };
 
     if (!body.service || !body.scope || !body.location || !body.urgency) {
-      return jsonResponse({ error: "Faltan campos obligatorios del proyecto" }, 400);
+      return jsonResponse(
+        { error: "Faltan campos obligatorios del proyecto" },
+        400,
+      );
     }
     if (!isValidEmail(body.email)) {
-      return jsonResponse({ error: "Introduce un email válido para recibir el presupuesto" }, 400);
+      return jsonResponse({
+        error: "Introduce un email válido para recibir el presupuesto",
+      }, 400);
     }
     if (!body.vatNumber) {
-      return jsonResponse({ error: "Introduce el NIF/CIF/VAT para preparar el presupuesto" }, 400);
+      return jsonResponse({
+        error: "Introduce el NIF/CIF/VAT para preparar el presupuesto",
+      }, 400);
     }
 
     const pricingCatalog = await loadPricingCatalog();
@@ -968,17 +1266,23 @@ Deno.serve(async (req) => {
     await createCommercialQuoteDraft(body, quote, requestId);
 
     // Notificación admin (no bloquea la respuesta al usuario)
-    const emailPromise = sendNotificationEmails(body, quote, requestId).catch((err) =>
-      console.error("[generate-quote] Notification error:", err),
-    );
+    const emailPromise = sendNotificationEmails(body, quote, requestId).catch((
+      err,
+    ) => console.error("[generate-quote] Notification error:", err));
 
-    if (typeof EdgeRuntime !== "undefined" && typeof EdgeRuntime.waitUntil === "function") {
+    if (
+      typeof EdgeRuntime !== "undefined" &&
+      typeof EdgeRuntime.waitUntil === "function"
+    ) {
       EdgeRuntime.waitUntil(emailPromise);
     }
 
     return jsonResponse({ ...quote, requestId });
   } catch (err) {
     console.error("[generate-quote] Error:", err);
-    return jsonResponse({ error: "No se pudo generar el presupuesto. Inténtalo de nuevo o contacta por WhatsApp." }, 500);
+    return jsonResponse({
+      error:
+        "No se pudo generar el presupuesto. Inténtalo de nuevo o contacta por WhatsApp.",
+    }, 500);
   }
 });

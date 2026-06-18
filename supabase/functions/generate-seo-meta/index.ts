@@ -1,4 +1,11 @@
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import {
+  callLovableChat,
+  getAssistantText,
+  getFirstToolArguments,
+  isLovableStatus,
+  parseJsonFromText,
+} from "../_shared/lovableAi.ts";
 
 interface Body {
   title?: string;
@@ -10,7 +17,9 @@ interface Body {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
   try {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -21,14 +30,19 @@ Deno.serve(async (req) => {
       body.title && `Título: ${body.title}`,
       body.page_path && `Ruta: ${body.page_path}`,
       body.excerpt && `Extracto: ${body.excerpt}`,
-      body.content && `Contenido: ${String(body.content).replace(/<[^>]*>/g, " ").slice(0, 1500)}`,
+      body.content &&
+      `Contenido: ${
+        String(body.content).replace(/<[^>]*>/g, " ").slice(0, 1500)
+      }`,
       body.current_title && `Meta title actual: ${body.current_title}`,
-      body.current_description && `Meta desc actual: ${body.current_description}`,
+      body.current_description &&
+      `Meta desc actual: ${body.current_description}`,
     ]
       .filter(Boolean)
       .join("\n");
 
-    const systemPrompt = `Eres un experto SEO para Silvio Costa Photography (silviocosta.net), fotografía y vídeo profesional en España y Portugal. Genera meta tags optimizados para Google en español.
+    const systemPrompt =
+      `Eres un experto SEO para Silvio Costa Photography (silviocosta.net), fotografía y vídeo profesional en España y Portugal. Genera meta tags optimizados para Google en español.
 
 Reglas estrictas:
 - meta_title: 50-60 caracteres, incluye marca al final si cabe (" | Silvio Costa"), sin clickbait.
@@ -36,17 +50,16 @@ Reglas estrictas:
 - Sin comillas dobles dentro de los valores.
 - Devuelve solo a través de la herramienta seo_meta.`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    let data: any;
+    try {
+      data = await callLovableChat(apiKey, {
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: context || "Genera meta tags genéricos para la home." },
+          {
+            role: "user",
+            content: context || "Genera meta tags genéricos para la home.",
+          },
         ],
         tools: [
           {
@@ -57,8 +70,14 @@ Reglas estrictas:
               parameters: {
                 type: "object",
                 properties: {
-                  meta_title: { type: "string", description: "50-60 caracteres" },
-                  meta_description: { type: "string", description: "140-160 caracteres" },
+                  meta_title: {
+                    type: "string",
+                    description: "50-60 caracteres",
+                  },
+                  meta_description: {
+                    type: "string",
+                    description: "140-160 caracteres",
+                  },
                 },
                 required: ["meta_title", "meta_description"],
                 additionalProperties: false,
@@ -67,31 +86,37 @@ Reglas estrictas:
           },
         ],
         tool_choice: { type: "function", function: { name: "seo_meta" } },
-      }),
-    });
-
-    if (resp.status === 429) {
-      return new Response(
-        JSON.stringify({ error: "Límite de uso de IA alcanzado. Inténtalo en un momento." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-    if (resp.status === 402) {
-      return new Response(
-        JSON.stringify({ error: "Créditos de IA agotados. Añade créditos en Settings → Workspace → Usage." }),
-        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-    if (!resp.ok) {
-      const t = await resp.text();
-      console.error("Gateway error", resp.status, t);
+      });
+    } catch (error) {
+      if (isLovableStatus(error, 429)) {
+        return new Response(
+          JSON.stringify({
+            error: "Límite de uso de IA alcanzado. Inténtalo en un momento.",
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+      if (isLovableStatus(error, 402)) {
+        return new Response(
+          JSON.stringify({
+            error:
+              "Créditos de IA agotados. Añade créditos en Settings → Workspace → Usage.",
+          }),
+          {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+      console.error("Gateway error", error);
       throw new Error("AI gateway error");
     }
 
-    const data = await resp.json();
-    const toolCall = data?.choices?.[0]?.message?.tool_calls?.[0];
-    const args = toolCall?.function?.arguments;
-    const parsed = typeof args === "string" ? JSON.parse(args) : args;
+    const parsed = getFirstToolArguments(data) ??
+      parseJsonFromText(getAssistantText(data), "object");
 
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -99,8 +124,13 @@ Reglas estrictas:
   } catch (e) {
     console.error("generate-seo-meta error", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({
+        error: e instanceof Error ? e.message : "Unknown error",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

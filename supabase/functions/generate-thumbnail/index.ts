@@ -1,13 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAdmin } from "../_shared/adminAuth.ts";
+import {
+  callLovableChat,
+  extractImageUrl,
+  isLovableStatus,
+} from "../_shared/lovableAi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   try {
     const adminAuth = await requireAdmin(req, corsHeaders);
@@ -20,41 +28,47 @@ serve(async (req) => {
     if (!prompt) throw new Error("Missing prompt");
 
     const count = Math.min(numberResults || 1, 4);
-    const enhancedPrompt = `Create a professional video thumbnail image (${width || 1280}x${height || 720} pixels). ${prompt}. The image should be eye-catching, high contrast, with bold composition suitable for a video thumbnail on social media.`;
+    const enhancedPrompt = `Create a professional video thumbnail image (${
+      width || 1280
+    }x${
+      height || 720
+    } pixels). ${prompt}. The image should be eye-catching, high contrast, with bold composition suitable for a video thumbnail on social media.`;
 
     const images = [];
 
     for (let i = 0; i < count; i++) {
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      let data: any;
+      try {
+        data = await callLovableChat(LOVABLE_API_KEY, {
           model: "google/gemini-2.5-flash-image",
           messages: [{ role: "user", content: enhancedPrompt }],
           modalities: ["image", "text"],
-        }),
-      });
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          return new Response(JSON.stringify({ error: "Rate limit exceeded, please try again later." }), {
-            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+        });
+      } catch (error) {
+        if (isLovableStatus(error, 429)) {
+          return new Response(
+            JSON.stringify({
+              error: "Rate limit exceeded, please try again later.",
+            }),
+            {
+              status: 429,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
-        if (response.status === 402) {
-          return new Response(JSON.stringify({ error: "Payment required, please add credits." }), {
-            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+        if (isLovableStatus(error, 402)) {
+          return new Response(
+            JSON.stringify({ error: "Payment required, please add credits." }),
+            {
+              status: 402,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
-        const errText = await response.text();
-        throw new Error(`AI gateway error [${response.status}]: ${errText}`);
+        throw error;
       }
 
-      const data = await response.json();
-      const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      const imageData = extractImageUrl(data);
 
       if (imageData) {
         images.push({
@@ -70,7 +84,8 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("generate-thumbnail error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

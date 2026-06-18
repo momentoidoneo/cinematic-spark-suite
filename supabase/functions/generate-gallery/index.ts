@@ -1,13 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  callLovableChat,
+  extractImageUrl,
+  imageUrlToBytes,
+  isLovableStatus,
+} from "../_shared/lovableAi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -56,59 +65,50 @@ serve(async (req) => {
       try {
         // Build a varied prompt for each image
         const variation = i + 1;
-        let prompt = `Generate a professional high-quality photograph for a ${catName} / ${subName} portfolio gallery. Variation ${variation} of ${numImages} — each image should be distinct.`;
+        let prompt =
+          `Generate a professional high-quality photograph for a ${catName} / ${subName} portfolio gallery. Variation ${variation} of ${numImages} — each image should be distinct.`;
         if (context?.trim()) prompt += ` Context: ${context.trim()}.`;
         if (style?.trim()) prompt += ` Style: ${style.trim()}.`;
         prompt += ` Wide 16:9 aspect ratio, photorealistic.`;
 
-        console.log(`Generating gallery image ${variation}/${numImages} for ${subName}`);
+        console.log(
+          `Generating gallery image ${variation}/${numImages} for ${subName}`,
+        );
 
-        const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash-image",
-            messages: [{ role: "user", content: prompt }],
-            modalities: ["image", "text"],
-          }),
+        const aiData = await callLovableChat(LOVABLE_API_KEY, {
+          model: "google/gemini-2.5-flash-image",
+          messages: [{ role: "user", content: prompt }],
+          modalities: ["image", "text"],
         });
+        const imageUrl = extractImageUrl(aiData);
 
-        if (!aiResp.ok) {
-          const errText = await aiResp.text();
-          console.error(`AI error image ${variation}: ${aiResp.status} ${errText}`);
-          results.push({ index: i, status: `error: ${aiResp.status}` });
-          if (aiResp.status === 429) await new Promise(r => setTimeout(r, 5000));
-          continue;
-        }
-
-        const aiData = await aiResp.json();
-        const imageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-        if (!imageUrl || !imageUrl.startsWith("data:image")) {
+        if (!imageUrl) {
           results.push({ index: i, status: "no image returned" });
           continue;
         }
 
         // Decode and upload
-        const base64Data = imageUrl.split(",")[1];
-        const binaryStr = atob(base64Data);
-        const bytes = new Uint8Array(binaryStr.length);
-        for (let j = 0; j < binaryStr.length; j++) bytes[j] = binaryStr.charCodeAt(j);
+        const image = await imageUrlToBytes(imageUrl);
 
-        const filePath = `${subcategory_id}/ai-${Date.now()}-${variation}.png`;
+        const filePath =
+          `${subcategory_id}/ai-${Date.now()}-${variation}.${image.extension}`;
         const { error: uploadErr } = await supabase.storage
           .from("portfolio")
-          .upload(filePath, bytes, { contentType: "image/png", upsert: true });
+          .upload(filePath, image.bytes, {
+            contentType: image.contentType,
+            upsert: true,
+          });
 
         if (uploadErr) {
-          results.push({ index: i, status: `upload error: ${uploadErr.message}` });
+          results.push({
+            index: i,
+            status: `upload error: ${uploadErr.message}`,
+          });
           continue;
         }
 
-        const { data: urlData } = supabase.storage.from("portfolio").getPublicUrl(filePath);
+        const { data: urlData } = supabase.storage.from("portfolio")
+          .getPublicUrl(filePath);
         const publicUrl = urlData.publicUrl + `?t=${Date.now()}`;
 
         // Insert into portfolio_images
@@ -126,20 +126,26 @@ serve(async (req) => {
         console.log(`✓ Gallery image ${variation}/${numImages}`);
 
         // Rate limit pause between generations
-        if (i < numImages - 1) await new Promise(r => setTimeout(r, 2000));
+        if (i < numImages - 1) await new Promise((r) => setTimeout(r, 2000));
       } catch (e) {
-        results.push({ index: i, status: `error: ${e.message}` });
+        if (isLovableStatus(e, 429)) {
+          await new Promise((r) => setTimeout(r, 5000));
+        }
+        results.push({ index: i, status: `error: ${(e as Error).message}` });
       }
     }
 
-    const generated = results.filter(r => r.status === "ok").length;
+    const generated = results.filter((r) => r.status === "ok").length;
     return new Response(
-      JSON.stringify({ message: `Generadas ${generated}/${numImages} imágenes`, results }),
+      JSON.stringify({
+        message: `Generadas ${generated}/${numImages} imágenes`,
+        results,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
     console.error("generate-gallery error:", e);
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
