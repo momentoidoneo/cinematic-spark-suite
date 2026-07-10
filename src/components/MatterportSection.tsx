@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { ArrowRight, CheckCircle, Maximize, Play } from "lucide-react";
 import { Link } from "react-router-dom";
-import matterportPreview from "@/assets/matterport-landing.avif";
+import matterportPreviewFallback from "@/assets/matterport-landing.avif";
+
+const MATTERPORT_MODEL_ID = "buNhXbQW5V6";
+const MATTERPORT_TOUR_URL = `https://my.matterport.com/show/?m=${MATTERPORT_MODEL_ID}`;
+const matterportPreviewUrl = (width: number, height: number) =>
+  `https://my.matterport.com/api/v2/player/models/${MATTERPORT_MODEL_ID}/thumb/?width=${width}&height=${height}&fit=crop&disable=upscale`;
 
 const benefits = [
   "Visita disponible las 24 horas desde cualquier dispositivo",
@@ -53,7 +58,7 @@ const MatterportSection = () => {
           <div className="relative min-h-[300px] sm:min-h-[420px] lg:min-h-full bg-secondary">
             {showTour ? (
               <iframe
-                src="https://my.matterport.com/show/?m=buNhXbQW5V6"
+                src={MATTERPORT_TOUR_URL}
                 title="Tour virtual Matterport 360°"
                 className="absolute inset-0 h-full w-full border-0"
                 allow="fullscreen; xr-spatial-tracking"
@@ -63,13 +68,20 @@ const MatterportSection = () => {
             ) : (
               <>
                 <img
-                  src={matterportPreview}
-                  alt="Vista previa de un tour virtual Matterport"
+                  src={matterportPreviewUrl(1200, 900)}
+                  srcSet={`${matterportPreviewUrl(640, 480)} 640w, ${matterportPreviewUrl(960, 720)} 960w, ${matterportPreviewUrl(1200, 900)} 1200w`}
+                  sizes="(min-width: 1024px) 576px, calc(100vw - 3rem)"
+                  alt="Vista previa del gemelo digital Matterport de una vivienda"
                   className="absolute inset-0 h-full w-full object-cover"
                   loading="lazy"
                   decoding="async"
-                  width={960}
-                  height={600}
+                  width={1200}
+                  height={900}
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.removeAttribute("srcset");
+                    event.currentTarget.src = matterportPreviewFallback;
+                  }}
                 />
                 <div className="absolute inset-0 bg-background/35" />
                 <button
