@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calculator, X, ArrowRight, Loader2, MessageCircle, CheckCircle, Sparkles } from "lucide-react";
+import {
+  Calculator,
+  X,
+  ArrowRight,
+  Loader2,
+  MessageCircle,
+  CheckCircle,
+  Sparkles,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
 import { toast } from "sonner";
@@ -72,8 +80,8 @@ const initialForm = {
   vatNumber: "",
 };
 
-const SmartQuoter = () => {
-  const [open, setOpen] = useState(false);
+const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
+  const [open, setOpen] = useState(initialOpen);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
@@ -101,13 +109,21 @@ const SmartQuoter = () => {
   };
 
   useEffect(() => {
+    if (initialOpen) {
+      trackEvent("quoter_open", { event_category: "engagement" });
+    }
+  }, [initialOpen]);
+
+  useEffect(() => {
     supabase
       .from("whatsapp_config")
       .select("phone_number")
       .maybeSingle()
       .then(({ data }) => {
         if (data?.phone_number) {
-          setWhatsappPhone(data.phone_number.replace(/[\s\-()]/g, "").replace("+", ""));
+          setWhatsappPhone(
+            data.phone_number.replace(/[\s\-()]/g, "").replace("+", ""),
+          );
         }
       });
   }, []);
@@ -130,14 +146,19 @@ const SmartQuoter = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-quote", { body: form });
+      const { data, error } = await supabase.functions.invoke(
+        "generate-quote",
+        { body: form },
+      );
       if (error || data?.error) {
         toast.error(data?.error || "No se pudo generar el presupuesto");
         setLoading(false);
         return;
       }
       setResult(data as QuoteResult);
-      toast.success("Solicitud guardada. Aquí tienes una estimación orientativa.");
+      toast.success(
+        "Solicitud guardada. Aquí tienes una estimación orientativa.",
+      );
       trackEvent("quoter_complete", {
         event_category: "engagement",
         event_label: form.service,
@@ -152,7 +173,10 @@ const SmartQuoter = () => {
     if (!whatsappPhone || !result) return;
     const msg = `${result.whatsappMessage}\n\n💰 Presupuesto orientativo: ${result.min}€ - ${result.max}€`;
     const url = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`;
-    trackEvent("quoter_whatsapp", { event_category: "conversion", event_label: form.service });
+    trackEvent("quoter_whatsapp", {
+      event_category: "conversion",
+      event_label: form.service,
+    });
     fireGoogleAdsConversion();
     window.open(url, "_blank");
   };
@@ -187,9 +211,15 @@ const SmartQuoter = () => {
               <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-border bg-card/95 backdrop-blur-sm">
                 <div className="flex items-center gap-2">
                   <Calculator className="w-5 h-5 text-primary" />
-                  <h2 className="font-display text-lg font-bold text-foreground">Cotizador Inteligente</h2>
+                  <h2 className="font-display text-lg font-bold text-foreground">
+                    Cotizador Inteligente
+                  </h2>
                 </div>
-                <button onClick={handleClose} className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Cerrar">
+                <button
+                  onClick={handleClose}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Cerrar"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -200,14 +230,21 @@ const SmartQuoter = () => {
                     {/* Progress */}
                     <div className="flex gap-1.5 mb-6">
                       {[0, 1, 2, 3, 4, 5].map((i) => (
-                        <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-secondary"}`} />
+                        <div
+                          key={i}
+                          className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-secondary"}`}
+                        />
                       ))}
                     </div>
 
                     {step === 0 && (
                       <div>
-                        <h3 className="font-display text-xl font-bold text-foreground mb-2">¿Qué servicio necesitas?</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Elige el tipo de proyecto.</p>
+                        <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                          ¿Qué servicio necesitas?
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Elige el tipo de proyecto.
+                        </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {SERVICES.map((s) => (
                             <button
@@ -224,12 +261,18 @@ const SmartQuoter = () => {
 
                     {step === 1 && (
                       <div>
-                        <h3 className="font-display text-xl font-bold text-foreground mb-2">Tamaño o alcance</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Ej: "120 m²", "vídeo 60s", "evento 4h", "5 renders".</p>
+                        <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                          Tamaño o alcance
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Ej: "120 m²", "vídeo 60s", "evento 4h", "5 renders".
+                        </p>
                         <input
                           autoFocus
                           value={form.scope}
-                          onChange={(e) => setForm({ ...form, scope: e.target.value })}
+                          onChange={(e) =>
+                            setForm({ ...form, scope: e.target.value })
+                          }
                           placeholder="Describe el alcance"
                           className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                         />
@@ -238,12 +281,18 @@ const SmartQuoter = () => {
 
                     {step === 2 && (
                       <div>
-                        <h3 className="font-display text-xl font-bold text-foreground mb-2">Ubicación</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Ciudad o zona del proyecto.</p>
+                        <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                          Ubicación
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Ciudad o zona del proyecto.
+                        </p>
                         <input
                           autoFocus
                           value={form.location}
-                          onChange={(e) => setForm({ ...form, location: e.target.value })}
+                          onChange={(e) =>
+                            setForm({ ...form, location: e.target.value })
+                          }
                           placeholder="Ej: Lisboa, Madrid, Algarve..."
                           className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                         />
@@ -252,8 +301,12 @@ const SmartQuoter = () => {
 
                     {step === 3 && (
                       <div>
-                        <h3 className="font-display text-xl font-bold text-foreground mb-2">¿Cuándo lo necesitas?</h3>
-                        <p className="text-sm text-muted-foreground mb-4">La urgencia puede afectar al precio.</p>
+                        <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                          ¿Cuándo lo necesitas?
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          La urgencia puede afectar al precio.
+                        </p>
                         <div className="grid grid-cols-2 gap-2">
                           {URGENCY.map((u) => (
                             <button
@@ -270,11 +323,20 @@ const SmartQuoter = () => {
 
                     {step === 4 && (
                       <div>
-                        <h3 className="font-display text-xl font-bold text-foreground mb-2">Detalles adicionales <span className="text-muted-foreground text-sm font-normal">(opcional)</span></h3>
-                        <p className="text-sm text-muted-foreground mb-4">Cualquier requisito especial que debamos saber.</p>
+                        <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                          Detalles adicionales{" "}
+                          <span className="text-muted-foreground text-sm font-normal">
+                            (opcional)
+                          </span>
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Cualquier requisito especial que debamos saber.
+                        </p>
                         <textarea
                           value={form.details}
-                          onChange={(e) => setForm({ ...form, details: e.target.value })}
+                          onChange={(e) =>
+                            setForm({ ...form, details: e.target.value })
+                          }
                           placeholder="Ej: Necesito derechos exclusivos, formato vertical para Instagram..."
                           rows={4}
                           className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
@@ -284,13 +346,20 @@ const SmartQuoter = () => {
 
                     {step === 5 && (
                       <div>
-                        <h3 className="font-display text-xl font-bold text-foreground mb-2">¿Dónde enviamos la estimación?</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Guardaremos la solicitud para poder preparar una propuesta con los datos fiscales correctos.</p>
+                        <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                          ¿Dónde enviamos la estimación?
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Guardaremos la solicitud para poder preparar una
+                          propuesta con los datos fiscales correctos.
+                        </p>
                         <div className="space-y-3">
                           <input
                             autoFocus
                             value={form.email}
-                            onChange={(e) => setForm({ ...form, email: e.target.value })}
+                            onChange={(e) =>
+                              setForm({ ...form, email: e.target.value })
+                            }
                             placeholder="Email"
                             type="email"
                             autoComplete="email"
@@ -300,7 +369,9 @@ const SmartQuoter = () => {
                             <select
                               value={form.countryCode}
                               onChange={(e) => {
-                                const country = EU_COUNTRIES.find(([code]) => code === e.target.value);
+                                const country = EU_COUNTRIES.find(
+                                  ([code]) => code === e.target.value,
+                                );
                                 setForm({
                                   ...form,
                                   countryCode: e.target.value,
@@ -311,12 +382,19 @@ const SmartQuoter = () => {
                               aria-label="País fiscal"
                             >
                               {EU_COUNTRIES.map(([code, name]) => (
-                                <option key={code} value={code}>{code} · {name}</option>
+                                <option key={code} value={code}>
+                                  {code} · {name}
+                                </option>
                               ))}
                             </select>
                             <input
                               value={form.vatNumber}
-                              onChange={(e) => setForm({ ...form, vatNumber: e.target.value.toUpperCase() })}
+                              onChange={(e) =>
+                                setForm({
+                                  ...form,
+                                  vatNumber: e.target.value.toUpperCase(),
+                                })
+                              }
                               placeholder="NIF/CIF/VAT *"
                               autoComplete="organization"
                               className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -324,14 +402,18 @@ const SmartQuoter = () => {
                           </div>
                           <input
                             value={form.name}
-                            onChange={(e) => setForm({ ...form, name: e.target.value })}
+                            onChange={(e) =>
+                              setForm({ ...form, name: e.target.value })
+                            }
                             placeholder="Nombre (opcional)"
                             autoComplete="name"
                             className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                           />
                           <input
                             value={form.phone}
-                            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                            onChange={(e) =>
+                              setForm({ ...form, phone: e.target.value })
+                            }
                             placeholder="Teléfono o WhatsApp (opcional)"
                             type="tel"
                             autoComplete="tel"
@@ -373,26 +455,42 @@ const SmartQuoter = () => {
                 {loading && (
                   <div className="text-center py-12">
                     <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
-                    <p className="text-foreground font-medium">Calculando tu presupuesto…</p>
-                    <p className="text-sm text-muted-foreground mt-1">La IA está analizando tu solicitud</p>
+                    <p className="text-foreground font-medium">
+                      Calculando tu presupuesto…
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      La IA está analizando tu solicitud
+                    </p>
                   </div>
                 )}
 
                 {result && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
                     <div className="text-center mb-6 pb-6 border-b border-border">
-                      <p className="text-sm text-muted-foreground mb-1">Presupuesto orientativo</p>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Presupuesto orientativo
+                      </p>
                       <p className="font-display text-4xl font-bold text-gradient-primary mb-2">
                         {result.min}€ – {result.max}€
                       </p>
-                      <p className="text-sm text-muted-foreground">{result.summary}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {result.summary}
+                      </p>
                     </div>
 
                     <div className="mb-6">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Incluye</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                        Incluye
+                      </p>
                       <ul className="space-y-2">
                         {result.includes.map((item, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                          <li
+                            key={i}
+                            className="flex items-start gap-2 text-sm text-foreground"
+                          >
                             <CheckCircle className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                             {item}
                           </li>
@@ -402,7 +500,10 @@ const SmartQuoter = () => {
 
                     {result.notes && (
                       <div className="mb-6 p-3 rounded-lg bg-secondary/50 border border-border">
-                        <p className="text-xs text-muted-foreground"><strong className="text-foreground">Nota:</strong> {result.notes}</p>
+                        <p className="text-xs text-muted-foreground">
+                          <strong className="text-foreground">Nota:</strong>{" "}
+                          {result.notes}
+                        </p>
                       </div>
                     )}
 
@@ -412,7 +513,8 @@ const SmartQuoter = () => {
                           onClick={sendWhatsApp}
                           className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-[#25D366] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
                         >
-                          <MessageCircle className="w-4 h-4" /> Enviar por WhatsApp
+                          <MessageCircle className="w-4 h-4" /> Enviar por
+                          WhatsApp
                         </button>
                       )}
                       <button
@@ -424,7 +526,8 @@ const SmartQuoter = () => {
                     </div>
 
                     <p className="text-xs text-muted-foreground text-center mt-4">
-                      * Estimación orientativa. Tu solicitud queda registrada para poder preparar una propuesta final.
+                      * Estimación orientativa. Tu solicitud queda registrada
+                      para poder preparar una propuesta final.
                     </p>
                   </motion.div>
                 )}

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useSEOMetadata } from "@/hooks/useSEOMetadata";
+import { landingFaqItems } from "@/content/landingFaq";
 
 type JsonLdSchema = Record<string, unknown>;
 
@@ -15,15 +16,26 @@ interface SEOHeadProps {
 
 const SITE_URL = "https://silviocosta.net";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
-const DEFAULT_OG_IMAGE_ALT = "Silvio Costa Photography, estudio de fotografia y produccion audiovisual profesional";
+const DEFAULT_OG_IMAGE_ALT =
+  "Silvio Costa Photography, estudio de fotografia y produccion audiovisual profesional";
 
 export function getSiteUrl() {
   return SITE_URL;
 }
 
-const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, noindex = false, jsonLd }: SEOHeadProps) => {
+const SEOHead = ({
+  title,
+  description,
+  canonical,
+  ogType = "website",
+  ogImage,
+  noindex = false,
+  jsonLd,
+}: SEOHeadProps) => {
   // Derive page path from canonical for DB lookup
-  const pagePath = canonical ? new URL(canonical, SITE_URL).pathname.replace(/\/$/, "") || "/" : null;
+  const pagePath = canonical
+    ? new URL(canonical, SITE_URL).pathname.replace(/\/$/, "") || "/"
+    : null;
   const seoOverride = useSEOMetadata(pagePath || "/");
 
   const finalTitle = seoOverride?.title || title;
@@ -36,7 +48,9 @@ const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, n
 
     // Meta tags
     const setMeta = (name: string, content: string, attr = "name") => {
-      let el = document.querySelector(`meta[${attr}="${name}"]`) as HTMLMetaElement;
+      let el = document.querySelector(
+        `meta[${attr}="${name}"]`,
+      ) as HTMLMetaElement;
       if (!el) {
         el = document.createElement("meta");
         el.setAttribute(attr, name);
@@ -66,7 +80,9 @@ const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, n
     setMeta("twitter:image:alt", DEFAULT_OG_IMAGE_ALT, "name");
 
     // Canonical
-    let canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+    let canonicalEl = document.querySelector(
+      'link[rel="canonical"]',
+    ) as HTMLLinkElement;
     if (!canonicalEl) {
       canonicalEl = document.createElement("link");
       canonicalEl.rel = "canonical";
@@ -75,12 +91,30 @@ const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, n
     canonicalEl.href = canonical || window.location.href;
 
     // AI discovery files for answer engines and LLM crawlers.
-    document.querySelectorAll("link[data-ai-discovery]").forEach(el => el.remove());
+    document
+      .querySelectorAll("link[data-ai-discovery]")
+      .forEach((el) => el.remove());
     [
-      { type: "text/plain", title: "LLM summary", href: `${SITE_URL}/llms.txt` },
-      { type: "text/plain", title: "LLM full context", href: `${SITE_URL}/llms-full.txt` },
-      { type: "text/markdown", title: "AI services guide", href: `${SITE_URL}/ai-context/servicios-audiovisuales.md` },
-      { type: "application/json", title: "AI sitemap", href: `${SITE_URL}/ai-sitemap.json` },
+      {
+        type: "text/plain",
+        title: "LLM summary",
+        href: `${SITE_URL}/llms.txt`,
+      },
+      {
+        type: "text/plain",
+        title: "LLM full context",
+        href: `${SITE_URL}/llms-full.txt`,
+      },
+      {
+        type: "text/markdown",
+        title: "AI services guide",
+        href: `${SITE_URL}/ai-context/servicios-audiovisuales.md`,
+      },
+      {
+        type: "application/json",
+        title: "AI sitemap",
+        href: `${SITE_URL}/ai-sitemap.json`,
+      },
     ].forEach(({ type, title, href }) => {
       const link = document.createElement("link");
       link.rel = "alternate";
@@ -97,7 +131,9 @@ const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, n
       { lang: "x-default", href: canonical || window.location.href },
     ];
     // Remove old hreflangs
-    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(el => el.remove());
+    document
+      .querySelectorAll('link[rel="alternate"][hreflang]')
+      .forEach((el) => el.remove());
     hreflangs.forEach(({ lang, href }) => {
       const link = document.createElement("link");
       link.rel = "alternate";
@@ -107,12 +143,14 @@ const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, n
     });
 
     // JSON-LD
-    const existingScripts = document.querySelectorAll('script[data-seo-jsonld]');
-    existingScripts.forEach(s => s.remove());
+    const existingScripts = document.querySelectorAll(
+      "script[data-seo-jsonld]",
+    );
+    existingScripts.forEach((s) => s.remove());
 
     if (jsonLd) {
       const schemas = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
-      schemas.forEach(schema => {
+      schemas.forEach((schema) => {
         const script = document.createElement("script");
         script.type = "application/ld+json";
         script.setAttribute("data-seo-jsonld", "true");
@@ -122,9 +160,19 @@ const SEOHead = ({ title, description, canonical, ogType = "website", ogImage, n
     }
 
     return () => {
-      document.querySelectorAll('script[data-seo-jsonld]').forEach(s => s.remove());
+      document
+        .querySelectorAll("script[data-seo-jsonld]")
+        .forEach((s) => s.remove());
     };
-  }, [finalTitle, finalDescription, canonical, ogType, finalOgImage, noindex, jsonLd]);
+  }, [
+    finalTitle,
+    finalDescription,
+    canonical,
+    ogType,
+    finalOgImage,
+    noindex,
+    jsonLd,
+  ]);
 
   return null;
 };
@@ -136,14 +184,16 @@ export const localBusinessSchema = {
   "@type": "LocalBusiness",
   "@id": `${SITE_URL}/#business`,
   name: "Silvio Costa Photography",
-  description: "Servicios profesionales de fotografía, vídeo, dron y tours virtuales 360° en España y Portugal.",
+  description:
+    "Servicios profesionales de fotografía, vídeo, dron y tours virtuales 360° en España y Portugal.",
   url: SITE_URL,
   telephone: "+34640934640",
   email: "silvio@silviocosta.net",
   image: DEFAULT_OG_IMAGE,
   priceRange: "€€-€€€",
   alternateName: ["Silvio Costa", "Silvio Costa Photography"],
-  slogan: "Fotografía, vídeo, dron y tours virtuales para vender mejor espacios, marcas y experiencias.",
+  slogan:
+    "Fotografía, vídeo, dron y tours virtuales para vender mejor espacios, marcas y experiencias.",
   founder: { "@id": `${SITE_URL}/#person` },
   knowsAbout: [
     "Fotografía inmobiliaria",
@@ -230,27 +280,15 @@ export const serviceCatalogSchema = {
   ],
 };
 
-export const aiSearchFAQSchema = faqPageSchema([
-  {
-    question: "¿Qué servicios audiovisuales ofrece Silvio Costa Photography?",
-    answer: "Silvio Costa Photography ofrece fotografía profesional, vídeo corporativo, vídeo con dron, tours virtuales Matterport, cobertura de eventos, streaming, renders 3D y contenido visual para inmobiliarias, arquitectura, hostelería y empresas en España y Portugal.",
-  },
-  {
-    question: "¿En qué zonas trabaja Silvio Costa Photography?",
-    answer: "El estudio trabaja en toda España y Portugal, con desplazamiento para proyectos inmobiliarios, arquitectura, eventos, hoteles, restaurantes, empresas y espacios comerciales.",
-  },
-  {
-    question: "¿Cómo se solicita un presupuesto?",
-    answer: "Se puede solicitar presupuesto desde el formulario de contacto, WhatsApp o el cotizador IA de la web. La respuesta incluye alcance recomendado, disponibilidad y precio orientativo.",
-  },
-]);
+export const aiSearchFAQSchema = faqPageSchema(landingFaqItems);
 
 export const photographyServiceSchema = {
   "@context": "https://schema.org",
   "@type": "Service",
   "@id": `${SITE_URL}/servicios/fotografia#service`,
   name: "Fotografía Profesional",
-  description: "Servicios de fotografía profesional: inmobiliaria, arquitectura, producto, gastronomía, moda y eventos en España y Portugal.",
+  description:
+    "Servicios de fotografía profesional: inmobiliaria, arquitectura, producto, gastronomía, moda y eventos en España y Portugal.",
   provider: { "@id": `${SITE_URL}/#business` },
   areaServed: [
     { "@type": "Country", name: "España" },
@@ -265,7 +303,8 @@ export const videoDronServiceSchema = {
   "@type": "Service",
   "@id": `${SITE_URL}/servicios/video-dron#service`,
   name: "Vídeo Profesional y Dron",
-  description: "Producción de vídeo corporativo, publicitario, eventos y grabación aérea con drones profesionales en España y Portugal.",
+  description:
+    "Producción de vídeo corporativo, publicitario, eventos y grabación aérea con drones profesionales en España y Portugal.",
   provider: { "@id": `${SITE_URL}/#business` },
   areaServed: [
     { "@type": "Country", name: "España" },
@@ -280,7 +319,8 @@ export const tourVirtualServiceSchema = {
   "@type": "Service",
   "@id": `${SITE_URL}/servicios/tour-virtual#service`,
   name: "Tours Virtuales 360° y Matterport",
-  description: "Tours virtuales 360° con tecnología Matterport Pro3 para inmobiliarias, hoteles, comercios y espacios de eventos en España y Portugal.",
+  description:
+    "Tours virtuales 360° con tecnología Matterport Pro3 para inmobiliarias, hoteles, comercios y espacios de eventos en España y Portugal.",
   provider: { "@id": `${SITE_URL}/#business` },
   areaServed: [
     { "@type": "Country", name: "España" },
@@ -303,7 +343,14 @@ export function breadcrumbSchema(items: { name: string; url: string }[]) {
   };
 }
 
-export function blogPostSchema(post: { title: string; slug: string; excerpt?: string; coverImage?: string; publishedAt?: string; updatedAt?: string }) {
+export function blogPostSchema(post: {
+  title: string;
+  slug: string;
+  excerpt?: string;
+  coverImage?: string;
+  publishedAt?: string;
+  updatedAt?: string;
+}) {
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -312,7 +359,8 @@ export function blogPostSchema(post: { title: string; slug: string; excerpt?: st
     image: post.coverImage || DEFAULT_OG_IMAGE,
     url: `${SITE_URL}/blog/${post.slug}`,
     datePublished: post.publishedAt || new Date().toISOString(),
-    dateModified: post.updatedAt || post.publishedAt || new Date().toISOString(),
+    dateModified:
+      post.updatedAt || post.publishedAt || new Date().toISOString(),
     author: {
       "@type": "Person",
       name: "Silvio Costa",
@@ -336,7 +384,7 @@ export function faqPageSchema(faqs: { question: string; answer: string }[]) {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: faqs.map(faq => ({
+    mainEntity: faqs.map((faq) => ({
       "@type": "Question",
       name: faq.question,
       acceptedAnswer: {
@@ -357,7 +405,8 @@ export const personSchema = {
   givenName: "Silvio",
   familyName: "Costa",
   jobTitle: "Fotógrafo y videógrafo profesional",
-  description: "Fotógrafo profesional con +10 años de experiencia en arquitectura, inmobiliaria, gastronomía y eventos. Especialista en Matterport Pro3 y dron AESA en España y Portugal.",
+  description:
+    "Fotógrafo profesional con +10 años de experiencia en arquitectura, inmobiliaria, gastronomía y eventos. Especialista en Matterport Pro3 y dron AESA en España y Portugal.",
   url: SITE_URL,
   email: "silvio@silviocosta.net",
   telephone: "+34640934640",

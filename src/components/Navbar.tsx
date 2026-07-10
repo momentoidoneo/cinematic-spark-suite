@@ -1,13 +1,26 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Menu, ChevronDown, LogIn, ChevronRight, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronDown, ChevronRight, LogIn, Menu, Sparkles } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 type NavChild = { label: string; href: string; isAnchor: boolean };
-type NavItem = { label: string; href: string; isAnchor: boolean; children?: NavChild[] };
+type NavItem = {
+  label: string;
+  href: string;
+  isAnchor: boolean;
+  children?: NavChild[];
+};
 
 const staticNavItems: NavItem[] = [
   { label: "Inicio", href: "/#inicio", isAnchor: true },
@@ -17,23 +30,34 @@ const staticNavItems: NavItem[] = [
     isAnchor: true,
     children: [
       { label: "Fotografía", href: "/servicios/fotografia", isAnchor: false },
-      { label: "Video y Dron", href: "/servicios/video-dron", isAnchor: false },
-      { label: "Tour Virtual 360°", href: "/servicios/tour-virtual", isAnchor: false },
+      { label: "Vídeo y dron", href: "/servicios/video-dron", isAnchor: false },
+      {
+        label: "Tour virtual 360°",
+        href: "/servicios/tour-virtual",
+        isAnchor: false,
+      },
       { label: "Eventos", href: "/servicios/eventos", isAnchor: false },
       { label: "Renders 3D", href: "/servicios/renders", isAnchor: false },
     ],
   },
-  {
-    label: "Portafolio",
-    href: "/portafolio",
-    isAnchor: false,
-    children: [],
-  },
+  { label: "Portafolio", href: "/portafolio", isAnchor: false, children: [] },
   { label: "Precios", href: "/precios", isAnchor: false },
   { label: "Blog", href: "/blog", isAnchor: false },
-  { label: "Trabaja con nosotros", href: "/trabaja-con-nosotros", isAnchor: false },
+  {
+    label: "Trabaja con nosotros",
+    href: "/trabaja-con-nosotros",
+    isAnchor: false,
+  },
   { label: "Contacto", href: "/#contacto", isAnchor: true },
 ];
+
+const desktopLabels = new Set([
+  "Servicios",
+  "Portafolio",
+  "Precios",
+  "Blog",
+  "Contacto",
+]);
 
 const NavLinkItem = ({
   item,
@@ -51,6 +75,7 @@ const NavLinkItem = ({
       </a>
     );
   }
+
   return (
     <Link
       to={item.href}
@@ -65,7 +90,6 @@ const NavLinkItem = ({
   );
 };
 
-/* ─── Desktop dropdown ─── */
 const DesktopDropdown = ({
   item,
   openDropdown,
@@ -73,50 +97,50 @@ const DesktopDropdown = ({
 }: {
   item: NavItem;
   openDropdown: string | null;
-  setOpenDropdown: (v: string | null) => void;
+  setOpenDropdown: (value: string | null) => void;
 }) => {
-  const hasChildren = item.children && item.children.length > 0;
+  const hasChildren = Boolean(item.children?.length);
   const linkClass =
-    "relative text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-300 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-secondary/60 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-0 after:h-[2px] after:bg-primary after:transition-all after:duration-300 hover:after:w-3/4";
+    "relative flex items-center gap-1 rounded-lg px-2.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60";
 
   return (
     <div
-      className="relative group"
+      className="relative"
       onMouseEnter={() => hasChildren && setOpenDropdown(item.label)}
       onMouseLeave={() => hasChildren && setOpenDropdown(null)}
+      onFocus={() => hasChildren && setOpenDropdown(item.label)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget))
+          setOpenDropdown(null);
+      }}
     >
-      <NavLinkItem item={item} className={linkClass} />
-      {hasChildren && (
-        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 -mr-1 w-3 h-3 text-muted-foreground transition-transform duration-300 group-hover:rotate-180 pointer-events-none" />
-      )}
+      <div className="relative flex items-center">
+        <NavLinkItem item={item} className={linkClass} />
+        {hasChildren && (
+          <ChevronDown
+            className="-ml-2 h-3 w-3 text-muted-foreground pointer-events-none"
+            aria-hidden="true"
+          />
+        )}
+      </div>
 
-      {hasChildren && (
+      {hasChildren && openDropdown === item.label && (
         <div className="absolute top-full left-0 pt-2">
-          <AnimatePresence>
-            {openDropdown === item.label && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="glass rounded-lg p-2 min-w-[180px]"
-              >
-                {item.children!.map((child) => (
-                  <NavLinkItem
-                    key={child.label}
-                    item={child}
-                    className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-md transition-colors"
-                  />
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="glass rounded-xl p-2 min-w-[210px] shadow-xl">
+            {item.children!.map((child) => (
+              <NavLinkItem
+                key={child.label}
+                item={child}
+                className="block rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-/* ─── Mobile menu item ─── */
 const MobileMenuItem = ({
   item,
   onClose,
@@ -125,17 +149,19 @@ const MobileMenuItem = ({
   onClose: () => void;
 }) => {
   const location = useLocation();
-  const hasChildren = item.children && item.children.length > 0;
+  const hasChildren = Boolean(item.children?.length);
   const isActive =
     (!item.isAnchor && location.pathname.startsWith(item.href)) ||
-    (item.isAnchor && location.pathname === "/" && item.href.includes("#inicio"));
+    (item.isAnchor &&
+      location.pathname === "/" &&
+      item.href.includes("#inicio"));
 
   if (!hasChildren) {
     return (
       <NavLinkItem
         item={item}
         onClick={onClose}
-        className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-colors ${
+        className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-base font-medium transition-colors ${
           isActive
             ? "bg-primary/10 text-primary"
             : "text-foreground hover:bg-secondary/60"
@@ -146,23 +172,24 @@ const MobileMenuItem = ({
 
   return (
     <Collapsible>
-      <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3.5 rounded-xl text-base font-medium text-foreground hover:bg-secondary/60 transition-colors group">
+      <CollapsibleTrigger className="group flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium text-foreground transition-colors hover:bg-secondary/60">
         <span>{item.label}</span>
-        <ChevronRight className="w-4 h-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
+        <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="ml-4 mt-1 mb-2 pl-4 border-l border-border space-y-1">
+        <div className="ml-4 mt-1 mb-2 space-y-1 border-l border-border pl-4">
           {item.children!.map((child) => {
-            const childActive = !child.isAnchor && location.pathname === child.href;
+            const childActive =
+              !child.isAnchor && location.pathname === child.href;
             return (
               <NavLinkItem
                 key={child.label}
                 item={child}
                 onClick={onClose}
-                className={`block px-4 py-2.5 rounded-lg text-sm transition-colors ${
+                className={`block rounded-lg px-4 py-2.5 text-sm transition-colors ${
                   childActive
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                 }`}
               />
             );
@@ -173,7 +200,6 @@ const MobileMenuItem = ({
   );
 };
 
-/* ─── Navbar ─── */
 const Navbar = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -182,43 +208,39 @@ const Navbar = () => {
   useEffect(() => {
     supabase
       .from("portfolio_categories")
-      .select("name, slug")
+      .select("name,slug")
       .eq("is_visible", true)
       .order("order")
       .then(({ data }) => {
-        if (data && data.length > 0) {
-          setNavItems((prev) =>
-            prev.map((item) =>
-              item.label === "Portafolio"
-                ? {
-                    ...item,
-                    children: data.map((cat) => ({
-                      label: cat.name,
-                      href: `/portafolio/${cat.slug}`,
-                      isAnchor: false,
-                    })),
-                  }
-                : item
-            )
-          );
-        }
+        if (!data?.length) return;
+        setNavItems((previous) =>
+          previous.map((item) =>
+            item.label === "Portafolio"
+              ? {
+                  ...item,
+                  children: data.map((category) => ({
+                    label: category.name,
+                    href: `/portafolio/${category.slug}`,
+                    isAnchor: false,
+                  })),
+                }
+              : item,
+          ),
+        );
       });
   }, []);
 
   const closeMobile = () => setMobileOpen(false);
-  const openQuoter = () => {
+  const openQuoter = () =>
     window.dispatchEvent(new CustomEvent("open-smart-quoter"));
-  };
+  const desktopItems = navItems.filter((item) => desktopLabels.has(item.label));
 
   return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="fixed top-0 left-0 right-0 z-50 glass"
+    <nav
+      className="fixed inset-x-0 top-0 z-50 glass"
+      aria-label="Navegación principal"
     >
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between lg:justify-center">
-        {/* Mobile hamburger */}
+      <div className="max-w-7xl mx-auto px-5 lg:px-6 h-16 flex items-center justify-between gap-5">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <button
@@ -231,70 +253,75 @@ const Navbar = () => {
             </button>
           </SheetTrigger>
 
-          <SheetContent side="left" className="w-[85vw] max-w-[320px] p-0 glass border-border">
+          <SheetContent
+            side="left"
+            className="w-[85vw] max-w-[320px] p-0 glass border-border"
+          >
             <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
             <div className="flex flex-col h-full">
-              {/* Header */}
               <div className="px-6 py-5 border-b border-border">
-                <span className="text-lg font-display font-bold text-gradient-primary">
+                <span className="font-display text-lg font-bold text-gradient-primary">
                   Silvio Costa
                 </span>
               </div>
-
-              {/* Nav items */}
-              <nav id="mobile-navigation" className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+              <div
+                id="mobile-navigation"
+                className="flex-1 overflow-y-auto px-3 py-4 space-y-1"
+              >
                 {navItems.map((item) => (
-                  <MobileMenuItem key={item.label} item={item} onClose={closeMobile} />
+                  <MobileMenuItem
+                    key={item.label}
+                    item={item}
+                    onClose={closeMobile}
+                  />
                 ))}
-              </nav>
-
-              {/* CTA + Login */}
-              <div className="px-4 pb-6 pt-2 space-y-3 border-t border-border">
+              </div>
+              <div className="px-4 pb-6 pt-3 space-y-3 border-t border-border">
                 <button
                   type="button"
                   onClick={() => {
                     closeMobile();
                     openQuoter();
                   }}
-                  className="flex w-full items-center justify-center gap-2 px-5 py-3 text-sm font-semibold rounded-xl border border-primary/40 text-foreground hover:bg-primary/10 transition-colors"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 px-5 py-3 text-sm font-semibold text-foreground hover:bg-primary/10 transition-colors"
                 >
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  Cotizador IA
+                  <Sparkles className="h-4 w-4 text-primary" /> Cotizador IA
                 </button>
                 <a
                   href="/#contacto"
                   onClick={closeMobile}
-                  className="block w-full text-center px-5 py-3 text-sm font-semibold rounded-xl bg-gradient-primary text-primary-foreground hover:shadow-glow transition-all duration-300"
+                  className="block w-full rounded-xl bg-gradient-primary px-5 py-3 text-center text-sm font-semibold text-primary-foreground"
                 >
-                  Solicitar Presupuesto
+                  Solicitar presupuesto
                 </a>
                 <Link
                   to="/login"
                   onClick={closeMobile}
-                  className="flex items-center justify-center gap-2 w-full px-5 py-2.5 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-secondary/60 transition-colors"
+                  className="flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
                 >
-                  <LogIn className="w-4 h-4" />
-                  Admin
+                  <LogIn className="h-4 w-4" /> Admin
                 </Link>
               </div>
             </div>
           </SheetContent>
         </Sheet>
 
-        {/* Mobile brand center */}
-        <div className="lg:hidden flex flex-col items-center leading-tight">
+        <Link
+          to="/"
+          className="flex flex-col leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-md"
+        >
           <span className="text-sm font-display font-bold tracking-wide text-foreground uppercase">
             Silvio Costa
           </span>
           <span className="text-[9px] tracking-[0.2em] text-muted-foreground uppercase">
-            Servicios Audiovisuales
+            Servicios audiovisuales
           </span>
-        </div>
-        <div className="lg:hidden w-10" /> {/* spacer for symmetry */}
+        </Link>
 
-        {/* Desktop */}
-        <div className="hidden lg:flex items-center gap-3">
-          {navItems.map((item) => (
+        <div className="lg:hidden w-10" aria-hidden="true" />
+
+        <div className="hidden lg:flex items-center gap-1 ml-auto">
+          {desktopItems.map((item) => (
             <DesktopDropdown
               key={item.label}
               item={item}
@@ -305,27 +332,27 @@ const Navbar = () => {
           <button
             type="button"
             onClick={openQuoter}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full border border-primary/40 text-foreground hover:bg-primary/10 hover:border-primary/70 transition-all duration-300"
+            className="inline-flex items-center gap-2 rounded-full border border-primary/40 px-4 py-2 text-sm font-semibold text-foreground hover:bg-primary/10 transition-colors"
           >
-            <Sparkles className="h-4 w-4 text-primary" />
-            Cotizador IA
+            <Sparkles className="h-4 w-4 text-primary" /> Cotizador IA
           </button>
           <a
             href="/#contacto"
-            className="px-5 py-2 text-sm font-semibold rounded-full bg-gradient-primary text-primary-foreground hover:shadow-glow hover:scale-105 transition-all duration-300"
+            className="ml-1 rounded-full bg-gradient-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
           >
-            Solicitar Presupuesto
+            Pedir presupuesto
           </a>
           <Link
             to="/login"
-            className="p-2 rounded-full text-muted-foreground hover:text-primary hover:bg-secondary/60 hover:scale-110 transition-all duration-300"
-            title="Admin Login"
+            className="p-2 rounded-full text-muted-foreground hover:bg-secondary/60 hover:text-primary transition-colors"
+            title="Acceso al panel"
+            aria-label="Acceso al panel de administración"
           >
-            <LogIn className="w-4 h-4" />
+            <LogIn className="h-4 w-4" />
           </Link>
         </div>
       </div>
-    </motion.nav>
+    </nav>
   );
 };
 

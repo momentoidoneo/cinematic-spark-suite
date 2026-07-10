@@ -1,208 +1,195 @@
-import { motion, useInView } from "framer-motion";
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import {
-  Camera, Video, Plane as PlaneIcon, Eye, Home, Boxes,
+  ArrowRight,
+  Boxes,
+  Camera,
+  Eye,
+  Home,
+  Plane,
+  Video,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { getOptimizedImageSrcSet, getOptimizedImageUrl } from "@/lib/imageUrl";
 
-import servicioFotoHero from "@/assets/servicio-foto-hero.jpg";
-import bannerVideo from "@/assets/banner-video.jpg";
-import bannerDron from "@/assets/banner-dron.jpg";
-import matterportStreetview from "@/assets/matterport-streetview.jpg";
-import portfolioEventos from "@/assets/portfolio-eventos.jpg";
-import portfolioRenders from "@/assets/portfolio-renders.jpg";
+import fotoCover from "@/assets/servicio-foto-landing.avif";
+import videoCover from "@/assets/banner-video-landing.avif";
+import dronCover from "@/assets/banner-dron-landing.avif";
+import tourCover from "@/assets/matterport-landing.avif";
+import eventosCover from "@/assets/portfolio-eventos-landing.avif";
+import rendersCover from "@/assets/portfolio-renders-landing.avif";
 
-type Category = { id: string; name: string; slug: string };
-type Subcategory = { id: string; name: string; slug: string; category_id: string; cover_image: string | null; cover_position: string; link_enabled: boolean };
+type CategoryCover = {
+  slug: string;
+  cover_image: string | null;
+};
 
-const categoryBanners: Record<string, { image: string; title: string; subtitle: string }> = {
-  fotografia: {
-    image: servicioFotoHero,
-    title: "Fotografía Profesional",
-    subtitle: "Capturamos cada detalle con la luz perfecta. Fotografía de alta calidad para arquitectura, producto, moda, gastronomía y eventos.",
+const serviceDefinitions = [
+  {
+    slug: "fotografia",
+    title: "Fotografía profesional",
+    description:
+      "Inmobiliaria, arquitectura, producto, gastronomía, retrato y comunicación corporativa.",
+    href: "/servicios/fotografia",
+    icon: Camera,
+    fallback: fotoCover,
   },
-  video: {
-    image: bannerVideo,
-    title: "Producción Audiovisual",
-    subtitle: "Vídeos corporativos, spots publicitarios, cobertura de eventos y contenido para redes sociales con calidad cinematográfica.",
+  {
+    slug: "video",
+    title: "Vídeo y producción",
+    description:
+      "Vídeo corporativo, publicidad, eventos, contenido social, podcast y streaming.",
+    href: "/servicios/video-dron",
+    icon: Video,
+    fallback: videoCover,
   },
-  dron: {
-    image: bannerDron,
-    title: "Servicios de Dron",
-    subtitle: "Perspectivas aéreas espectaculares con drones de última generación. Fotografía, vídeo, fotogrametría e inspecciones en altura.",
+  {
+    slug: "dron",
+    title: "Servicios de dron",
+    description:
+      "Fotografía y vídeo aéreo, inspecciones, fotogrametría y apoyo a producciones.",
+    href: "/servicios/video-dron",
+    icon: Plane,
+    fallback: dronCover,
   },
-  "tours-virtuales": {
-    image: matterportStreetview,
-    title: "Tours Virtuales 3D",
-    subtitle: "Recorridos inmersivos con tecnología Matterport para que tus clientes exploren cada rincón desde cualquier lugar.",
+  {
+    slug: "tours-virtuales",
+    title: "Tours virtuales 360°",
+    description:
+      "Recorridos Matterport y publicación en Google Street View para espacios que necesitan venderse a distancia.",
+    href: "/servicios/tour-virtual",
+    icon: Eye,
+    fallback: tourCover,
   },
-  eventos: {
-    image: portfolioEventos,
-    title: "Cobertura de Eventos",
-    subtitle: "Cobertura integral con fotografía, vídeo, streaming y sonido profesional para tus eventos más importantes.",
+  {
+    slug: "eventos",
+    title: "Cobertura de eventos",
+    description:
+      "Fotografía, vídeo, streaming y sonido coordinados para una cobertura completa.",
+    href: "/servicios/eventos",
+    icon: Home,
+    fallback: eventosCover,
   },
-  renders: {
-    image: portfolioRenders,
+  {
+    slug: "renders",
     title: "Renders 3D",
-    subtitle: "Visualizaciones fotorrealistas y modelado 3D para arquitectura, interiorismo y producto.",
+    description:
+      "Visualización fotorrealista de arquitectura, interiorismo y producto antes de construir o producir.",
+    href: "/servicios/renders",
+    icon: Boxes,
+    fallback: rendersCover,
   },
-};
-
-const categoryIcons: Record<string, React.ElementType> = {
-  fotografia: Camera,
-  video: Video,
-  dron: PlaneIcon,
-  "tours-virtuales": Eye,
-  eventos: Home,
-  renders: Boxes,
-};
-
-const ServiceCard = ({ name, catSlug, subSlug, index, coverImage, coverPosition, linkEnabled }: { name: string; catSlug: string; subSlug: string; index: number; coverImage: string | null; coverPosition: string; linkEnabled: boolean }) => {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-50px" });
-
-  const content = (
-    <div className="relative w-full h-32 sm:h-36 overflow-hidden">
-      {coverImage && (
-        <img
-          src={getOptimizedImageUrl(coverImage, { width: 480, height: 270, quality: 72 })}
-          srcSet={getOptimizedImageSrcSet(coverImage, [320, 480, 640, 960], { quality: 72 })}
-          sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
-          alt={`${name} — Servicio profesional de Silvio Costa Photography`}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          style={{ objectPosition: coverPosition || 'center' }}
-          loading="lazy"
-          decoding="async"
-        />
-      )}
-      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-card via-card/70 to-transparent px-4 pb-1 pt-12 flex items-end justify-center">
-        <div className="text-center">
-          <h4 className="font-display text-xl sm:text-2xl font-semibold text-foreground group-hover:text-primary transition-colors leading-tight">
-            {name}
-          </h4>
-          {linkEnabled && (
-            <span className="text-xs text-primary mt-1 inline-block opacity-0 group-hover:opacity-100 transition-opacity">
-              Ver portafolio →
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
-    >
-      {linkEnabled ? (
-        <Link
-          to={`/portafolio/${catSlug}/${subSlug}`}
-          className="group rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-glow transition-all block h-full overflow-hidden"
-        >
-          {content}
-        </Link>
-      ) : (
-        <div className="group rounded-xl bg-card border border-border/50 block h-full overflow-hidden">
-          {content}
-        </div>
-      )}
-    </motion.div>
-  );
-};
-
-const SectionBanner = ({ image, title, subtitle, reverse = false }: { image: string; title: string; subtitle: string; reverse?: boolean }) => {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 30 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7 }}
-      className={`relative rounded-2xl overflow-hidden mb-12 flex flex-col ${reverse ? "md:flex-row-reverse" : "md:flex-row"} items-stretch min-h-[280px] md:min-h-[340px]`}
-    >
-      <div className="relative w-full md:w-1/2 min-h-[200px] md:min-h-full">
-        <img src={image} alt={`${title} — Servicio profesional de fotografía y producción audiovisual`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
-        <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-card/60 to-transparent" />
-      </div>
-      <div className="relative w-full md:w-1/2 flex flex-col justify-center p-8 md:p-12 bg-card/90 border border-border/50">
-        <h3 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">{title}</h3>
-        <p className="text-muted-foreground text-base md:text-lg leading-relaxed max-w-md">{subtitle}</p>
-      </div>
-    </motion.div>
-  );
-};
+];
 
 const ServicesSection = () => {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [covers, setCovers] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    Promise.all([
-      supabase.from("portfolio_categories").select("id, name, slug").eq("is_visible", true).order("order"),
-      supabase.from("portfolio_subcategories").select("id, name, slug, category_id, cover_image, cover_position, link_enabled").eq("is_visible", true).order("order"),
-    ]).then(([catRes, subRes]) => {
-      if (catRes.data) setCategories(catRes.data as Category[]);
-      if (subRes.data) setSubcategories(subRes.data as Subcategory[]);
-    });
+    supabase
+      .from("portfolio_categories")
+      .select("slug,cover_image")
+      .eq("is_visible", true)
+      .then(({ data }) => {
+        const next: Record<string, string> = {};
+        (data as CategoryCover[] | null)?.forEach((category) => {
+          if (category.cover_image) next[category.slug] = category.cover_image;
+        });
+        setCovers(next);
+      });
   }, []);
 
   return (
-    <section id="servicios" className="pt-12 pb-24 px-6" ref={ref}>
+    <section id="servicios" className="py-20 px-6">
       <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          className="text-center mb-16"
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-10">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary mb-3">
+              Servicios
+            </p>
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-3">
+              Todo lo necesario para presentar mejor tu proyecto
+            </h2>
+            <p className="text-muted-foreground max-w-2xl">
+              Un único equipo para coordinar fotografía, vídeo, dron, espacios
+              360° y visualización 3D.
+            </p>
+          </div>
+          <Link
+            to="/precios"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+          >
+            Consultar precios <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        <div
+          className="flex gap-4 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-4 -mx-6 px-6 md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:overflow-visible"
+          aria-label="Áreas de servicio"
         >
-          <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-            Nuestros{" "}
-            <span className="text-gradient-primary italic">Servicios</span>
-          </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Especialistas en capturar la mejor imagen para tu negocio, producto o evento.
-          </p>
-        </motion.div>
+          {serviceDefinitions.map((service) => {
+            const image = covers[service.slug] || service.fallback;
+            const srcSet = covers[service.slug]
+              ? getOptimizedImageSrcSet(image, [480, 720, 960], {
+                  height: 600,
+                  quality: 68,
+                })
+              : undefined;
 
-        {categories.map((cat, catIndex) => {
-          const subs = subcategories.filter(s => s.category_id === cat.id);
-          const banner = categoryBanners[cat.slug];
-          const Icon = categoryIcons[cat.slug] || Camera;
-          const isReverse = catIndex % 2 !== 0;
-
-          return (
-            <div key={cat.id} id={cat.slug} className="mb-20 last:mb-0">
-              {banner && (
-                <SectionBanner
-                  image={banner.image}
-                  title={banner.title}
-                  subtitle={banner.subtitle}
-                  reverse={isReverse}
-                />
-              )}
-
-              <div className="flex items-center gap-3 mb-8">
-                <Icon className="w-6 h-6 text-primary" />
-                <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground">{cat.name}</h3>
-                <div className="h-0.5 w-12 bg-gradient-primary rounded-full" />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {subs.map((sub, i) => (
-                  <ServiceCard key={sub.id} name={sub.name} catSlug={cat.slug} subSlug={sub.slug || sub.id} index={i} coverImage={sub.cover_image} coverPosition={sub.cover_position} linkEnabled={sub.link_enabled} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+            return (
+              <article
+                key={service.slug}
+                className="group min-w-[82vw] max-w-[340px] snap-start rounded-2xl border border-border bg-card overflow-hidden md:min-w-0 md:max-w-none"
+              >
+                <Link
+                  to={service.href}
+                  className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                  aria-label={`${service.title}: ver servicio`}
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden">
+                    <img
+                      src={
+                        covers[service.slug]
+                          ? getOptimizedImageUrl(image, {
+                              width: 720,
+                              height: 450,
+                              quality: 68,
+                            })
+                          : image
+                      }
+                      srcSet={srcSet}
+                      sizes="(min-width: 1024px) 31vw, (min-width: 768px) 48vw, 92vw"
+                      alt={`${service.title} de Silvio Costa Photography`}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                      loading="lazy"
+                      decoding="async"
+                      width={720}
+                      height={450}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+                  </div>
+                  <div className="p-6">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                      <service.icon
+                        className="h-5 w-5 text-primary"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                      {service.title}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground mb-5">
+                      {service.description}
+                    </p>
+                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                      Ver servicio{" "}
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </div>
+                </Link>
+              </article>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

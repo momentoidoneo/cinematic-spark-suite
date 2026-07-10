@@ -1,5 +1,21 @@
 import { useEffect, useState } from "react";
-import { Mail, Phone, MessageCircle, Instagram, Facebook, Youtube, Linkedin, Twitter, Globe, Send, Pin, Video, Music, Camera, Twitch } from "lucide-react";
+import {
+  Mail,
+  Phone,
+  MessageCircle,
+  Instagram,
+  Facebook,
+  Youtube,
+  Linkedin,
+  Twitter,
+  Globe,
+  Send,
+  Pin,
+  Video,
+  Music,
+  Camera,
+  Twitch,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
@@ -12,7 +28,10 @@ interface SocialLink {
   is_active: boolean;
 }
 
-const socialIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+const socialIconMap: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   instagram: Instagram,
   facebook: Facebook,
   youtube: Youtube,
@@ -36,7 +55,10 @@ const Footer = () => {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
 
   const trackWhatsAppClick = (label: string) => {
-    trackEvent("whatsapp_click", { event_category: "contact", event_label: label });
+    trackEvent("whatsapp_click", {
+      event_category: "contact",
+      event_label: label,
+    });
     fireGoogleAdsConversion();
   };
 
@@ -52,14 +74,20 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer id="contacto" className="border-t border-border bg-card/50 pt-16 pb-8 px-6">
+    <footer className="border-t border-border bg-card/50 pt-16 pb-28 md:pb-8 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
           <div className="flex flex-col items-center md:items-start">
-            <img src={logo} alt="Silvio Costa Photography" className="h-24 w-auto mb-4" />
+            <img
+              src={logo}
+              alt="Silvio Costa Photography"
+              className="h-24 w-auto mb-4"
+            />
             <p className="text-sm text-foreground/75 leading-relaxed">
-              Elevando la fotografía a una experiencia cinematográfica. Capturando la esencia de cada momento con una estética premium y atención al detalle.
+              Elevando la fotografía a una experiencia cinematográfica.
+              Capturando la esencia de cada momento con una estética premium y
+              atención al detalle.
             </p>
             {socialLinks.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4">
@@ -72,7 +100,11 @@ const Footer = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       title={link.label || link.platform}
-                      onClick={link.platform === "whatsapp" ? () => trackWhatsAppClick("footer_social") : undefined}
+                      onClick={
+                        link.platform === "whatsapp"
+                          ? () => trackWhatsAppClick("footer_social")
+                          : undefined
+                      }
                       className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center text-foreground/75 hover:text-primary hover:border-primary/50 hover:scale-110 transition-all duration-300"
                     >
                       <Icon className="w-4 h-4" />
@@ -85,20 +117,31 @@ const Footer = () => {
 
           {/* Nav */}
           <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Navegación</h4>
+            <h4 className="font-display font-semibold text-foreground mb-4">
+              Navegación
+            </h4>
             <ul className="space-y-2">
               {[
                 { label: "Inicio", href: "/" },
                 { label: "Servicios", href: "/#servicios" },
-                { label: "Guía audiovisual", href: "/guia-servicios-audiovisuales" },
+                {
+                  label: "Guía audiovisual",
+                  href: "/guia-servicios-audiovisuales",
+                },
                 { label: "Portafolio", href: "/portafolio" },
                 { label: "Casos de estudio", href: "/casos-estudio" },
                 { label: "Glosario", href: "/glosario" },
-                { label: "Trabaja con nosotros", href: "/trabaja-con-nosotros" },
+                {
+                  label: "Trabaja con nosotros",
+                  href: "/trabaja-con-nosotros",
+                },
                 { label: "Contacto", href: "/#contacto" },
               ].map((item) => (
                 <li key={item.label}>
-                  <a href={item.href} className="text-sm text-foreground/75 hover:text-foreground transition-colors">
+                  <a
+                    href={item.href}
+                    className="text-sm text-foreground/75 hover:text-foreground transition-colors"
+                  >
                     {item.label}
                   </a>
                 </li>
@@ -108,11 +151,22 @@ const Footer = () => {
 
           {/* Portfolio */}
           <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Portafolio</h4>
+            <h4 className="font-display font-semibold text-foreground mb-4">
+              Portafolio
+            </h4>
             <ul className="space-y-2">
-              {["Fotografía", "Dron", "Tours Virtuales", "Video", "Eventos"].map((item) => (
+              {[
+                "Fotografía",
+                "Dron",
+                "Tours Virtuales",
+                "Video",
+                "Eventos",
+              ].map((item) => (
                 <li key={item}>
-                  <a href="#portafolio" className="text-sm text-foreground/75 hover:text-foreground transition-colors">
+                  <a
+                    href="#portafolio"
+                    className="text-sm text-foreground/75 hover:text-foreground transition-colors"
+                  >
                     {item}
                   </a>
                 </li>
@@ -123,7 +177,9 @@ const Footer = () => {
           {/* Contact */}
           <div>
             <div className="rounded-xl bg-secondary border border-border p-6">
-              <h4 className="font-display font-semibold text-foreground mb-4">Contacto Directo</h4>
+              <h4 className="font-display font-semibold text-foreground mb-4">
+                Contacto Directo
+              </h4>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
@@ -131,7 +187,12 @@ const Footer = () => {
                   </div>
                   <div>
                     <p className="text-xs text-foreground/75">Email</p>
-                    <a href="mailto:silvio@silviocosta.net" className="text-sm font-medium text-foreground">silvio@silviocosta.net</a>
+                    <a
+                      href="mailto:silvio@silviocosta.net"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      silvio@silviocosta.net
+                    </a>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -140,7 +201,12 @@ const Footer = () => {
                   </div>
                   <div>
                     <p className="text-xs text-foreground/75">Teléfono</p>
-                    <a href="tel:+34640934640" className="text-sm font-medium text-foreground">+34 640 934 640</a>
+                    <a
+                      href="tel:+34640934640"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      +34 640 934 640
+                    </a>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -149,7 +215,13 @@ const Footer = () => {
                   </div>
                   <div>
                     <p className="text-xs text-foreground/75">WhatsApp</p>
-                    <a href="https://wa.me/34640934640" onClick={() => trackWhatsAppClick("footer_contact")} className="text-sm font-medium text-foreground">+34 640 934 640</a>
+                    <a
+                      href="https://wa.me/34640934640"
+                      onClick={() => trackWhatsAppClick("footer_contact")}
+                      className="text-sm font-medium text-foreground"
+                    >
+                      +34 640 934 640
+                    </a>
                   </div>
                 </div>
               </div>
@@ -163,10 +235,30 @@ const Footer = () => {
             © 2026 Silvio Costa Photography. Todos los derechos reservados.
           </p>
           <div className="flex gap-4">
-            <a href="/legal/privacy-policy" className="text-xs text-foreground/75 hover:text-foreground transition-colors">Privacidad</a>
-            <a href="/legal/legal-notice" className="text-xs text-foreground/75 hover:text-foreground transition-colors">Aviso Legal</a>
-            <a href="/legal/cookies" className="text-xs text-foreground/75 hover:text-foreground transition-colors">Cookies</a>
-            <a href="/legal/terms" className="text-xs text-foreground/75 hover:text-foreground transition-colors">Términos</a>
+            <a
+              href="/legal/privacy-policy"
+              className="text-xs text-foreground/75 hover:text-foreground transition-colors"
+            >
+              Privacidad
+            </a>
+            <a
+              href="/legal/legal-notice"
+              className="text-xs text-foreground/75 hover:text-foreground transition-colors"
+            >
+              Aviso Legal
+            </a>
+            <a
+              href="/legal/cookies"
+              className="text-xs text-foreground/75 hover:text-foreground transition-colors"
+            >
+              Cookies
+            </a>
+            <a
+              href="/legal/terms"
+              className="text-xs text-foreground/75 hover:text-foreground transition-colors"
+            >
+              Términos
+            </a>
           </div>
         </div>
       </div>

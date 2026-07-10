@@ -12,25 +12,17 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [react(), mode === "development" && componentTagger()].filter(
+    Boolean,
+  ),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
   build: {
-    chunkSizeWarningLimit: 900,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (!id.includes("node_modules")) return;
-          if (id.includes("@supabase")) return "vendor-supabase";
-          if (id.includes("framer-motion")) return "vendor-motion";
-          if (id.includes("lucide-react")) return "vendor-icons";
-          if (id.includes("recharts")) return "vendor-charts";
-          return "vendor-core";
-        },
-      },
-    },
+    // Let Rollup keep route-only dependencies inside their lazy chunks.
+    // A catch-all vendor chunk made the public landing preload admin libraries.
+    chunkSizeWarningLimit: 600,
   },
 }));

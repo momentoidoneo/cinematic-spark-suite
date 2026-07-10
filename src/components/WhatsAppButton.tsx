@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { ArrowRight, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { motion, AnimatePresence } from "framer-motion";
 import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
 
 const WhatsAppButton = () => {
@@ -10,65 +9,87 @@ const WhatsAppButton = () => {
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase
-        .from("whatsapp_config")
-        .select("phone_number, welcome_message")
-        .maybeSingle();
-      if (data?.phone_number) {
+    supabase
+      .from("whatsapp_config")
+      .select("phone_number,welcome_message")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data?.phone_number) return;
         setPhone(data.phone_number.replace(/[\s\-()]/g, ""));
         setMessage(data.welcome_message || "");
-      }
-    };
-    load();
+      });
 
-    // Show tooltip after 3s
-    const t = setTimeout(() => setShowTooltip(true), 3000);
-    const t2 = setTimeout(() => setShowTooltip(false), 8000);
-    return () => { clearTimeout(t); clearTimeout(t2); };
+    const showTimer = window.setTimeout(() => setShowTooltip(true), 3000);
+    const hideTimer = window.setTimeout(() => setShowTooltip(false), 8000);
+    return () => {
+      window.clearTimeout(showTimer);
+      window.clearTimeout(hideTimer);
+    };
   }, []);
 
   if (!phone) return null;
 
   const url = `https://wa.me/${phone.replace("+", "")}${message ? `?text=${encodeURIComponent(message)}` : ""}`;
-
-  const handleClick = () => {
-    trackEvent("whatsapp_click", { event_category: "contact", event_label: "floating_button" });
+  const handleWhatsAppClick = (label: string) => {
+    trackEvent("whatsapp_click", {
+      event_category: "contact",
+      event_label: label,
+    });
     fireGoogleAdsConversion();
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-end gap-3">
-      <AnimatePresence>
+    <>
+      <div className="hidden md:flex fixed bottom-6 right-6 z-50 items-end gap-3">
         {showTooltip && (
-          <motion.div
-            initial={{ opacity: 0, x: 10, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 10, scale: 0.9 }}
-            className="bg-card border border-border rounded-xl px-4 py-3 shadow-lg max-w-[220px] cursor-pointer"
-            onClick={() => { handleClick(); window.open(url, "_blank"); }}
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => handleWhatsAppClick("floating_tooltip")}
+            className="max-w-[230px] rounded-xl border border-border bg-card px-4 py-3 shadow-xl"
           >
             <p className="text-xs text-muted-foreground mb-0.5">WhatsApp</p>
-            <p className="text-sm text-foreground font-medium">¿Necesitas presupuesto rápido? Escríbenos.</p>
-          </motion.div>
+            <p className="text-sm font-medium text-foreground">
+              ¿Necesitas una respuesta rápida? Escríbenos.
+            </p>
+          </a>
         )}
-      </AnimatePresence>
-      <motion.a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={handleClick}
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: "spring", delay: 1 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className="w-14 h-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow"
-        aria-label="Contactar por WhatsApp"
-      >
-        <MessageCircle className="w-7 h-7 text-white" fill="white" />
-      </motion.a>
-    </div>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => handleWhatsAppClick("floating_button")}
+          className="h-14 w-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          aria-label="Contactar por WhatsApp"
+        >
+          <MessageCircle
+            className="h-7 w-7 text-[#052e16]"
+            fill="currentColor"
+          />
+        </a>
+      </div>
+
+      <div className="md:hidden fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-8px_28px_rgba(0,0,0,0.35)]">
+        <div className="grid grid-cols-2 gap-2 max-w-md mx-auto">
+          <a
+            href="/#contacto"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground"
+          >
+            Presupuesto <ArrowRight className="h-4 w-4" />
+          </a>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => handleWhatsAppClick("mobile_bar")}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-3 py-2.5 text-sm font-semibold text-[#052e16]"
+          >
+            <MessageCircle className="h-4 w-4" fill="currentColor" /> WhatsApp
+          </a>
+        </div>
+      </div>
+    </>
   );
 };
 

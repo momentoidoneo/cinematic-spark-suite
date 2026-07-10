@@ -1,123 +1,102 @@
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
-import { Globe, Monitor, Zap, MapPin, Smartphone, Euro } from "lucide-react";
-import matterportTour from "@/assets/blog-matterport-tour.jpg";
-import streetviewImg from "@/assets/matterport-streetview.jpg";
+import { useState } from "react";
+import { ArrowRight, CheckCircle, Maximize, Play } from "lucide-react";
+import { Link } from "react-router-dom";
+import matterportPreview from "@/assets/matterport-landing.avif";
 
-const features = [
-  { icon: Monitor, title: "Calidad 8K HD", desc: "Resolución ultra alta para apreciar cada detalle del espacio con total nitidez." },
-  { icon: Zap, title: "Movimientos fluidos", desc: "Navegación inmersiva y sin saltos, ofreciendo una experiencia realista." },
-  { icon: Smartphone, title: "Carga rápida", desc: "Optimizado para visualizarse instantáneamente en cualquier dispositivo." },
-  { icon: Globe, title: "Personalización AR", desc: "Integración de etiquetas, vídeos y enlaces interactivos dentro del tour." },
+const benefits = [
+  "Visita disponible las 24 horas desde cualquier dispositivo",
+  "Medición, etiquetas y contenido interactivo dentro del espacio",
+  "Publicación compatible con Google Maps y Street View",
 ];
 
 const MatterportSection = () => {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
+  const [showTour, setShowTour] = useState(false);
 
   return (
-    <section id="tour" className="py-24 px-6" ref={ref}>
-      <div className="max-w-7xl mx-auto">
-        {/* Header with image */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center mb-16">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.7 }}
-          >
-            <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-              Tecnología{" "}
-              <span className="text-gradient-accent italic">Matterport</span>
+    <section id="tour" className="py-20 px-6">
+      <div className="max-w-6xl mx-auto rounded-3xl border border-border bg-card overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          <div className="p-7 sm:p-10 lg:p-12 flex flex-col justify-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent mb-3">
+              Tecnología Matterport
+            </p>
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">
+              Permite visitar tu espacio antes de desplazarse
             </h2>
-            <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
-              Utilizamos la tecnología líder en el mercado para crear gemelos digitales exactos de cualquier espacio físico.
-              Ideal para inmobiliarias, hoteles, restaurantes, comercios y espacios de eventos.
+            <p className="text-muted-foreground leading-relaxed mb-6">
+              Creamos gemelos digitales para inmobiliarias, hoteles,
+              restaurantes, comercios y espacios de eventos que necesitan
+              mostrar cada detalle a distancia.
             </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="relative rounded-2xl overflow-hidden aspect-[16/10] shadow-lg"
-          >
-            <iframe
-              src="https://my.matterport.com/show/?m=buNhXbQW5V6"
-              title="Tour virtual Matterport 360°"
-              className="w-full h-full absolute inset-0 border-0"
-              allowFullScreen
-              loading="lazy"
-            />
-          </motion.div>
-        </div>
-
-        {/* Feature cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
-          {features.map((f, i) => (
-            <motion.div
-              key={f.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.2 + i * 0.1 }}
-              className="rounded-xl bg-card border border-border/50 p-6 text-center hover:border-accent/30 transition-all"
+            <ul className="space-y-3 mb-7">
+              {benefits.map((benefit) => (
+                <li
+                  key={benefit}
+                  className="flex items-start gap-2.5 text-sm text-foreground/80"
+                >
+                  <CheckCircle
+                    className="h-4 w-4 text-accent mt-0.5 shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/servicios/tour-virtual"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline self-start"
             >
-              <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                <f.icon className="w-5 h-5 text-accent" />
-              </div>
-              <h4 className="font-display font-semibold text-foreground mb-2">{f.title}</h4>
-              <p className="text-sm text-muted-foreground">{f.desc}</p>
-            </motion.div>
-          ))}
+              Ver el servicio completo <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="relative min-h-[300px] sm:min-h-[420px] lg:min-h-full bg-secondary">
+            {showTour ? (
+              <iframe
+                src="https://my.matterport.com/show/?m=buNhXbQW5V6"
+                title="Tour virtual Matterport 360°"
+                className="absolute inset-0 h-full w-full border-0"
+                allow="fullscreen; xr-spatial-tracking"
+                allowFullScreen
+                loading="lazy"
+              />
+            ) : (
+              <>
+                <img
+                  src={matterportPreview}
+                  alt="Vista previa de un tour virtual Matterport"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  width={960}
+                  height={600}
+                />
+                <div className="absolute inset-0 bg-background/35" />
+                <button
+                  type="button"
+                  onClick={() => setShowTour(true)}
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+                  aria-label="Cargar y explorar la demostración 3D"
+                >
+                  <span className="h-16 w-16 rounded-full bg-accent text-accent-foreground flex items-center justify-center shadow-xl transition-transform hover:scale-105">
+                    <Play
+                      className="h-6 w-6 ml-1"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    />
+                  </span>
+                  <span className="rounded-full bg-background/75 border border-foreground/15 px-4 py-2 text-sm font-semibold backdrop-blur-sm">
+                    Explorar demostración 3D
+                  </span>
+                </button>
+                <Maximize
+                  className="absolute bottom-4 right-4 h-5 w-5 text-foreground/70"
+                  aria-hidden="true"
+                />
+              </>
+            )}
+          </div>
         </div>
-
-        {/* Google Street View with image */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.6 }}
-          className="rounded-2xl overflow-hidden border border-border/50 mb-16 flex flex-col md:flex-row-reverse items-stretch min-h-[280px]"
-        >
-          <div className="relative w-full md:w-2/5 min-h-[200px]">
-            <img
-              src={streetviewImg}
-              alt="Tour virtual Matterport integrado en Google Street View para mejorar la visibilidad en Google Maps"
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
-            />
-          </div>
-          <div className="w-full md:w-3/5 bg-secondary/50 p-10 flex flex-col justify-center">
-            <MapPin className="w-10 h-10 text-accent mb-4" />
-            <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">
-              Compatibilidad con Google Street View
-            </h3>
-            <p className="text-muted-foreground max-w-2xl">
-              Aumenta tu visibilidad online publicando tu tour virtual directamente en Google Maps y Google My Business.
-              Mejora tu posicionamiento SEO local y permite que los clientes te encuentren y visiten virtualmente desde el buscador más utilizado del mundo.
-            </p>
-          </div>
-        </motion.div>
-
-        {/* Pricing CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.8 }}
-          className="text-center"
-        >
-          <Euro className="w-10 h-10 text-accent mx-auto mb-4" />
-          <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">
-            Producción de Tours 3D
-          </h3>
-          <p className="text-muted-foreground max-w-xl mx-auto mb-6">
-            Ofrecemos presupuestos personalizados basados en los metros cuadrados del espacio y los requerimientos específicos de personalización.
-          </p>
-          <a
-            href="#contacto"
-            className="inline-block px-8 py-3 rounded-full bg-gradient-accent text-accent-foreground font-semibold hover:opacity-90 transition-opacity"
-          >
-            Solicitar Presupuesto
-          </a>
-        </motion.div>
       </div>
     </section>
   );

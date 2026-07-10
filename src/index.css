@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/dm-sans-latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/dm-sans-italic-latin.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter-latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
 @layer base {
   :root {
     --background: 220 20% 7%;
@@ -44,9 +68,22 @@
     --sidebar-ring: 168 55% 45%;
 
     /* Custom tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(168 55% 45%), hsl(195 60% 50%));
-    --gradient-accent: linear-gradient(135deg, hsl(42 80% 55%), hsl(30 70% 50%));
-    --gradient-hero: linear-gradient(180deg, transparent 0%, hsl(220 20% 7% / 0.6) 50%, hsl(220 20% 7%) 100%);
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(168 55% 45%),
+      hsl(195 60% 50%)
+    );
+    --gradient-accent: linear-gradient(
+      135deg,
+      hsl(42 80% 55%),
+      hsl(30 70% 50%)
+    );
+    --gradient-hero: linear-gradient(
+      180deg,
+      transparent 0%,
+      hsl(220 20% 7% / 0.6) 50%,
+      hsl(220 20% 7%) 100%
+    );
     --shadow-glow: 0 0 40px hsl(168 55% 45% / 0.15);
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.3);
   }
@@ -64,15 +101,33 @@
 
   html {
     scroll-behavior: auto;
+    scroll-padding-top: 4rem;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    overflow-x: hidden;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -111,5 +166,13 @@
     background: hsl(220 18% 10% / 1);
     backdrop-filter: blur(20px);
     border: 1px solid hsl(220 15% 18% / 0.5);
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 }
