@@ -1,7 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, CheckCircle, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  LANDING_PRICING_SETTING_KEY,
+  parseLandingPricingPlanIds,
+  resolveLandingPricingPlans,
+} from "@/lib/landingPricing";
 
 type PricingPlan = {
   id: string;
@@ -11,35 +16,45 @@ type PricingPlan = {
   price_suffix: string | null;
   features: string[] | null;
   is_highlighted: boolean;
+  is_visible: boolean;
   show_from: boolean;
   order: number;
 };
 
 const PricingPreviewSection = () => {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
+  const [configuredPlanIds, setConfiguredPlanIds] = useState<string[] | null>(
+    null,
+  );
 
   useEffect(() => {
-    supabase
-      .from("pricing_plans")
-      .select(
-        "id,name,description,price,price_suffix,features,is_highlighted,show_from,order",
-      )
-      .eq("is_visible", true)
-      .not("price", "is", null)
-      .order("order")
-      .then(({ data }) => setPlans((data as PricingPlan[]) || []));
+    const load = async () => {
+      const [plansResult, settingResult] = await Promise.all([
+        supabase
+          .from("pricing_plans")
+          .select(
+            "id,name,description,price,price_suffix,features,is_highlighted,is_visible,show_from,order",
+          )
+          .eq("is_visible", true)
+          .not("price", "is", null)
+          .order("order"),
+        supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", LANDING_PRICING_SETTING_KEY)
+          .maybeSingle(),
+      ]);
+
+      setPlans((plansResult.data as PricingPlan[]) || []);
+      setConfiguredPlanIds(
+        parseLandingPricingPlanIds(settingResult.data?.value),
+      );
+    };
+
+    void load();
   }, []);
 
-  const featuredPlans = useMemo(() => {
-    const complete = plans.filter((plan) => (plan.features?.length || 0) >= 3);
-    return [...complete]
-      .sort(
-        (a, b) =>
-          Number(b.is_highlighted) - Number(a.is_highlighted) ||
-          a.order - b.order,
-      )
-      .slice(0, 3);
-  }, [plans]);
+  const featuredPlans = resolveLandingPricingPlans(plans, configuredPlanIds);
 
   if (featuredPlans.length === 0) return null;
 
@@ -70,7 +85,15 @@ const PricingPreviewSection = () => {
           </Link>
         </div>
 
-        <div className="flex gap-4 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-4 -mx-6 px-6 md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-3 md:overflow-visible">
+        <div
+          className={`flex gap-4 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-4 -mx-6 px-6 md:px-0 md:pb-0 md:grid md:overflow-visible ${
+            featuredPlans.length === 1
+              ? "md:grid-cols-1 md:max-w-sm md:mx-auto"
+              : featuredPlans.length === 2
+                ? "md:grid-cols-2 md:max-w-3xl md:mx-auto"
+                : "md:grid-cols-3 md:mx-0"
+          }`}
+        >
           {featuredPlans.map((plan) => (
             <article
               key={plan.id}
@@ -98,7 +121,10 @@ const PricingPreviewSection = () => {
                   <span className="text-sm text-muted-foreground">desde </span>
                 )}
                 <span className="font-display text-3xl font-bold text-primary">
-                  {plan.price}€
+                  {Number(plan.price).toLocaleString("es-ES", {
+                    maximumFractionDigits: 2,
+                  })}
+                  €
                 </span>
                 {plan.price_suffix && (
                   <span className="text-sm text-muted-foreground ml-1">

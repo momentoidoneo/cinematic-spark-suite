@@ -56,8 +56,8 @@ const CommandPalette = () => {
     { label: "Suite de Marketing", icon: Megaphone, action: go("/admin/marketing"), keywords: "redes sociales ia campañas" },
     { label: "Promociones", icon: Tag, action: go("/admin/promotions") },
     { label: "Blog", icon: FileText, action: go("/admin/blog"), keywords: "posts artículos" },
-    { label: "Landing", icon: Home, action: go("/admin/landing") },
-    { label: "Precios", icon: DollarSign, action: go("/admin/pricing") },
+    { label: "Landing y portada", icon: Home, action: go("/admin/landing"), keywords: "inicio web home editar" },
+    { label: "Precios web", icon: DollarSign, action: go("/admin/pricing"), keywords: "landing planes servicios tarifas" },
   ];
   const comms: CommandItemDef[] = [
     { label: "WhatsApp Chats", icon: MessageCircle, action: go("/admin/whatsapp-chats") },

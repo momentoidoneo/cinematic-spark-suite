@@ -49,12 +49,12 @@ const communicationItems = [
 ];
 
 const settingsItems = [
-  { title: "Landing Page", url: "/admin/landing", icon: Monitor },
+  { title: "Landing y portada", url: "/admin/landing", icon: Monitor },
   { title: "Logos Clientes", url: "/admin/client-logos", icon: Building2 },
   { title: "SEO & Meta Tags", url: "/admin/seo", icon: Search },
   { title: "SEO Técnico", url: "/admin/seo-technical", icon: Rss },
   { title: "Ciudades SEO", url: "/admin/cities", icon: MapPin },
-  { title: "Precios", url: "/admin/pricing", icon: CreditCard },
+  { title: "Precios web", url: "/admin/pricing", icon: CreditCard },
   { title: "Calculadora Presup.", url: "/admin/quote-calculator", icon: Calculator },
   { title: "Tracking & Ads", url: "/admin/tracking", icon: Target },
   { title: "Textos Legales", url: "/admin/legal", icon: Scale },

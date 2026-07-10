@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Eye, MailOpen, MessageSquare, TrendingUp, BarChart3, Camera, FileText, Settings,
+  Eye, MailOpen, MessageSquare, TrendingUp, BarChart3, Camera, FileText,
   FolderOpen, Layers, Image as ImageIcon, Users, Clock, Globe, Zap,
+  CreditCard, Monitor,
 } from "lucide-react";
 import {
   AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid,
@@ -165,10 +166,10 @@ const AdminDashboard = () => {
   const quickActions = [
     { label: "Ver mensajes", icon: MessageSquare, link: "/admin/messages", color: "from-primary/20 to-primary/5", badge: counts.unread },
     { label: "Solicitudes IA", icon: Zap, link: "/admin/quote-requests", color: "from-accent/20 to-accent/5", badge: counts.unreadQuotes },
+    { label: "Presupuestos", icon: FileText, link: "/admin/quotes", color: "from-primary/20 to-primary/5" },
+    { label: "Editar Landing", icon: Monitor, link: "/admin/landing", color: "from-secondary to-secondary/50" },
+    { label: "Precios web", icon: CreditCard, link: "/admin/pricing", color: "from-primary/20 to-primary/5" },
     { label: "Subir imágenes", icon: Camera, link: "/admin/images", color: "from-accent/20 to-accent/5" },
-    { label: "SEO", icon: BarChart3, link: "/admin/seo", color: "from-accent/20 to-accent/5" },
-    { label: "Marketing", icon: Zap, link: "/admin/marketing", color: "from-primary/20 to-primary/5" },
-    { label: "Configuración", icon: Settings, link: "/admin/tracking", color: "from-secondary to-secondary/50" },
   ];
   const hasVisitData = stats.viewsCount > 0;
 

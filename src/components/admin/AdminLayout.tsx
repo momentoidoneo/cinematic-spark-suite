@@ -78,7 +78,11 @@ const AdminLayout = () => {
               <ChangePasswordDialog />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                  <button
+                    type="button"
+                    aria-label="Abrir menú de usuario"
+                    className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                  >
                     <MoreVertical className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>

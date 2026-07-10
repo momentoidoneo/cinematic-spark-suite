@@ -34,16 +34,19 @@ const Login = () => {
         </div>
         <form onSubmit={handleSubmit} className="rounded-2xl bg-card border border-border p-8 space-y-5">
           {error && (
-            <div className="rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm p-3">
+            <div role="alert" className="rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm p-3">
               {error}
             </div>
           )}
           <div>
-            <label className="text-sm font-medium text-foreground mb-1.5 block">Email</label>
+            <label htmlFor="admin-email" className="text-sm font-medium text-foreground mb-1.5 block">Email</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
+                id="admin-email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -53,18 +56,27 @@ const Login = () => {
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-foreground mb-1.5 block">Contraseña</label>
+            <label htmlFor="admin-password" className="text-sm font-medium text-foreground mb-1.5 block">Contraseña</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
+                id="admin-password"
+                name="password"
                 type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="••••••••"
                 required
               />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-pressed={showPassword}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
