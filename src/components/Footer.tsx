@@ -18,7 +18,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
-import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
+import { trackEvent } from "@/lib/trackingEvents";
+import { openCookieSettings } from "@/lib/cookieConsent";
 
 interface SocialLink {
   id: string;
@@ -59,7 +60,6 @@ const Footer = () => {
       event_category: "contact",
       event_label: label,
     });
-    fireGoogleAdsConversion();
   };
 
   useEffect(() => {
@@ -253,6 +253,13 @@ const Footer = () => {
             >
               Cookies
             </a>
+            <button
+              type="button"
+              onClick={openCookieSettings}
+              className="text-xs text-foreground/75 hover:text-foreground transition-colors"
+            >
+              Configurar cookies
+            </button>
             <a
               href="/legal/terms"
               className="text-xs text-foreground/75 hover:text-foreground transition-colors"

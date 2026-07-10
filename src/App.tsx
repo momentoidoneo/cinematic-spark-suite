@@ -33,6 +33,9 @@ const GuiaServiciosAudiovisuales = lazy(
 );
 const Glosario = lazy(() => import("./pages/Glosario"));
 const WorkWithUs = lazy(() => import("./pages/WorkWithUs"));
+const CookieConsentBanner = lazy(
+  () => import("./components/CookieConsentBanner"),
+);
 
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
 const BackofficeProviders = lazy(
@@ -101,6 +104,9 @@ const App = () => (
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
       <TrackingScripts />
+      <Suspense fallback={null}>
+        <CookieConsentBanner />
+      </Suspense>
       <GlobalCTATracker />
       <SmartQuoterLoader />
       <PageTracker />

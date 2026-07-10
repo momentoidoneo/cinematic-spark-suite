@@ -1,6 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureDataLayer, setGoogleAdsConversion } from "@/lib/trackingEvents";
+import {
+  COOKIE_CONSENT_UPDATED_EVENT,
+  initializeConsentMode,
+  type CookieConsentPreferences,
+} from "@/lib/cookieConsent";
 
 const TRACKING_KEYS = [
   "google_tag_manager_id",
@@ -18,10 +23,12 @@ const isEnabled = (value?: string) => value === "true";
 const isValidGtmId = (value?: string) => /^GTM-[A-Z0-9]+$/i.test(value || "");
 const isValidGaId = (value?: string) => /^G-[A-Z0-9]+$/i.test(value || "");
 const isValidAdsId = (value?: string) => /^AW-\d+$/i.test(value || "");
-const isValidConversionLabel = (value?: string) => /^[A-Za-z0-9_-]{6,80}$/.test(value || "");
+const isValidConversionLabel = (value?: string) =>
+  /^[A-Za-z0-9_-]{6,80}$/.test(value || "");
 const isValidMetaPixelId = (value?: string) => /^\d{8,30}$/.test(value || "");
 
-const trackingElementId = (prefix: string, id: string) => `sc-${prefix}-${id.toLowerCase()}`;
+const trackingElementId = (prefix: string, id: string) =>
+  `sc-${prefix}-${id.toLowerCase()}`;
 
 const ensureGtag = (id: string) => {
   const scriptId = trackingElementId("gtag", id);
@@ -35,46 +42,76 @@ const ensureGtag = (id: string) => {
   }
 
   ensureDataLayer();
-  window.gtag = window.gtag || ((...args: unknown[]) => {
-    window.dataLayer?.push(args);
-  });
+  window.gtag =
+    window.gtag ||
+    function () {
+      // Google Consent Mode expects the native arguments object in dataLayer.
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer?.push(arguments);
+    };
+};
+
+const grantMetaPixelConsent = (pixelId: string) => {
+  const scriptId = trackingElementId("meta-pixel", pixelId);
+
+  if (document.getElementById(scriptId)) {
+    window.fbq?.("consent", "grant");
+    return;
+  }
+
+  const script = document.createElement("script");
+  script.id = scriptId;
+  script.textContent = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');fbq('track','PageView');`;
+  document.head.appendChild(script);
 };
 
 const TrackingScripts = () => {
-  const [loaded, setLoaded] = useState(false);
-
   useEffect(() => {
-    if (loaded) return;
+    let active = true;
+    let removeConsentListener: (() => void) | undefined;
 
     const load = async () => {
+      const storedConsent = initializeConsentMode();
+
       try {
         const { data } = await supabase
           .from("site_settings")
           .select("key, value")
           .in("key", TRACKING_KEYS);
 
-        if (!data) return;
+        if (!active || !data) return;
 
         const cfg: Record<string, string> = {};
         data.forEach((r) => {
           cfg[r.key] = r.value || "";
         });
 
-        const gtmId = isEnabled(cfg.google_tag_manager_enabled) && isValidGtmId(cfg.google_tag_manager_id)
-          ? cfg.google_tag_manager_id
-          : null;
-        const gaId = isEnabled(cfg.google_analytics_enabled) && isValidGaId(cfg.google_analytics_id)
-          ? cfg.google_analytics_id
-          : null;
-        const adsId = isEnabled(cfg.google_ads_enabled) && isValidAdsId(cfg.google_ads_id)
-          ? cfg.google_ads_id
-          : null;
-        const adsConversionLabel = isValidConversionLabel(cfg.google_ads_conversion_label)
+        const gtmId =
+          isEnabled(cfg.google_tag_manager_enabled) &&
+          isValidGtmId(cfg.google_tag_manager_id)
+            ? cfg.google_tag_manager_id
+            : null;
+        const gaId =
+          isEnabled(cfg.google_analytics_enabled) &&
+          isValidGaId(cfg.google_analytics_id)
+            ? cfg.google_analytics_id
+            : null;
+        const adsId =
+          isEnabled(cfg.google_ads_enabled) && isValidAdsId(cfg.google_ads_id)
+            ? cfg.google_ads_id
+            : null;
+        const adsConversionLabel = isValidConversionLabel(
+          cfg.google_ads_conversion_label,
+        )
           ? cfg.google_ads_conversion_label
           : null;
-        const pixelId = isEnabled(cfg.meta_pixel_enabled) && isValidMetaPixelId(cfg.meta_pixel_id)
-          ? cfg.meta_pixel_id
-          : null;
+        const pixelId =
+          isEnabled(cfg.meta_pixel_enabled) &&
+          isValidMetaPixelId(cfg.meta_pixel_id)
+            ? cfg.meta_pixel_id
+            : null;
+
+        window.__gtm_active = Boolean(gtmId);
 
         if (gtmId) {
           ensureDataLayer();
@@ -85,21 +122,6 @@ const TrackingScripts = () => {
             script.id = scriptId;
             script.textContent = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`;
             document.head.appendChild(script);
-          }
-
-          const noscriptId = trackingElementId("gtm-noscript", gtmId);
-
-          if (!document.getElementById(noscriptId)) {
-            const noscript = document.createElement("noscript");
-            noscript.id = noscriptId;
-            const iframe = document.createElement("iframe");
-            iframe.src = `https://www.googletagmanager.com/ns.html?id=${gtmId}`;
-            iframe.height = "0";
-            iframe.width = "0";
-            iframe.style.display = "none";
-            iframe.style.visibility = "hidden";
-            noscript.appendChild(iframe);
-            document.body.insertBefore(noscript, document.body.firstChild);
           }
         }
 
@@ -122,36 +144,43 @@ const TrackingScripts = () => {
         }
 
         if (pixelId) {
-          const scriptId = trackingElementId("meta-pixel", pixelId);
+          const applyMetaConsent = (marketingAllowed: boolean) => {
+            if (marketingAllowed) {
+              grantMetaPixelConsent(pixelId);
+            } else {
+              window.fbq?.("consent", "revoke");
+            }
+          };
 
-          if (!document.getElementById(scriptId)) {
-            const script = document.createElement("script");
-            script.id = scriptId;
-            script.textContent = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');fbq('track','PageView');`;
-            document.head.appendChild(script);
-          }
+          applyMetaConsent(storedConsent?.marketing === true);
 
-          const noscriptId = trackingElementId("meta-noscript", pixelId);
-
-          if (!document.getElementById(noscriptId)) {
-            const noscript = document.createElement("noscript");
-            noscript.id = noscriptId;
-            const img = document.createElement("img");
-            img.height = 1;
-            img.width = 1;
-            img.style.display = "none";
-            img.src = `https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`;
-            noscript.appendChild(img);
-            document.body.appendChild(noscript);
-          }
+          const handleConsentUpdate = (event: Event) => {
+            const preferences = (event as CustomEvent<CookieConsentPreferences>)
+              .detail;
+            applyMetaConsent(preferences.marketing);
+          };
+          window.addEventListener(
+            COOKIE_CONSENT_UPDATED_EVENT,
+            handleConsentUpdate,
+          );
+          removeConsentListener = () =>
+            window.removeEventListener(
+              COOKIE_CONSENT_UPDATED_EVENT,
+              handleConsentUpdate,
+            );
         }
-      } finally {
-        setLoaded(true);
+      } catch {
+        // Tracking must never prevent the site from loading.
       }
     };
 
-    load().catch(() => setLoaded(true));
-  }, [loaded]);
+    void load();
+
+    return () => {
+      active = false;
+      removeConsentListener?.();
+    };
+  }, []);
 
   return null;
 };

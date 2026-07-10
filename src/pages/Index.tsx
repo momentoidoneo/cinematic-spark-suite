@@ -1,7 +1,6 @@
 import { lazy, Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEOHead, {
   localBusinessSchema,
@@ -31,6 +30,7 @@ const PricingPreviewSection = lazy(
   () => import("@/components/PricingPreviewSection"),
 );
 const FAQSection = lazy(() => import("@/components/FAQSection"));
+const Footer = lazy(() => import("@/components/Footer"));
 
 const Index = () => {
   const siteUrl = getSiteUrl();
@@ -81,7 +81,9 @@ const Index = () => {
         <FAQSection />
         <CTASection />
       </Suspense>
-      <Footer />
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
       <WhatsAppButton />
     </div>
   );

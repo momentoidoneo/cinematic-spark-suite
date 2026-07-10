@@ -139,6 +139,7 @@ const AdminTracking = () => {
           {
             key,
             value,
+            updated_at: new Date().toISOString(),
             label: key
               .replace(/_/g, " ")
               .replace(/\b\w/g, (c) => c.toUpperCase()),

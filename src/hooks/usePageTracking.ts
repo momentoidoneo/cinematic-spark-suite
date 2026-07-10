@@ -1,7 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { detectAIReferrer } from "@/lib/aiReferrers";
+import {
+  COOKIE_CONSENT_UPDATED_EVENT,
+  getStoredCookieConsent,
+  type CookieConsentPreferences,
+} from "@/lib/cookieConsent";
 
 /**
  * Records a page view + session + UTM + geo + device data.
@@ -40,9 +45,10 @@ const getOrCreateSessionId = (): string => {
       sessionStorage.setItem(SESSION_TS_KEY, String(now));
       return existing;
     }
-    const id = typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? `s_${crypto.randomUUID()}`
-      : `s_${now}_${Math.random().toString(36).slice(2, 10)}`;
+    const id =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? `s_${crypto.randomUUID()}`
+        : `s_${now}_${Math.random().toString(36).slice(2, 10)}`;
     sessionStorage.setItem(SESSION_KEY, id);
     sessionStorage.setItem(SESSION_TS_KEY, String(now));
     return id;
@@ -51,10 +57,19 @@ const getOrCreateSessionId = (): string => {
   }
 };
 
-const detectDevice = (): { device_type: string; browser: string; os: string; screen_size: string } => {
+const detectDevice = (): {
+  device_type: string;
+  browser: string;
+  os: string;
+  screen_size: string;
+} => {
   const ua = navigator.userAgent;
   const w = window.screen.width;
-  const device_type = /Mobi|Android|iPhone/i.test(ua) ? "mobile" : /iPad|Tablet/i.test(ua) ? "tablet" : "desktop";
+  const device_type = /Mobi|Android|iPhone/i.test(ua)
+    ? "mobile"
+    : /iPad|Tablet/i.test(ua)
+      ? "tablet"
+      : "desktop";
   let browser = "other";
   if (/Edg\//.test(ua)) browser = "Edge";
   else if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) browser = "Chrome";
@@ -66,7 +81,12 @@ const detectDevice = (): { device_type: string; browser: string; os: string; scr
   else if (/Android/.test(ua)) os = "Android";
   else if (/iPhone|iPad|iOS/.test(ua)) os = "iOS";
   else if (/Linux/.test(ua)) os = "Linux";
-  return { device_type, browser, os, screen_size: `${w}x${window.screen.height}` };
+  return {
+    device_type,
+    browser,
+    os,
+    screen_size: `${w}x${window.screen.height}`,
+  };
 };
 
 const getUTMParams = () => {
@@ -80,14 +100,22 @@ const getUTMParams = () => {
   };
 };
 
-const fetchGeo = async (): Promise<{ country?: string; city?: string; region?: string }> => {
+const fetchGeo = async (): Promise<{
+  country?: string;
+  city?: string;
+  region?: string;
+}> => {
   try {
     const cached = localStorage.getItem(GEO_CACHE_KEY);
     if (cached) {
       const parsed = JSON.parse(cached) as GeoCache;
       // Cache 24h
       if (Date.now() - parsed.ts < 24 * 60 * 60 * 1000) {
-        return { country: parsed.country, city: parsed.city, region: parsed.region };
+        return {
+          country: parsed.country,
+          city: parsed.city,
+          region: parsed.region,
+        };
       }
     }
     const res = await fetch("https://ipapi.co/json/");
@@ -98,7 +126,10 @@ const fetchGeo = async (): Promise<{ country?: string; city?: string; region?: s
       city: data.city || undefined,
       region: data.region || undefined,
     };
-    localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({ ...geo, ts: Date.now() }));
+    localStorage.setItem(
+      GEO_CACHE_KEY,
+      JSON.stringify({ ...geo, ts: Date.now() }),
+    );
     return geo;
   } catch {
     return {};
@@ -107,12 +138,38 @@ const fetchGeo = async (): Promise<{ country?: string; city?: string; region?: s
 
 const usePageTracking = () => {
   const location = useLocation();
+  const [analyticsAllowed, setAnalyticsAllowed] = useState(
+    () => getStoredCookieConsent()?.analytics === true,
+  );
   const lastViewIdRef = useRef<string | null>(null);
   const lastSessionIdRef = useRef<string | null>(null);
   const arrivedAtRef = useRef<number>(Date.now());
 
   useEffect(() => {
-    if (location.pathname.startsWith("/admin") || location.pathname === "/login") return;
+    const handleConsentUpdate = (event: Event) => {
+      const preferences = (event as CustomEvent<CookieConsentPreferences>)
+        .detail;
+      if (!preferences.analytics) {
+        lastViewIdRef.current = null;
+        lastSessionIdRef.current = null;
+      }
+      setAnalyticsAllowed(preferences.analytics);
+    };
+    window.addEventListener(COOKIE_CONSENT_UPDATED_EVENT, handleConsentUpdate);
+    return () =>
+      window.removeEventListener(
+        COOKIE_CONSENT_UPDATED_EVENT,
+        handleConsentUpdate,
+      );
+  }, []);
+
+  useEffect(() => {
+    if (!analyticsAllowed) return;
+    if (
+      location.pathname.startsWith("/admin") ||
+      location.pathname === "/login"
+    )
+      return;
 
     const ref = document.referrer || "";
     const host = window.location.hostname || "";
@@ -167,7 +224,9 @@ const usePageTracking = () => {
 
     const record = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (session?.user) return;
 
         await finishCurrentView();
@@ -176,29 +235,33 @@ const usePageTracking = () => {
         const device = detectDevice();
         const utm = getUTMParams();
         const aiReferrer = detectAIReferrer(document.referrer || null);
-        const aiAttribution = aiReferrer && !utm.utm_source
-          ? {
-              utm_source: aiReferrer.source,
-              utm_medium: "ai_search",
-              utm_campaign: "ai_referral",
-            }
-          : {};
+        const aiAttribution =
+          aiReferrer && !utm.utm_source
+            ? {
+                utm_source: aiReferrer.source,
+                utm_medium: "ai_search",
+                utm_campaign: "ai_referral",
+              }
+            : {};
         const geo = await fetchGeo();
         if (cancelled) return;
 
-        const { data, error } = await supabase.functions.invoke<{ id: string }>("track-page-view", {
-          body: {
-            action: "start",
-            page_path: location.pathname,
-            referrer: document.referrer || null,
-            user_agent: navigator.userAgent || null,
-            session_id,
-            ...device,
-            ...utm,
-            ...aiAttribution,
-            ...geo,
+        const { data, error } = await supabase.functions.invoke<{ id: string }>(
+          "track-page-view",
+          {
+            body: {
+              action: "start",
+              page_path: location.pathname,
+              referrer: document.referrer || null,
+              user_agent: navigator.userAgent || null,
+              session_id,
+              ...device,
+              ...utm,
+              ...aiAttribution,
+              ...geo,
+            },
           },
-        });
+        );
 
         const fallbackId = error
           ? await recordViaDirectInsert({
@@ -229,7 +292,8 @@ const usePageTracking = () => {
 
     // Best-effort duration update on tab hidden (works mid-session for SPA navs above already)
     const handleVisibility = () => {
-      if (document.visibilityState !== "hidden" || !lastViewIdRef.current) return;
+      if (document.visibilityState !== "hidden" || !lastViewIdRef.current)
+        return;
       finishCurrentView(true).catch(() => {});
     };
     document.addEventListener("visibilitychange", handleVisibility);
@@ -239,7 +303,7 @@ const usePageTracking = () => {
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [location.pathname]);
+  }, [analyticsAllowed, location.pathname]);
 };
 
 export default usePageTracking;

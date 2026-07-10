@@ -155,13 +155,18 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
         setLoading(false);
         return;
       }
-      setResult(data as QuoteResult);
+      const quote = data as QuoteResult;
+      setResult(quote);
       toast.success(
         "Solicitud guardada. Aquí tienes una estimación orientativa.",
       );
       trackEvent("quoter_complete", {
-        event_category: "engagement",
+        event_category: "lead",
         event_label: form.service,
+      });
+      fireGoogleAdsConversion({
+        eventLabel: "smart_quoter",
+        transactionId: quote.requestId || undefined,
       });
     } catch (err) {
       toast.error("Error al generar el presupuesto");
@@ -174,10 +179,9 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
     const msg = `${result.whatsappMessage}\n\n💰 Presupuesto orientativo: ${result.min}€ - ${result.max}€`;
     const url = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`;
     trackEvent("quoter_whatsapp", {
-      event_category: "conversion",
+      event_category: "contact",
       event_label: form.service,
     });
-    fireGoogleAdsConversion();
     window.open(url, "_blank");
   };
 

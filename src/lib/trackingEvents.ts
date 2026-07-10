@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getStoredCookieConsent } from "@/lib/cookieConsent";
 
 declare global {
   interface Window {
@@ -7,10 +8,14 @@ declare global {
     fbq?: (...args: unknown[]) => void;
     __gads_conversion_id?: string;
     __gads_conversion_label?: string;
+    __gtm_active?: boolean;
   }
 }
 
-type TrackingParams = Record<string, string | number | boolean | null | undefined>;
+type TrackingParams = Record<
+  string,
+  string | number | boolean | null | undefined
+>;
 
 const SESSION_KEY = "sc_session_id";
 const conversionEventNames = new Set([
@@ -27,15 +32,41 @@ export const ensureDataLayer = () => {
   return window.dataLayer;
 };
 
-export const setGoogleAdsConversion = (conversionId: string, conversionLabel: string) => {
+export const setGoogleAdsConversion = (
+  conversionId: string,
+  conversionLabel: string,
+) => {
   window.__gads_conversion_id = conversionId;
   window.__gads_conversion_label = conversionLabel;
 };
 
-export const fireGoogleAdsConversion = () => {
-  if (window.__gads_conversion_id && window.__gads_conversion_label && typeof window.gtag === "function") {
+export const fireGoogleAdsConversion = ({
+  eventLabel,
+  transactionId,
+}: {
+  eventLabel?: string;
+  transactionId?: string;
+} = {}) => {
+  if (!window.__gads_conversion_id || !window.__gads_conversion_label) {
+    return false;
+  }
+
+  if (window.__gtm_active) {
+    ensureDataLayer().push({
+      event: "lead_conversion",
+      conversion_id: window.__gads_conversion_id,
+      conversion_label: window.__gads_conversion_label,
+      event_label: eventLabel,
+      transaction_id: transactionId,
+    });
+    return true;
+  }
+
+  if (typeof window.gtag === "function") {
     window.gtag("event", "conversion", {
       send_to: `${window.__gads_conversion_id}/${window.__gads_conversion_label}`,
+      event_label: eventLabel,
+      transaction_id: transactionId,
     });
     return true;
   }
@@ -45,6 +76,8 @@ export const fireGoogleAdsConversion = () => {
       event: "lead_conversion",
       conversion_id: window.__gads_conversion_id,
       conversion_label: window.__gads_conversion_label,
+      event_label: eventLabel,
+      transaction_id: transactionId,
     });
     return true;
   }
@@ -71,8 +104,11 @@ const getUtmParams = () => {
 
 const persistConversionEvent = (eventName: string, params?: TrackingParams) => {
   if (!conversionEventNames.has(eventName)) return;
+  const consent = getStoredCookieConsent();
+  if (!consent?.analytics && !consent?.marketing) return;
 
-  const eventLabel = typeof params?.event_label === "string" ? params.event_label : null;
+  const eventLabel =
+    typeof params?.event_label === "string" ? params.event_label : null;
   const dedupeKey = `${eventName}:${eventLabel || ""}:${window.location.pathname}`;
   const now = Date.now();
   const last = lastPersistedEvents.get(dedupeKey) || 0;
@@ -81,20 +117,22 @@ const persistConversionEvent = (eventName: string, params?: TrackingParams) => {
 
   const { utm_source, utm_medium, utm_campaign } = getUtmParams();
 
-  void supabase.functions.invoke("track-conversion-event", {
-    body: {
-      event_name: eventName,
-      event_label: eventLabel,
-      page_path: window.location.pathname || "/",
-      session_id: getSessionId(),
-      referrer: document.referrer || null,
-      user_agent: navigator.userAgent || null,
-      utm_source,
-      utm_medium,
-      utm_campaign,
-      metadata: params || {},
-    },
-  }).catch(() => {});
+  void supabase.functions
+    .invoke("track-conversion-event", {
+      body: {
+        event_name: eventName,
+        event_label: eventLabel,
+        page_path: window.location.pathname || "/",
+        session_id: getSessionId(),
+        referrer: document.referrer || null,
+        user_agent: navigator.userAgent || null,
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        metadata: params || {},
+      },
+    })
+    .catch(() => {});
 };
 
 export const trackEvent = (eventName: string, params?: TrackingParams) => {
