@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, Navigate, Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, MapPin, CheckCircle2, ArrowRight, Star, Award, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import heroImg from "@/assets/servicio-foto-hero.jpg";
+import NotFound from "@/pages/NotFound";
 
 /**
  * Long-tail SEO landing: /{servicio}-{ciudad}
@@ -24,6 +25,12 @@ import heroImg from "@/assets/servicio-foto-hero.jpg";
  */
 
 const SERVICES: Record<string, { title: string; desc: string; bullets: string[]; cta: string }> = {
+  "fotografia": {
+    title: "Fotografía Profesional",
+    desc: "Fotografía comercial para inmobiliaria, arquitectura, producto, gastronomía, eventos y empresas.",
+    bullets: ["Planificación y dirección visual", "Equipo e iluminación profesional", "Edición y retoque incluidos", "Entrega optimizada para web y alta resolución"],
+    cta: "Solicitar presupuesto fotográfico",
+  },
   "fotografia-inmobiliaria": {
     title: "Fotografía Inmobiliaria",
     desc: "Sesiones HDR profesionales para venta y alquiler. Edición Sky-Replacement, verticales corregidas y entrega en 48h.",
@@ -122,7 +129,7 @@ export default function ServicioCiudad() {
   if (!loaded) {
     return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Cargando…</div>;
   }
-  if (!service || !city) return <Navigate to="/" replace />;
+  if (!service || !city) return <NotFound />;
 
   const SITE = getSiteUrl();
   const url = `${SITE}/${slug}`;

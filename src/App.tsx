@@ -24,7 +24,6 @@ const ServicioVideoDron = lazy(() => import("./pages/ServicioVideoDron"));
 const ServicioTourVirtual = lazy(() => import("./pages/ServicioTourVirtual"));
 const ServicioEventos = lazy(() => import("./pages/ServicioEventos"));
 const ServicioRenders = lazy(() => import("./pages/ServicioRenders"));
-const FotografiaCiudad = lazy(() => import("./pages/FotografiaCiudad"));
 const ServicioCiudad = lazy(() => import("./pages/ServicioCiudad"));
 const Legal = lazy(() => import("./pages/Legal"));
 const Precios = lazy(() => import("./pages/Precios"));
@@ -174,29 +173,10 @@ const App = () => (
           <Route path="/glosario" element={<Glosario />} />
           <Route path="/casos-estudio" element={<CasosEstudio />} />
           <Route path="/casos-estudio/:slug" element={<CasoEstudio />} />
-          <Route path="/fotografia-:city" element={<FotografiaCiudad />} />
-          <Route
-            path="/fotografia-inmobiliaria-:city"
-            element={<ServicioCiudad />}
-          />
-          <Route
-            path="/fotografia-arquitectura-:city"
-            element={<ServicioCiudad />}
-          />
-          <Route
-            path="/fotografia-gastronomia-:city"
-            element={<ServicioCiudad />}
-          />
-          <Route
-            path="/fotografia-producto-:city"
-            element={<ServicioCiudad />}
-          />
-          <Route
-            path="/fotografia-eventos-:city"
-            element={<ServicioCiudad />}
-          />
-          <Route path="/tour-virtual-:city" element={<ServicioCiudad />} />
-          <Route path="/video-dron-:city" element={<ServicioCiudad />} />
+          {/* React Router does not parse partial params such as
+              /fotografia-inmobiliaria-:city. Capture the complete long-tail
+              slug as one segment and let ServicioCiudad validate it. */}
+          <Route path="/:serviceCitySlug" element={<ServicioCiudad />} />
           <Route
             path="/admin"
             element={
