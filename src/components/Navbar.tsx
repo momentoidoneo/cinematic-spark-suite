@@ -52,6 +52,7 @@ const staticNavItems: NavItem[] = [
 ];
 
 const desktopLabels = new Set([
+  "Inicio",
   "Servicios",
   "Portafolio",
   "Precios",
