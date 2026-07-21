@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Navigate, Link } from "react-router-dom";
+import { useLocation, Navigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -94,9 +94,10 @@ const HARDCODED_CITIES: Record<string, CityRecord> = {
 };
 
 export default function ServicioCiudad() {
-  const params = useParams();
-  // Route: /:slug — slug = "{servicio}-{ciudad}" e.g. "fotografia-inmobiliaria-madrid"
-  const slug = (params["*"] || params.slug || "") as string;
+  const { pathname } = useLocation();
+  // These routes expose only the trailing :city param. Read the complete path so
+  // the service prefix is preserved (e.g. "fotografia-inmobiliaria-madrid").
+  const slug = pathname.replace(/^\/+|\/+$/g, "");
 
   const [city, setCity] = useState<CityRecord | null>(null);
   const [loaded, setLoaded] = useState(false);
