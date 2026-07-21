@@ -129,6 +129,10 @@ const App = () => (
             element={<Navigate to="/blog" replace />}
           />
           <Route path="/portafolio" element={<Portfolio />} />
+          <Route
+            path="/portfolio"
+            element={<Navigate to="/portafolio" replace />}
+          />
           <Route path="/portafolio/:categorySlug" element={<Portfolio />} />
           <Route
             path="/portafolio/:categorySlug/:subcategorySlug"
@@ -136,6 +140,10 @@ const App = () => (
           />
           <Route
             path="/servicios"
+            element={<Navigate to="/servicios/fotografia" replace />}
+          />
+          <Route
+            path="/servicios-1"
             element={<Navigate to="/servicios/fotografia" replace />}
           />
           <Route
