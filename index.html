@@ -7,6 +7,68 @@
       name="google-site-verification"
       content="yrQcH7VdUHZGXF9SRHDD6nARwXAekhkF9WsqTeUno_M"
     />
+    <!--
+      Google Consent Mode and GTM must exist in the initial HTML.
+      Loading GTM only after the React/Supabase bootstrap prevents Google Ads
+      diagnostics and some first-page visits from detecting the Google tag.
+    -->
+    <script id="sc-gtm-gtm-ncpz56k2">
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w.gtag =
+          w.gtag ||
+          function () {
+            w[l].push(arguments);
+          };
+
+        var preferences = { analytics: false, marketing: false };
+        try {
+          var rawConsent = w.localStorage.getItem("sc_cookie_consent");
+          var storedConsent = rawConsent ? JSON.parse(rawConsent) : null;
+          var updatedAt = storedConsent
+            ? Date.parse(storedConsent.updatedAt)
+            : NaN;
+          var isCurrent =
+            storedConsent &&
+            storedConsent.version === 1 &&
+            typeof storedConsent.analytics === "boolean" &&
+            typeof storedConsent.marketing === "boolean" &&
+            Number.isFinite(updatedAt) &&
+            Date.now() - updatedAt <= 180 * 24 * 60 * 60 * 1000;
+
+          if (isCurrent) {
+            preferences.analytics = storedConsent.analytics;
+            preferences.marketing = storedConsent.marketing;
+          }
+        } catch (_) {
+          // Keep denied defaults when storage is unavailable or malformed.
+        }
+
+        w.gtag("consent", "default", {
+          analytics_storage: preferences.analytics ? "granted" : "denied",
+          ad_storage: preferences.marketing ? "granted" : "denied",
+          ad_user_data: preferences.marketing ? "granted" : "denied",
+          ad_personalization: preferences.marketing ? "granted" : "denied",
+          functionality_storage: "granted",
+          security_storage: "granted",
+          wait_for_update: 500,
+        });
+        w.__consent_mode_initialized = true;
+        w.__gtm_active = true;
+
+        w[l].push({
+          "gtm.start": new Date().getTime(),
+          event: "gtm.js",
+        });
+        var firstScript = d.getElementsByTagName(s)[0];
+        var gtmScript = d.createElement(s);
+        var layerParam = l !== "dataLayer" ? "&l=" + l : "";
+        gtmScript.async = true;
+        gtmScript.src =
+          "https://www.googletagmanager.com/gtm.js?id=" + i + layerParam;
+        firstScript.parentNode.insertBefore(gtmScript, firstScript);
+      })(window, document, "script", "dataLayer", "GTM-NCPZ56K2");
+    </script>
     <title>
       Fotografía y producción audiovisual para empresas | Silvio Costa
     </title>
@@ -98,6 +160,15 @@
   </head>
 
   <body>
+    <noscript>
+      <iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-NCPZ56K2"
+        height="0"
+        width="0"
+        style="display: none; visibility: hidden"
+        title="Google Tag Manager"
+      ></iframe>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
