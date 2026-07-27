@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy:cloudflare": "npx wrangler@4.114.0 deploy",
     "postbuild": "node scripts/prerender-seo.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "smoke:site": "node scripts/smoke-site.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

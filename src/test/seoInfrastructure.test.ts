@@ -18,6 +18,17 @@ const robots = readFileSync(
   resolve(process.cwd(), "public/robots.txt"),
   "utf8",
 );
+const headers = readFileSync(
+  resolve(process.cwd(), "public/_headers"),
+  "utf8",
+);
+const prerenderScript = readFileSync(
+  resolve(process.cwd(), "scripts/prerender-seo.mjs"),
+  "utf8",
+);
+const wranglerConfig = JSON.parse(
+  readFileSync(resolve(process.cwd(), "wrangler.jsonc"), "utf8"),
+);
 
 describe("initial SEO shell", () => {
   it("does not claim that every client-side route is the home page", () => {
@@ -34,6 +45,36 @@ describe("AI crawler access", () => {
       expect(robots).toContain(`User-agent: ${crawler}`);
     },
   );
+});
+
+describe("Cloudflare edge configuration", () => {
+  it("uses Cloudflare-compatible permanent redirects", () => {
+    expect(prerenderScript).not.toContain("301!");
+    expect(prerenderScript).not.toContain('"/* /404.html 404"');
+    expect(prerenderScript).not.toContain('"/admin/* /index.html 200"');
+    expect(prerenderScript).toContain(
+      '"/single-post/* /blog/:splat 301"',
+    );
+  });
+
+  it("keeps private routes out of search and caches hashed assets", () => {
+    expect(headers).toContain(
+      "X-Robots-Tag: noindex, nofollow, noarchive",
+    );
+    expect(headers).toContain(
+      "Cache-Control: public, max-age=31536000, immutable",
+    );
+    expect(headers).toContain(
+      "https://:worker.:account.workers.dev/*",
+    );
+  });
+
+  it("preserves clean URLs and returns a native 404", () => {
+    expect(wranglerConfig.assets.html_handling).toBe(
+      "drop-trailing-slash",
+    );
+    expect(wranglerConfig.assets.not_found_handling).toBe("404-page");
+  });
 });
 
 describe("sitemap catalog", () => {

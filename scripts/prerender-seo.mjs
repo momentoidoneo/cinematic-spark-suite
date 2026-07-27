@@ -335,6 +335,65 @@ for (const route of routesByPath.values()) {
   await writeFile(path.join(outputDir, "index.html"), renderRoute(route));
 }
 
+const privateShellRoutes = [
+  "/login",
+  "/admin",
+  "/admin/categories",
+  "/admin/subcategories",
+  "/admin/images",
+  "/admin/analytics",
+  "/admin/storage",
+  "/admin/marketing",
+  "/admin/promotions",
+  "/admin/blog",
+  "/admin/whatsapp-chats",
+  "/admin/whatsapp-config",
+  "/admin/legal",
+  "/admin/social",
+  "/admin/api-keys",
+  "/admin/landing",
+  "/admin/tracking",
+  "/admin/migration",
+  "/admin/messages",
+  "/admin/quote-requests",
+  "/admin/quotes",
+  "/admin/drone-permits",
+  "/admin/collaborators",
+  "/admin/pricing",
+  "/admin/seo",
+  "/admin/seo-technical",
+  "/admin/marketing-tools",
+  "/admin/cities",
+  "/admin/client-logos",
+  "/admin/testimonials",
+  "/admin/case-studies",
+  "/admin/quote-calculator",
+  "/admin/lead-magnets",
+];
+
+function renderPrivateShell(routePath) {
+  let html = setTitle(
+    sourceHtml,
+    routePath === "/login"
+      ? "Acceso privado | Silvio Costa Photography"
+      : "Panel privado | Silvio Costa Photography",
+  );
+  html = setMeta(html, "name", "robots", "noindex, nofollow, noarchive");
+  return html;
+}
+
+for (const routePath of privateShellRoutes) {
+  const outputDir = path.join(
+    distDir,
+    routePath.replace(/^\/+|\/+$/g, ""),
+  );
+  await mkdir(outputDir, { recursive: true });
+  await writeFile(
+    path.join(outputDir, "index.html"),
+    renderPrivateShell(routePath),
+  );
+}
+
 const legacyRedirects = [
   { from: "/trabajos-realizados", to: "/portafolio" },
   { from: "/tour-virtual", to: "/servicios/tour-virtual" },
@@ -400,19 +459,13 @@ for (const redirect of legacyRedirects) {
 }
 
 const redirectLines = [
-  "/trabajos-realizados /portafolio 301!",
-  "/tour-virtual /servicios/tour-virtual 301!",
-  "/portfolio /portafolio 301!",
-  "/servicios-1 /servicios/fotografia 301!",
-  "/contacto /#contacto 301!",
-  "/single-post/* /blog 301!",
-  "/service-page/servicios-de-fotograf%C3%ADa-varios /servicios/fotografia 301!",
-  ...[...routesByPath.keys()]
-    .filter((routePath) => routePath !== "/")
-    .map((routePath) => `${routePath} ${routePath}/index.html 200`),
-  "/admin/* /index.html 200",
-  "/login /index.html 200",
-  "/* /404.html 404",
+  "/trabajos-realizados /portafolio 301",
+  "/tour-virtual /servicios/tour-virtual 301",
+  "/portfolio /portafolio 301",
+  "/servicios-1 /servicios/fotografia 301",
+  "/contacto /#contacto 301",
+  "/service-page/servicios-de-fotograf%C3%ADa-varios /servicios/fotografia 301",
+  "/single-post/* /blog/:splat 301",
 ];
 await writeFile(path.join(distDir, "_redirects"), `${redirectLines.join("\n")}\n`);
 
@@ -431,5 +484,5 @@ notFoundHtml = setMeta(notFoundHtml, "name", "robots", "noindex, nofollow");
 await writeFile(path.join(distDir, "404.html"), notFoundHtml);
 
 console.log(
-  `[prerender] generated ${routesByPath.size} route HTML files, ${legacyRedirects.length} legacy redirects and a real 404 fallback`,
+  `[prerender] generated ${routesByPath.size} public route HTML files, ${privateShellRoutes.length} private shells, ${legacyRedirects.length} legacy redirects and a real 404 fallback`,
 );
