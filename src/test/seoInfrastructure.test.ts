@@ -3,11 +3,15 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   dateOnly,
-  HARDCODED_CITY_SLUGS,
   isSafeSlug,
   latestDate,
+  PRIORITY_CITY_SLUGS,
   SITEMAP_STATIC_PAGES,
 } from "../../supabase/functions/_shared/seoCatalog";
+import {
+  priorityServiceCitySlugs,
+  regionalCoverage,
+} from "@/content/regionalCoverage";
 
 const html = readFileSync(resolve(process.cwd(), "index.html"), "utf8");
 const robots = readFileSync(
@@ -33,19 +37,18 @@ describe("AI crawler access", () => {
 });
 
 describe("sitemap catalog", () => {
-  it("lists only local cities that the application can render without DB data", () => {
-    expect(HARDCODED_CITY_SLUGS).toEqual([
-      "madrid",
-      "barcelona",
-      "valencia",
-      "sevilla",
-      "malaga",
-      "bilbao",
-      "marbella",
-      "lisboa",
-      "porto",
-      "faro",
-    ]);
+  it("pushes only cities with current commercial priority", () => {
+    expect(PRIORITY_CITY_SLUGS).toEqual(["madrid"]);
+    expect(PRIORITY_CITY_SLUGS).toEqual(priorityServiceCitySlugs);
+  });
+
+  it("defines focused landing pages for both priority regions", () => {
+    expect(regionalCoverage.madrid.path).toBe(
+      "/servicios-audiovisuales-madrid",
+    );
+    expect(regionalCoverage["castilla-la-mancha"].path).toBe(
+      "/servicios-audiovisuales-castilla-la-mancha",
+    );
   });
 
   it("includes the public guide, glossary and collaborator routes", () => {
@@ -53,6 +56,10 @@ describe("sitemap catalog", () => {
     expect(paths).toContain("/guia-servicios-audiovisuales");
     expect(paths).toContain("/glosario");
     expect(paths).toContain("/trabaja-con-nosotros");
+    expect(paths).toContain("/servicios-audiovisuales-madrid");
+    expect(paths).toContain(
+      "/servicios-audiovisuales-castilla-la-mancha",
+    );
   });
 
   it("validates slugs and keeps truthful update dates", () => {

@@ -13,7 +13,7 @@ import logo from "@/assets/logo.png";
 
 const trustSignals = [
   { icon: Clock, label: "Respuesta en menos de 24h" },
-  { icon: MapPin, label: "España y Portugal" },
+  { icon: MapPin, label: "Madrid · Castilla-La Mancha" },
   { icon: Sparkles, label: "Foto · vídeo · dron · 360° · 3D" },
 ];
 
@@ -105,9 +105,9 @@ const HeroSection = () => {
         </h1>
 
         <p className="mt-6 max-w-3xl mx-auto text-base sm:text-lg lg:text-xl leading-relaxed text-foreground/75">
-          Fotografía, vídeo, dron, Matterport y renders 3D en España y Portugal.
-          Te proponemos el alcance adecuado y un presupuesto orientativo en
-          menos de 24 horas.
+          Cobertura prioritaria en Madrid y Castilla-La Mancha para fotografía,
+          vídeo, dron, Matterport y renders 3D. También nos desplazamos por
+          España y Portugal cuando el proyecto lo requiere.
         </p>
 
         <div className="mt-7 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">

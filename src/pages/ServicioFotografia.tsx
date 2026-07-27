@@ -45,7 +45,7 @@ const processSteps = [
 const photographyFAQs = [
   { question: "¿Cuánto cuesta una sesión de fotografía profesional?", answer: "El precio varía según el tipo de sesión, la duración y la cantidad de imágenes finales. Ofrecemos presupuestos personalizados sin compromiso. Contacta con nosotros para recibir una propuesta adaptada a tu proyecto." },
   { question: "¿Cuánto tiempo tarda la entrega de las fotografías?", answer: "La entrega estándar es de 48 a 72 horas laborables tras la sesión. Para proyectos urgentes, ofrecemos servicio express con entrega en 24 horas." },
-  { question: "¿En qué zonas ofrecéis servicio de fotografía?", answer: "Trabajamos en toda España y Portugal. Nos desplazamos a cualquier ubicación para realizar los proyectos, con especial presencia en Andalucía, Madrid, Cataluña y la Comunidad Valenciana." },
+  { question: "¿En qué zonas ofrecéis servicio de fotografía?", answer: "Nuestra cobertura prioritaria está en la Comunidad de Madrid y Castilla-La Mancha. También nos desplazamos por España y Portugal cuando el alcance del proyecto lo requiere." },
   { question: "¿Qué incluye el servicio de fotografía profesional?", answer: "Incluye planificación de la sesión, captura con equipo profesional de última generación, selección de las mejores tomas, retoque y edición profesional, y entrega en alta resolución en los formatos que necesites." },
   { question: "¿Hacéis fotografía para e-commerce y tiendas online?", answer: "Sí, ofrecemos fotografía de producto optimizada para e-commerce: packshots sobre fondo blanco, fotografía lifestyle, imágenes de detalle y fotografía de catálogo adaptada a los requisitos de cada plataforma." },
 ];
@@ -56,8 +56,8 @@ const ServicioFotografia = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Fotografía Profesional España y Portugal | Silvio Costa"
-        description="Servicios de fotografía profesional: inmobiliaria, arquitectura, producto, gastronomía, moda y eventos. +10 especialidades con calidad cinematográfica en toda España y Portugal."
+        title="Fotografía profesional en Madrid y Castilla-La Mancha | Silvio Costa"
+        description="Fotografía profesional para inmobiliaria, arquitectura, producto, gastronomía, empresas y eventos en Madrid y Castilla-La Mancha."
         canonical={`${siteUrl}/servicios/fotografia`}
         jsonLd={[
           photographyServiceSchema,

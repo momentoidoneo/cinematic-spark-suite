@@ -25,6 +25,7 @@ const ServicioTourVirtual = lazy(() => import("./pages/ServicioTourVirtual"));
 const ServicioEventos = lazy(() => import("./pages/ServicioEventos"));
 const ServicioRenders = lazy(() => import("./pages/ServicioRenders"));
 const ServicioCiudad = lazy(() => import("./pages/ServicioCiudad"));
+const CoberturaRegional = lazy(() => import("./pages/CoberturaRegional"));
 const Legal = lazy(() => import("./pages/Legal"));
 const Precios = lazy(() => import("./pages/Precios"));
 const GuiaServiciosAudiovisuales = lazy(
@@ -164,6 +165,14 @@ const App = () => (
           />
           <Route path="/servicios/eventos" element={<ServicioEventos />} />
           <Route path="/servicios/renders" element={<ServicioRenders />} />
+          <Route
+            path="/servicios-audiovisuales-madrid"
+            element={<CoberturaRegional region="madrid" />}
+          />
+          <Route
+            path="/servicios-audiovisuales-castilla-la-mancha"
+            element={<CoberturaRegional region="castilla-la-mancha" />}
+          />
           <Route path="/precios" element={<Precios />} />
           <Route path="/trabaja-con-nosotros" element={<WorkWithUs />} />
           <Route

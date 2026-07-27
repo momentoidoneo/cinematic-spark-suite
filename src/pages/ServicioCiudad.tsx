@@ -6,13 +6,14 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import FloatingCTA from "@/components/FloatingCTA";
 import CTASection from "@/components/CTASection";
-import SEOHead, { breadcrumbSchema, getSiteUrl, personSchema, aggregateRatingSchema } from "@/components/SEOHead";
+import SEOHead, { breadcrumbSchema, getSiteUrl, personSchema } from "@/components/SEOHead";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { Button } from "@/components/ui/button";
-import { Camera, MapPin, CheckCircle2, ArrowRight, Star, Award, Clock } from "lucide-react";
+import { Camera, MapPin, CheckCircle2, ArrowRight, Award, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import heroImg from "@/assets/servicio-foto-hero.jpg";
 import NotFound from "@/pages/NotFound";
+import { priorityServiceCitySlugs } from "@/content/regionalCoverage";
 
 /**
  * Long-tail SEO landing: /{servicio}-{ciudad}
@@ -135,8 +136,12 @@ export default function ServicioCiudad() {
   const url = `${SITE}/${slug}`;
   const title = `${service.title} en ${city.name} | Silvio Costa`;
   const description = `${service.desc.slice(0, 110)} Cobertura local en ${city.name}, ${city.region}.`;
+  const isPriorityLocation =
+    priorityServiceCitySlugs.includes(
+      citySlug as (typeof priorityServiceCitySlugs)[number],
+    ) || !HARDCODED_CITIES[citySlug];
 
-  const jsonLd: Record<string, any>[] = [
+  const jsonLd: Record<string, unknown>[] = [
     breadcrumbSchema([
       { name: "Inicio", url: SITE },
       { name: "Servicios", url: `${SITE}/servicios/fotografia` },
@@ -155,19 +160,32 @@ export default function ServicioCiudad() {
         address: { "@type": "PostalAddress", addressRegion: city.region, addressCountry: city.country },
         ...(city.geo_lat && city.geo_lng ? { geo: { "@type": "GeoCoordinates", latitude: city.geo_lat, longitude: city.geo_lng } } : {}),
       },
-      aggregateRating: aggregateRatingSchema,
       url,
     },
   ];
 
   // Related cities for internal linking
   const relatedCities = Object.values(HARDCODED_CITIES)
-    .filter(c => c.slug !== citySlug && c.country === city.country)
+    .filter(
+      (c) =>
+        c.slug !== citySlug &&
+        c.country === city.country &&
+        priorityServiceCitySlugs.includes(
+          c.slug as (typeof priorityServiceCitySlugs)[number],
+        ),
+    )
     .slice(0, 6);
 
   return (
     <div className="min-h-screen bg-background">
-      <SEOHead title={title} description={description} canonical={url} ogType="website" jsonLd={jsonLd} />
+      <SEOHead
+        title={title}
+        description={description}
+        canonical={url}
+        ogType="website"
+        noindex={!isPriorityLocation}
+        jsonLd={jsonLd}
+      />
       <Navbar />
       <FloatingCTA />
 
@@ -214,8 +232,10 @@ export default function ServicioCiudad() {
           </div>
           <div className="bg-card border border-border rounded-lg p-6">
             <div className="flex items-center gap-2 mb-3">
-              <Star className="h-5 w-5 text-primary fill-primary" />
-              <span className="font-semibold">4.9/5 en 47 proyectos</span>
+              <MapPin className="h-5 w-5 text-primary" />
+              <span className="font-semibold">
+                Producción planificada según ubicación
+              </span>
             </div>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div><Award className="h-5 w-5 mx-auto text-primary mb-1" /><div className="text-xs text-muted-foreground">+10 años</div></div>

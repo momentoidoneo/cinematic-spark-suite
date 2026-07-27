@@ -39,6 +39,8 @@ const KNOWN_PAGES = [
   "/blog",
   "/precios",
   "/guia-servicios-audiovisuales",
+  "/servicios-audiovisuales-madrid",
+  "/servicios-audiovisuales-castilla-la-mancha",
   "/glosario",
   "/casos-estudio",
   "/legal/legal-notice",

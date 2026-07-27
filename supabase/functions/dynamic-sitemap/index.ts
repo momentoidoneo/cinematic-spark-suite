@@ -2,9 +2,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.98.0";
 import {
   dateOnly,
   escapeXml,
-  HARDCODED_CITY_SLUGS,
   isSafeSlug,
   latestDate,
+  PRIORITY_CITY_SLUGS,
   SITE_URL,
   SITEMAP_STATIC_PAGES,
 } from "../_shared/seoCatalog.ts";
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
       if (isSafeSlug(c.slug)) dbCitySlugs.set(c.slug, dateOnly(c.updated_at));
     });
     const allCitySlugs = new Set<string>([
-      ...HARDCODED_CITY_SLUGS,
+      ...PRIORITY_CITY_SLUGS,
       ...dbCitySlugs.keys(),
     ]);
     allCitySlugs.forEach((slug) => {

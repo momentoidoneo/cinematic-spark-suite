@@ -1,17 +1,9 @@
 export const SITE_URL = "https://silviocosta.net";
 
-export const HARDCODED_CITY_SLUGS = [
-  "madrid",
-  "barcelona",
-  "valencia",
-  "sevilla",
-  "malaga",
-  "bilbao",
-  "marbella",
-  "lisboa",
-  "porto",
-  "faro",
-] as const;
+// Only locations with current commercial priority should be pushed through
+// the sitemap. Other supported routes can remain available without consuming
+// crawl/indexing resources until they have differentiated local content.
+export const PRIORITY_CITY_SLUGS = ["madrid"] as const;
 
 export const LOCAL_SERVICE_PREFIXES = [
   "fotografia",
@@ -37,6 +29,16 @@ export const SITEMAP_STATIC_PAGES = [
     loc: "/guia-servicios-audiovisuales",
     changefreq: "monthly",
     priority: "0.8",
+  },
+  {
+    loc: "/servicios-audiovisuales-madrid",
+    changefreq: "monthly",
+    priority: "0.9",
+  },
+  {
+    loc: "/servicios-audiovisuales-castilla-la-mancha",
+    changefreq: "monthly",
+    priority: "0.9",
   },
   { loc: "/glosario", changefreq: "monthly", priority: "0.8" },
   { loc: "/precios", changefreq: "monthly", priority: "0.7" },

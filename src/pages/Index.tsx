@@ -41,7 +41,7 @@ const Index = () => {
     name: "Silvio Costa Photography",
     url: siteUrl,
     description:
-      "Fotografía profesional, vídeo, dron y tours virtuales 360° en España y Portugal.",
+      "Fotografía profesional, vídeo, dron y tours virtuales 360° con cobertura prioritaria en Madrid y Castilla-La Mancha.",
     potentialAction: {
       "@type": "SearchAction",
       target: `${siteUrl}/blog?q={search_term_string}`,
@@ -52,8 +52,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Fotografía y producción audiovisual para empresas | Silvio Costa"
-        description="Fotografía, vídeo, dron, Matterport y renders 3D para empresas, inmobiliarias y eventos en España y Portugal. Propuesta en menos de 24 horas."
+        title="Producción audiovisual en Madrid y Castilla-La Mancha | Silvio Costa"
+        description="Fotografía, vídeo, dron, Matterport y renders 3D para empresas en Madrid y Castilla-La Mancha, con cobertura en España y Portugal."
         canonical={`${siteUrl}/`}
         jsonLd={[
           localBusinessSchema,

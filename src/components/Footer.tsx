@@ -128,6 +128,14 @@ const Footer = () => {
                   label: "Guía audiovisual",
                   href: "/guia-servicios-audiovisuales",
                 },
+                {
+                  label: "Cobertura en Madrid",
+                  href: "/servicios-audiovisuales-madrid",
+                },
+                {
+                  label: "Cobertura en Castilla-La Mancha",
+                  href: "/servicios-audiovisuales-castilla-la-mancha",
+                },
                 { label: "Portafolio", href: "/portafolio" },
                 { label: "Casos de estudio", href: "/casos-estudio" },
                 { label: "Glosario", href: "/glosario" },

@@ -12,7 +12,7 @@ export const landingFaqItems: LandingFaqItem[] = [
   {
     question: "¿En qué zonas trabaja Silvio Costa Photography?",
     answer:
-      "Trabajamos en España y Portugal y nos desplazamos para proyectos inmobiliarios, arquitectura, eventos, hoteles, restaurantes, empresas y espacios comerciales.",
+      "Nuestra cobertura prioritaria está en la Comunidad de Madrid y Castilla-La Mancha. También nos desplazamos por España y Portugal cuando el alcance del proyecto lo requiere.",
   },
   {
     question: "¿Cómo se solicita un presupuesto?",

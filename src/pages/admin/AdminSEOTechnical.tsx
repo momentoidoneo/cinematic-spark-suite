@@ -43,6 +43,8 @@ const AI_DISCOVERY_RESOURCES = [
   { label: "Guía textual para IA", url: `${SITE_URL}/ai-context/servicios-audiovisuales.md` },
   { label: "Manifest IA", url: `${SITE_URL}/ai-sitemap.json` },
   { label: "Guía de servicios audiovisuales", url: `${SITE_URL}/guia-servicios-audiovisuales` },
+  { label: "Cobertura Madrid", url: `${SITE_URL}/servicios-audiovisuales-madrid` },
+  { label: "Cobertura Castilla-La Mancha", url: `${SITE_URL}/servicios-audiovisuales-castilla-la-mancha` },
 ];
 
 export default function AdminSEOTechnical() {

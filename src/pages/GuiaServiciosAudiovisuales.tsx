@@ -19,15 +19,15 @@ const faqs = [
   },
   {
     question: "¿Cuánto cuesta una producción audiovisual profesional?",
-    answer: "Depende del servicio, alcance, localización y urgencia. Como referencia, una sesión fotográfica puede empezar alrededor de 180-280 euros para inmuebles estándar; un vídeo corporativo suele requerir una producción más amplia; y un tour Matterport se calcula según superficie y entregables.",
+    answer: "Depende del servicio, alcance, localización, entregables, derechos de uso y urgencia. La página de precios publica las referencias vigentes y editables; la propuesta final se prepara después de revisar el briefing.",
   },
   {
     question: "¿Cuánto tarda la entrega?",
     answer: "Fotografía y tours virtuales suelen entregarse en 48-72 horas. Vídeo, dron, streaming o renders 3D dependen de la edición y complejidad, normalmente entre varios días y dos semanas.",
   },
   {
-    question: "¿Trabajáis fuera de Málaga o Andalucía?",
-    answer: "Sí. Silvio Costa Photography trabaja en toda España y Portugal, con desplazamiento para inmobiliarias, arquitectura, hoteles, restaurantes, eventos y empresas.",
+    question: "¿Trabajáis fuera de Madrid y Castilla-La Mancha?",
+    answer: "Sí. Madrid y Castilla-La Mancha son las zonas de cobertura prioritaria, pero Silvio Costa Photography también se desplaza por España y Portugal cuando el alcance del proyecto lo requiere.",
   },
 ];
 

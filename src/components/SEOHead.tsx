@@ -181,11 +181,11 @@ const SEOHead = ({
 
 export const localBusinessSchema = {
   "@context": "https://schema.org",
-  "@type": "LocalBusiness",
+  "@type": "ProfessionalService",
   "@id": `${SITE_URL}/#business`,
   name: "Silvio Costa Photography",
   description:
-    "Servicios profesionales de fotografía, vídeo, dron y tours virtuales 360° en España y Portugal.",
+    "Servicios profesionales de fotografía, vídeo, dron y tours virtuales 360° con cobertura prioritaria en Madrid y Castilla-La Mancha.",
   url: SITE_URL,
   telephone: "+34640934640",
   email: "silvio@silviocosta.net",
@@ -205,20 +205,12 @@ export const localBusinessSchema = {
     "Streaming de eventos",
   ],
   hasOfferCatalog: { "@id": `${SITE_URL}/#service-catalog` },
-  address: {
-    "@type": "PostalAddress",
-    addressCountry: "ES",
-  },
-  geo: {
-    "@type": "GeoCoordinates",
-    latitude: 36.7213,
-    longitude: -4.4214,
-  },
   areaServed: [
+    { "@type": "AdministrativeArea", name: "Comunidad de Madrid" },
+    { "@type": "AdministrativeArea", name: "Castilla-La Mancha" },
     { "@type": "Country", name: "España" },
     { "@type": "Country", name: "Portugal" },
   ],
-  sameAs: [],
   openingHoursSpecification: {
     "@type": "OpeningHoursSpecification",
     dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
@@ -421,15 +413,6 @@ export const personSchema = {
     "Streaming profesional",
   ],
   knowsLanguage: ["es", "pt", "en"],
-  sameAs: [],
-};
-
-export const aggregateRatingSchema = {
-  "@type": "AggregateRating",
-  ratingValue: "4.9",
-  reviewCount: "47",
-  bestRating: "5",
-  worstRating: "1",
 };
 
 export function imageObjectSchema(img: {
@@ -476,15 +459,6 @@ export function videoObjectSchema(v: {
     duration: v.duration,
     publisher: { "@id": `${SITE_URL}/#business` },
     creator: { "@id": `${SITE_URL}/#person` },
-  };
-}
-
-/** Helper: enriches a Service schema with aggregate rating + provider Person. */
-export function serviceSchemaWithRating(base: JsonLdSchema) {
-  return {
-    ...base,
-    aggregateRating: aggregateRatingSchema,
-    provider: { "@id": `${SITE_URL}/#business` },
   };
 }
 
