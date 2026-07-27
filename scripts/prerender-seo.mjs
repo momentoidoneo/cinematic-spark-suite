@@ -344,6 +344,9 @@ const legacyRedirects = [
   {
     from: "/service-page/servicios-de-fotografía-varios",
     to: "/servicios/fotografia",
+    outputAliases: [
+      "/service-page/servicios-de-fotograf%C3%ADa-varios",
+    ],
   },
   ...posts
     .filter((post) => isSafeSlug(post.slug))
@@ -382,15 +385,18 @@ function renderLegacyRedirect({ from, to }) {
 }
 
 for (const redirect of legacyRedirects) {
-  const outputDir = path.join(
-    distDir,
-    redirect.from.replace(/^\/+|\/+$/g, ""),
-  );
-  await mkdir(outputDir, { recursive: true });
-  await writeFile(
-    path.join(outputDir, "index.html"),
-    renderLegacyRedirect(redirect),
-  );
+  const outputPaths = [redirect.from, ...(redirect.outputAliases || [])];
+  for (const outputPath of outputPaths) {
+    const outputDir = path.join(
+      distDir,
+      outputPath.replace(/^\/+|\/+$/g, ""),
+    );
+    await mkdir(outputDir, { recursive: true });
+    await writeFile(
+      path.join(outputDir, "index.html"),
+      renderLegacyRedirect(redirect),
+    );
+  }
 }
 
 const redirectLines = [
