@@ -335,6 +335,64 @@ for (const route of routesByPath.values()) {
   await writeFile(path.join(outputDir, "index.html"), renderRoute(route));
 }
 
+const legacyRedirects = [
+  { from: "/trabajos-realizados", to: "/portafolio" },
+  { from: "/tour-virtual", to: "/servicios/tour-virtual" },
+  { from: "/portfolio", to: "/portafolio" },
+  { from: "/servicios-1", to: "/servicios/fotografia" },
+  { from: "/contacto", to: "/#contacto" },
+  {
+    from: "/service-page/servicios-de-fotografía-varios",
+    to: "/servicios/fotografia",
+  },
+  ...posts
+    .filter((post) => isSafeSlug(post.slug))
+    .map((post) => ({
+      from: `/single-post/${post.slug}`,
+      to: `/blog/${post.slug}`,
+    })),
+];
+
+function renderLegacyRedirect({ from, to }) {
+  const target = `${siteUrl}${to}`;
+  let html = setTitle(
+    sourceHtml,
+    "Página trasladada | Silvio Costa Photography",
+  );
+  html = setMeta(
+    html,
+    "name",
+    "description",
+    "Esta página ha cambiado de dirección. Te llevamos al contenido actualizado.",
+  );
+  html = setMeta(html, "name", "robots", "noindex, follow");
+  html = setMeta(html, "property", "og:url", target);
+  html = setLink(html, "canonical", target);
+  html = html.replace(
+    "</head>",
+    `    <meta http-equiv="refresh" content="0; url=${escapeHtml(target)}" />\n` +
+      `    <script>window.location.replace(${JSON.stringify(target).replaceAll("<", "\\u003c")});</script>\n` +
+      "  </head>",
+  );
+  html = html.replace(
+    '<div id="root"></div>',
+    `<div id="root"><main style="min-height:100vh;background:#090b10;color:#f4f4f5;font-family:Arial,sans-serif;padding:4rem 1.5rem"><h1>Página trasladada</h1><p>Este contenido está ahora en <a href="${escapeHtml(target)}" style="color:#f4b52c">${escapeHtml(to)}</a>.</p></main></div>`,
+  );
+  return html;
+}
+
+for (const redirect of legacyRedirects) {
+  const outputDir = path.join(
+    distDir,
+    redirect.from.replace(/^\/+|\/+$/g, ""),
+  );
+  await mkdir(outputDir, { recursive: true });
+  await writeFile(
+    path.join(outputDir, "index.html"),
+    renderLegacyRedirect(redirect),
+  );
+}
+
 const redirectLines = [
   "/trabajos-realizados /portafolio 301!",
   "/tour-virtual /servicios/tour-virtual 301!",
@@ -367,5 +425,5 @@ notFoundHtml = setMeta(notFoundHtml, "name", "robots", "noindex, nofollow");
 await writeFile(path.join(distDir, "404.html"), notFoundHtml);
 
 console.log(
-  `[prerender] generated ${routesByPath.size} route HTML files, redirects and a real 404 fallback`,
+  `[prerender] generated ${routesByPath.size} route HTML files, ${legacyRedirects.length} legacy redirects and a real 404 fallback`,
 );
