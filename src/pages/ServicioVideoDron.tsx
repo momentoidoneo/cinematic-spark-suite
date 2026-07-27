@@ -98,7 +98,7 @@ const ServicioVideoDron = () => {
           videoDronServiceSchema,
           breadcrumbSchema([
             { name: "Inicio", url: siteUrl },
-            { name: "Servicios", url: `${siteUrl}/#servicios` },
+            { name: "Servicios", url: `${siteUrl}/servicios/fotografia` },
             { name: "Vídeo y Dron", url: `${siteUrl}/servicios/video-dron` },
           ]),
           faqPageSchema(videoDronFAQs),

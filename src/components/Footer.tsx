@@ -123,7 +123,7 @@ const Footer = () => {
             <ul className="space-y-2">
               {[
                 { label: "Inicio", href: "/" },
-                { label: "Servicios", href: "/#servicios" },
+                { label: "Servicios", href: "/servicios/fotografia" },
                 {
                   label: "Guía audiovisual",
                   href: "/guia-servicios-audiovisuales",
@@ -164,18 +164,21 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2">
               {[
-                "Fotografía",
-                "Dron",
-                "Tours Virtuales",
-                "Video",
-                "Eventos",
+                { label: "Fotografía", href: "/portafolio/fotografia" },
+                { label: "Dron", href: "/portafolio/dron" },
+                {
+                  label: "Tours Virtuales",
+                  href: "/portafolio/tours-virtuales",
+                },
+                { label: "Video", href: "/portafolio/video" },
+                { label: "Eventos", href: "/portafolio/eventos" },
               ].map((item) => (
-                <li key={item}>
+                <li key={item.label}>
                   <a
-                    href="#portafolio"
+                    href={item.href}
                     className="text-sm text-foreground/75 hover:text-foreground transition-colors"
                   >
-                    {item}
+                    {item.label}
                   </a>
                 </li>
               ))}

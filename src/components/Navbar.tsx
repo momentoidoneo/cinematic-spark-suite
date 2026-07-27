@@ -23,11 +23,11 @@ type NavItem = {
 };
 
 const staticNavItems: NavItem[] = [
-  { label: "Inicio", href: "/#inicio", isAnchor: true },
+  { label: "Inicio", href: "/", isAnchor: false },
   {
     label: "Servicios",
-    href: "/#servicios",
-    isAnchor: true,
+    href: "/servicios/fotografia",
+    isAnchor: false,
     children: [
       { label: "Fotografía", href: "/servicios/fotografia", isAnchor: false },
       { label: "Vídeo y dron", href: "/servicios/video-dron", isAnchor: false },
@@ -152,10 +152,9 @@ const MobileMenuItem = ({
   const location = useLocation();
   const hasChildren = Boolean(item.children?.length);
   const isActive =
-    (!item.isAnchor && location.pathname.startsWith(item.href)) ||
-    (item.isAnchor &&
-      location.pathname === "/" &&
-      item.href.includes("#inicio"));
+    item.href === "/"
+      ? location.pathname === "/"
+      : !item.isAnchor && location.pathname.startsWith(item.href);
 
   if (!hasChildren) {
     return (

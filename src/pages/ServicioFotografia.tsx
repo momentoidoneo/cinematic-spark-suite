@@ -63,7 +63,7 @@ const ServicioFotografia = () => {
           photographyServiceSchema,
           breadcrumbSchema([
             { name: "Inicio", url: siteUrl },
-            { name: "Servicios", url: `${siteUrl}/#servicios` },
+            { name: "Servicios", url: `${siteUrl}/servicios/fotografia` },
             { name: "Fotografía Profesional", url: `${siteUrl}/servicios/fotografia` },
           ]),
           faqPageSchema(photographyFAQs),

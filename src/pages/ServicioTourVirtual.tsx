@@ -68,7 +68,7 @@ const ServicioTourVirtual = () => {
           tourVirtualServiceSchema,
           breadcrumbSchema([
             { name: "Inicio", url: siteUrl },
-            { name: "Servicios", url: `${siteUrl}/#servicios` },
+            { name: "Servicios", url: `${siteUrl}/servicios/fotografia` },
             { name: "Tour Virtual 360°", url: `${siteUrl}/servicios/tour-virtual` },
           ]),
           faqPageSchema(tourVirtualFAQs),

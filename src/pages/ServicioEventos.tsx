@@ -71,7 +71,7 @@ const ServicioEventos = () => {
           eventosServiceSchema,
           breadcrumbSchema([
             { name: "Inicio", url: siteUrl },
-            { name: "Servicios", url: `${siteUrl}/#servicios` },
+            { name: "Servicios", url: `${siteUrl}/servicios/fotografia` },
             { name: "Eventos", url: `${siteUrl}/servicios/eventos` },
           ]),
           faqPageSchema(faqs),

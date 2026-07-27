@@ -131,7 +131,7 @@ export default function CoberturaRegional({
           serviceSchema,
           breadcrumbSchema([
             { name: "Inicio", url: siteUrl },
-            { name: "Servicios", url: `${siteUrl}/#servicios` },
+            { name: "Servicios", url: `${siteUrl}/servicios/fotografia` },
             { name: content.shortName, url: canonical },
           ]),
           faqPageSchema(faqs),

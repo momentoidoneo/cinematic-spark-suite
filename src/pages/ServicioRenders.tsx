@@ -71,7 +71,7 @@ const ServicioRenders = () => {
           rendersServiceSchema,
           breadcrumbSchema([
             { name: "Inicio", url: siteUrl },
-            { name: "Servicios", url: `${siteUrl}/#servicios` },
+            { name: "Servicios", url: `${siteUrl}/servicios/fotografia` },
             { name: "Renders 3D", url: `${siteUrl}/servicios/renders` },
           ]),
           faqPageSchema(faqs),
