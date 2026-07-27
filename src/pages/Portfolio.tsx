@@ -221,17 +221,28 @@ const Portfolio = () => {
     : null;
 
   const siteUrl = getSiteUrl();
+  const portfolioPath = `/portafolio${categorySlug ? `/${categorySlug}` : ""}${
+    subcategorySlug ? `/${subcategorySlug}` : ""
+  }`;
 
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
         title={`Portafolio${selectedCat ? ` — ${selectedCat.name}` : ""} | Silvio Costa Photography`}
         description="Portafolio profesional de fotografía, vídeo, dron y tours virtuales 360°. Descubre nuestros proyectos en España y Portugal."
-        canonical={`${siteUrl}/portafolio${categorySlug ? `/${categorySlug}` : ""}`}
+        canonical={`${siteUrl}${portfolioPath}`}
         jsonLd={breadcrumbSchema([
           { name: "Inicio", url: siteUrl },
           { name: "Portafolio", url: `${siteUrl}/portafolio` },
           ...(selectedCat ? [{ name: selectedCat.name, url: `${siteUrl}/portafolio/${categorySlug}` }] : []),
+          ...(selectedSub
+            ? [
+                {
+                  name: selectedSub.name,
+                  url: `${siteUrl}${portfolioPath}`,
+                },
+              ]
+            : []),
         ])}
       />
       <Navbar />

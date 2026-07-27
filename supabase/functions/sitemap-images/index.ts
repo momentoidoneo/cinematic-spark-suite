@@ -1,31 +1,36 @@
 // Sitemap específico de imágenes del portafolio (Google Image)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.98.0";
+import {
+  escapeXml,
+  isSafeSlug,
+  latestDate,
+  SITE_URL,
+} from "../_shared/seoCatalog.ts";
 
-const SITE_URL = "https://silviocosta.net";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-const escapeXml = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const today = new Date().toISOString().split("T")[0];
 
   const [catsRes, subsRes, imgsRes] = await Promise.all([
     supabase.from("portfolio_categories").select("id, slug").eq("is_visible", true),
-    supabase.from("portfolio_subcategories").select("id, slug, category_id, is_visible"),
+    supabase.from("portfolio_subcategories").select("id, slug, category_id, updated_at").eq("is_visible", true),
     supabase.from("portfolio_images")
-      .select("image_url, title, alt_text, subcategory_id")
+      .select("image_url, title, alt_text, subcategory_id, updated_at")
       .eq("media_type", "image")
       .order("created_at", { ascending: false })
       .limit(1000),
   ]);
+  if (catsRes.error || subsRes.error || imgsRes.error) {
+    throw catsRes.error || subsRes.error || imgsRes.error;
+  }
 
-  const cats = catsRes.data || [];
-  const subs = (subsRes.data || []).filter((s: any) => s.is_visible);
+  const cats = (catsRes.data || []).filter((c: any) => isSafeSlug(c.slug));
+  const subs = (subsRes.data || []).filter((s: any) => isSafeSlug(s.slug));
+  const catById = new Map(cats.map((c: any) => [c.id, c]));
   const imgsBySub = new Map<string, any[]>();
   (imgsRes.data || []).forEach((img: any) => {
     const arr = imgsBySub.get(img.subcategory_id) || [];
@@ -35,9 +40,10 @@ Deno.serve(async (req) => {
 
   const urls: string[] = [];
   subs.forEach((s: any) => {
-    const cat = cats.find((c: any) => c.id === s.category_id);
+    const cat = catById.get(s.category_id) as any;
     const imgs = imgsBySub.get(s.id) || [];
     if (!cat || imgs.length === 0) return;
+    const lastmod = latestDate(s.updated_at, ...imgs.map((img: any) => img.updated_at));
     const blocks = imgs.slice(0, 100).map((img: any) =>
       `    <image:image>
       <image:loc>${escapeXml(img.image_url)}</image:loc>${img.title ? `
@@ -47,7 +53,7 @@ Deno.serve(async (req) => {
     ).join("\n");
     urls.push(`  <url>
     <loc>${SITE_URL}/portafolio/${cat.slug}/${s.slug}</loc>
-    <lastmod>${today}</lastmod>
+    ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}
 ${blocks}
   </url>`);
   });

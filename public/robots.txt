@@ -20,6 +20,16 @@ Allow: /
 Disallow: /admin/
 Disallow: /login
 
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin/
+Disallow: /login
+
+User-agent: OAI-AdsBot
+Allow: /
+Disallow: /admin/
+Disallow: /login
+
 User-agent: ChatGPT-User
 Allow: /
 
@@ -27,6 +37,9 @@ User-agent: Google-Extended
 Allow: /
 
 User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
 Allow: /
 
 User-agent: ClaudeBot

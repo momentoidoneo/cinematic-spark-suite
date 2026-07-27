@@ -1,7 +1,11 @@
 // Sitemap: portfolio categorías y subcategorías
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.98.0";
+import {
+  dateOnly,
+  isSafeSlug,
+  SITE_URL,
+} from "../_shared/seoCatalog.ts";
 
-const SITE_URL = "https://silviocosta.net";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -10,30 +14,35 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const today = new Date().toISOString().split("T")[0];
 
   const [catsRes, subsRes] = await Promise.all([
     supabase.from("portfolio_categories").select("id, slug, updated_at").eq("is_visible", true),
-    supabase.from("portfolio_subcategories").select("slug, updated_at, category_id, is_visible"),
+    supabase.from("portfolio_subcategories").select("id, slug, updated_at, category_id").eq("is_visible", true),
   ]);
+  if (catsRes.error || subsRes.error) {
+    throw catsRes.error || subsRes.error;
+  }
 
-  const cats = catsRes.data || [];
-  const subs = (subsRes.data || []).filter((s: any) => s.is_visible);
+  const cats = (catsRes.data || []).filter((c: any) => isSafeSlug(c.slug));
+  const subs = (subsRes.data || []).filter((s: any) => isSafeSlug(s.slug));
+  const catById = new Map(cats.map((c: any) => [c.id, c]));
 
   const urls: string[] = [];
   cats.forEach((c: any) => {
+    const lastmod = dateOnly(c.updated_at);
     urls.push(`  <url>
     <loc>${SITE_URL}/portafolio/${c.slug}</loc>
-    <lastmod>${(c.updated_at || today).split("T")[0]}</lastmod>
+    ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>`);
   });
   subs.forEach((s: any) => {
-    const cat = cats.find((c: any) => c.id === s.category_id);
+    const cat = catById.get(s.category_id) as any;
+    const lastmod = dateOnly(s.updated_at);
     if (cat) urls.push(`  <url>
     <loc>${SITE_URL}/portafolio/${cat.slug}/${s.slug}</loc>
-    <lastmod>${(s.updated_at || today).split("T")[0]}</lastmod>
+    ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>`);
