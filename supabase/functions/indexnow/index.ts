@@ -1,4 +1,4 @@
-// Edge function: notifica IndexNow (Bing/Yandex/Seznam) + ping Google sitemap
+// Edge function: notifica URLs a los motores compatibles con IndexNow.
 // POST /functions/v1/indexnow  body: { urls: string[], triggered_by?: string }
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.98.0";
 
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
 
     const results: any[] = [];
 
-    // 1) IndexNow (Bing + Yandex)
+    // IndexNow: notify the shared endpoint and Bing directly.
     const indexNowEndpoints = [
       "https://api.indexnow.org/IndexNow",
       "https://www.bing.com/indexnow",
@@ -84,25 +84,6 @@ Deno.serve(async (req) => {
       } catch (err: any) {
         results.push({ endpoint, error: err.message });
       }
-    }
-
-    // 2) Ping Google sitemap (deprecated but still works in many cases)
-    try {
-      const sitemapUrl = `${SITE_URL}/sitemap.xml`;
-      const googlePing = await fetch(
-        `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`,
-        { method: "GET" }
-      );
-      results.push({ engine: "google_ping", status: googlePing.status });
-      await supabase.from("indexnow_pings").insert({
-        url: sitemapUrl,
-        engine: "google_ping",
-        status: googlePing.ok ? "ok" : "error",
-        http_status: googlePing.status,
-        triggered_by: triggered_by || "manual",
-      });
-    } catch (err: any) {
-      results.push({ engine: "google_ping", error: err.message });
     }
 
     return new Response(JSON.stringify({ ok: true, count: fullUrls.length, results }), {

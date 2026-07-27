@@ -153,7 +153,9 @@ export default function AdminSEOTechnical() {
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Una URL por línea (rutas relativas o absolutas). Bing y Yandex la indexarán en horas.
+                Una URL por línea (rutas relativas o absolutas). IndexNow
+                notifica a Bing y a otros motores compatibles. Google se
+                gestiona mediante Search Console y <code>/sitemap.xml</code>.
               </p>
               <Textarea
                 value={urls}
@@ -164,7 +166,7 @@ export default function AdminSEOTechnical() {
               <div className="flex gap-2">
                 <Button onClick={notifySearchEngines} disabled={sending}>
                   {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-                  Notificar a Bing/Yandex/Google
+                  Notificar por IndexNow
                 </Button>
                 <Button variant="outline" onClick={notifyAllSitemaps} disabled={sending}>
                   Notificar sitemaps + IA
