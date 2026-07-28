@@ -47,19 +47,23 @@ export const fireGoogleAdsConversion = ({
   eventLabel?: string;
   transactionId?: string;
 } = {}) => {
-  if (!window.__gads_conversion_id || !window.__gads_conversion_label) {
-    return false;
-  }
-
   if (window.__gtm_active) {
     ensureDataLayer().push({
       event: "lead_conversion",
-      conversion_id: window.__gads_conversion_id,
-      conversion_label: window.__gads_conversion_label,
+      ...(window.__gads_conversion_id
+        ? { conversion_id: window.__gads_conversion_id }
+        : {}),
+      ...(window.__gads_conversion_label
+        ? { conversion_label: window.__gads_conversion_label }
+        : {}),
       event_label: eventLabel,
       transaction_id: transactionId,
     });
     return true;
+  }
+
+  if (!window.__gads_conversion_id || !window.__gads_conversion_label) {
+    return false;
   }
 
   if (typeof window.gtag === "function") {

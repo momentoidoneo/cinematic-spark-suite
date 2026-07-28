@@ -49,6 +49,24 @@ describe("Google Ads conversion events", () => {
     });
   });
 
+  it("does not depend on the async settings query when GTM is already active", () => {
+    window.__gtm_active = true;
+
+    expect(
+      fireGoogleAdsConversion({
+        eventLabel: "contact_form",
+        transactionId: "lead-before-settings",
+      }),
+    ).toBe(true);
+
+    expect(window.gtag).not.toHaveBeenCalled();
+    expect(window.dataLayer).toContainEqual({
+      event: "lead_conversion",
+      event_label: "contact_form",
+      transaction_id: "lead-before-settings",
+    });
+  });
+
   it("uses the direct Google tag only when GTM is disabled", () => {
     setGoogleAdsConversion("AW-11017209497", "conversion-label");
 
