@@ -2,9 +2,16 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "silviocosta-net",
   "compatibility_date": "2026-07-27",
+  "main": "./worker/index.js",
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     "html_handling": "drop-trailing-slash",
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
+    "run_worker_first": [
+      "/fotografia-*",
+      "/tour-virtual-*",
+      "/video-dron-*"
+    ]
   }
 }

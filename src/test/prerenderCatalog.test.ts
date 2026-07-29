@@ -17,6 +17,7 @@ describe("SEO prerender catalog", () => {
     expect(paths).toContain(
       "/servicios-audiovisuales-castilla-la-mancha",
     );
+    expect(paths).toContain("/fotografia-inmobiliaria-madrid");
     expect(paths).not.toContain("/servicios-audiovisuales-barcelona");
   });
 });

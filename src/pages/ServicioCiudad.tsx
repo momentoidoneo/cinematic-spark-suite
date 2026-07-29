@@ -101,6 +101,23 @@ const HARDCODED_CITIES: Record<string, CityRecord> = {
   faro: { slug: "faro", name: "Faro", region: "Algarve", country: "Portugal", intro: "", highlights: [], zones: ["Centro", "Vilamoura", "Albufeira"], geo_lat: 37.0194, geo_lng: -7.9304 },
 };
 
+const PUBLISHED_SERVICE_CITY_SLUGS = new Set([
+  "fotografia-madrid",
+  "fotografia-inmobiliaria-madrid",
+]);
+
+const RELATED_SERVICE_PAGES = [
+  { title: "Fotografía para empresas", href: "/servicios/fotografia" },
+  { title: "Vídeo profesional y dron", href: "/servicios/video-dron" },
+  { title: "Tours virtuales Matterport", href: "/servicios/tour-virtual" },
+  { title: "Cobertura de eventos", href: "/servicios/eventos" },
+  { title: "Renders y visualización 3D", href: "/servicios/renders" },
+  {
+    title: "Todos los servicios en Madrid",
+    href: "/servicios-audiovisuales-madrid",
+  },
+] as const;
+
 export default function ServicioCiudad() {
   const { pathname } = useLocation();
   // These routes expose only the trailing :city param. Read the complete path so
@@ -136,10 +153,7 @@ export default function ServicioCiudad() {
   const url = `${SITE}/${slug}`;
   const title = `${service.title} en ${city.name} | Silvio Costa`;
   const description = `${service.desc.slice(0, 110)} Cobertura local en ${city.name}, ${city.region}.`;
-  const isPriorityLocation =
-    priorityServiceCitySlugs.includes(
-      citySlug as (typeof priorityServiceCitySlugs)[number],
-    ) || !HARDCODED_CITIES[citySlug];
+  const isPriorityLocation = PUBLISHED_SERVICE_CITY_SLUGS.has(slug);
 
   const jsonLd: Record<string, unknown>[] = [
     breadcrumbSchema([
@@ -254,17 +268,27 @@ export default function ServicioCiudad() {
         </div>
       </section>
 
-      {/* Internal linking: other services in this city */}
+      {/* Internal linking: only to published, differentiated service pages. */}
       <section className="py-12 bg-muted/30">
         <div className="container mx-auto px-4 max-w-5xl">
-          <h2 className="text-xl font-bold mb-4">Otros servicios en {city.name}</h2>
+          <h2 className="text-xl font-bold mb-4">
+            Otros servicios disponibles en {city.name}
+          </h2>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {Object.entries(SERVICES).filter(([k]) => k !== matchedServiceKey).map(([key, s]) => (
-              <Link key={key} to={`/${key}-${citySlug}`} className="block p-4 bg-card border border-border rounded-lg hover:border-primary transition-colors">
-                <div className="text-sm font-semibold">{s.title}</div>
-                <div className="text-xs text-muted-foreground mt-1">en {city.name}</div>
-              </Link>
-            ))}
+            {RELATED_SERVICE_PAGES.filter(({ href }) => href !== pathname).map(
+              ({ title: relatedTitle, href }) => (
+                <Link
+                  key={href}
+                  to={href}
+                  className="block p-4 bg-card border border-border rounded-lg hover:border-primary transition-colors"
+                >
+                  <div className="text-sm font-semibold">{relatedTitle}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Ver información y entregables
+                  </div>
+                </Link>
+              ),
+            )}
           </div>
         </div>
       </section>

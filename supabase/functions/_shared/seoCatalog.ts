@@ -40,6 +40,11 @@ export const SITEMAP_STATIC_PAGES = [
     changefreq: "monthly",
     priority: "0.9",
   },
+  {
+    loc: "/fotografia-inmobiliaria-madrid",
+    changefreq: "monthly",
+    priority: "0.9",
+  },
   { loc: "/glosario", changefreq: "monthly", priority: "0.8" },
   { loc: "/precios", changefreq: "monthly", priority: "0.7" },
   {

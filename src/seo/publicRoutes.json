@@ -72,6 +72,14 @@
     "kind": "Service"
   },
   {
+    "path": "/fotografia-inmobiliaria-madrid",
+    "title": "Fotografía inmobiliaria en Madrid | Silvio Costa",
+    "description": "Fotografía inmobiliaria profesional en Madrid para viviendas, promociones, arquitectura e interiorismo. Edición cuidada y entrega preparada para portales y campañas.",
+    "heading": "Fotografía inmobiliaria profesional en Madrid",
+    "summary": "Reportajes para viviendas, promociones, arquitectura e interiorismo en Madrid. Planificamos encuadres, luz, orden de espacios y entregables para que cada inmueble se presente con claridad en portales, webs, dossiers comerciales y campañas.",
+    "kind": "Service"
+  },
+  {
     "path": "/portafolio",
     "title": "Portafolio de fotografía, vídeo, dron y Matterport | Silvio Costa",
     "description": "Trabajos profesionales de fotografía, vídeo, dron, tours virtuales 360°, eventos y renders 3D realizados por Silvio Costa Photography.",

@@ -21,6 +21,14 @@ const escapeHtml = (value = "") =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
+const escapeXml = (value = "") =>
+  String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+
 const stripHtml = (value = "") =>
   String(value)
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
@@ -335,6 +343,23 @@ for (const route of routesByPath.values()) {
   await writeFile(path.join(outputDir, "index.html"), renderRoute(route));
 }
 
+const sitemapPaths = [...routesByPath.keys()].sort((left, right) => {
+  if (left === "/") return -1;
+  if (right === "/") return 1;
+  return left.localeCompare(right, "es");
+});
+const sitemapXml =
+  '<?xml version="1.0" encoding="UTF-8"?>\n' +
+  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+  sitemapPaths
+    .map((routePath) => {
+      const location = `${siteUrl}${routePath === "/" ? "/" : routePath}`;
+      return `  <url>\n    <loc>${escapeXml(location)}</loc>\n  </url>`;
+    })
+    .join("\n") +
+  "\n</urlset>\n";
+await writeFile(path.join(distDir, "sitemap.xml"), sitemapXml);
+
 const privateShellRoutes = [
   "/login",
   "/admin",
@@ -484,5 +509,5 @@ notFoundHtml = setMeta(notFoundHtml, "name", "robots", "noindex, nofollow");
 await writeFile(path.join(distDir, "404.html"), notFoundHtml);
 
 console.log(
-  `[prerender] generated ${routesByPath.size} public route HTML files, ${privateShellRoutes.length} private shells, ${legacyRedirects.length} legacy redirects and a real 404 fallback`,
+  `[prerender] generated ${routesByPath.size} public route HTML files, a ${sitemapPaths.length}-URL same-domain sitemap, ${privateShellRoutes.length} private shells, ${legacyRedirects.length} legacy redirects and a real 404 fallback`,
 );

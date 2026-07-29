@@ -75,6 +75,18 @@ describe("Cloudflare edge configuration", () => {
     );
     expect(wranglerConfig.assets.not_found_handling).toBe("404-page");
   });
+
+  it("runs edge logic only for retired programmatic routes", () => {
+    expect(wranglerConfig.main).toBe("./worker/index.js");
+    expect(wranglerConfig.assets.binding).toBe("ASSETS");
+    expect(wranglerConfig.assets.run_worker_first).toEqual(
+      expect.arrayContaining([
+        "/fotografia-*",
+        "/tour-virtual-*",
+        "/video-dron-*",
+      ]),
+    );
+  });
 });
 
 describe("sitemap catalog", () => {
@@ -101,6 +113,7 @@ describe("sitemap catalog", () => {
     expect(paths).toContain(
       "/servicios-audiovisuales-castilla-la-mancha",
     );
+    expect(paths).toContain("/fotografia-inmobiliaria-madrid");
   });
 
   it("validates slugs and keeps truthful update dates", () => {

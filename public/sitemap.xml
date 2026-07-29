@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap>
-    <loc>https://edpqywwtgoiktotxrqrz.supabase.co/functions/v1/dynamic-sitemap</loc>
-  </sitemap>
-</sitemapindex>
+<!--
+  Fallback used only when the postbuild prerender step has not run.
+  scripts/prerender-seo.mjs replaces this file in dist/ with the complete
+  same-domain sitemap generated from the public route catalog and live content.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://silviocosta.net/</loc>
+  </url>
+</urlset>

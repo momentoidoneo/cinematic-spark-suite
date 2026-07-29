@@ -26,6 +26,10 @@ const publicPages = [
   ["/servicios/fotografia", "https://silviocosta.net/servicios/fotografia"],
   ["/servicios/video-dron", "https://silviocosta.net/servicios/video-dron"],
   ["/servicios/tour-virtual", "https://silviocosta.net/servicios/tour-virtual"],
+  [
+    "/fotografia-inmobiliaria-madrid",
+    "https://silviocosta.net/fotografia-inmobiliaria-madrid",
+  ],
   ["/precios", "https://silviocosta.net/precios"],
   [
     "/servicios-audiovisuales-madrid",
@@ -98,6 +102,42 @@ expect(
   "La página 404 no incluye noindex, nofollow",
 );
 
+for (const path of [
+  "/fotografia-inmobiliaria-barcelona",
+  "/tour-virtual-malaga",
+  "/video-dron-marbella",
+]) {
+  const { response, body } = await request(path);
+  expect(response.status === 410, `${path} respondió ${response.status}, no 410`);
+  expect(
+    /noindex,\s*nofollow/i.test(
+      response.headers.get("x-robots-tag") || body,
+    ),
+    `${path} no incluye noindex, nofollow`,
+  );
+}
+
+const { response: sitemapResponse, body: sitemap } =
+  await request("/sitemap.xml");
+expect(sitemapResponse.status === 200, "sitemap.xml no respondió 200");
+expect(
+  sitemapResponse.headers.get("content-type")?.includes("xml"),
+  "sitemap.xml no se sirve como XML",
+);
+expect(sitemap.includes("<urlset"), "sitemap.xml no contiene un urlset");
+expect(!sitemap.includes("<sitemapindex"), "sitemap.xml sigue siendo un índice");
+expect(!sitemap.includes("supabase.co"), "sitemap.xml referencia Supabase");
+expect(
+  sitemap.includes(
+    "<loc>https://silviocosta.net/fotografia-inmobiliaria-madrid</loc>",
+  ),
+  "sitemap.xml no incluye la landing inmobiliaria de Madrid",
+);
+expect(
+  (sitemap.match(/<loc>/g) || []).length >= 60,
+  "sitemap.xml contiene menos de 60 URLs",
+);
+
 const { response: robotsResponse, body: robots } = await request("/robots.txt");
 expect(robotsResponse.status === 200, "robots.txt no respondió 200");
 for (const crawler of ["Googlebot", "GPTBot", "OAI-SearchBot", "ClaudeBot"]) {
@@ -114,5 +154,5 @@ if (failures.length) {
 }
 
 console.log(
-  `Smoke test correcto en ${baseUrl}: páginas, Admin, GTM, robots, 301 y 404 verificados.`,
+  `Smoke test correcto en ${baseUrl}: páginas, sitemap, Admin, GTM, robots, 301, 404 y 410 verificados.`,
 );
