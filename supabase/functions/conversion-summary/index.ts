@@ -93,6 +93,7 @@ Deno.serve(async (req) => {
       total: rows.length,
       ctaClicks: byName.cta_click || 0,
       whatsappClicks: byType.whatsapp || 0,
+      phoneClicks: byName.phone_click || 0,
       formLeads: byName.generate_lead || 0,
       quoteCompletions: byName.quoter_complete || 0,
       quoteWhatsappClicks: byName.quoter_whatsapp || 0,
@@ -109,4 +110,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-

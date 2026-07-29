@@ -39,6 +39,16 @@ describe("cookie consent", () => {
   it("starts Google Consent Mode denied until the visitor decides", () => {
     expect(initializeConsentMode()).toBeNull();
     expect(window.gtag).toHaveBeenCalledWith(
+      "set",
+      "url_passthrough",
+      true,
+    );
+    expect(window.gtag).toHaveBeenCalledWith(
+      "set",
+      "ads_data_redaction",
+      true,
+    );
+    expect(window.gtag).toHaveBeenCalledWith(
       "consent",
       "default",
       expect.objectContaining({

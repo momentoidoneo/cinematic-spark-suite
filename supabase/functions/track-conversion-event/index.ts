@@ -9,6 +9,7 @@ const eventTypes: Record<string, "cta" | "whatsapp" | "form" | "quote"> = {
   cta_click: "cta",
   whatsapp_click: "whatsapp",
   quoter_whatsapp: "whatsapp",
+  phone_click: "cta",
   generate_lead: "form",
   quoter_complete: "quote",
 };
@@ -99,4 +100,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-

@@ -96,6 +96,11 @@ export const initializeConsentMode = () => {
   const preferences = stored || { analytics: false, marketing: false };
 
   if (!window.__consent_mode_initialized) {
+    ensureConsentDataLayer();
+    // Preserve click attribution across same-domain navigation without storing
+    // advertising cookies, and redact ad identifiers while consent is denied.
+    window.gtag?.("set", "url_passthrough", true);
+    window.gtag?.("set", "ads_data_redaction", true);
     applyGoogleConsent("default", preferences);
     window.__consent_mode_initialized = true;
   }

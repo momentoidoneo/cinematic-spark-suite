@@ -441,6 +441,10 @@ const CTASection = () => {
                     event_category: "contact",
                     event_label: "cta_section",
                   });
+                  fireGoogleAdsConversion({
+                    kind: "whatsapp",
+                    eventLabel: "cta_section",
+                  });
                 }}
                 className="group rounded-2xl bg-[#25D366]/10 border border-[#25D366]/20 p-6 hover:bg-[#25D366]/15 transition-colors block"
               >

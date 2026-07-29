@@ -20,6 +20,7 @@ describe("Google Ads conversion events", () => {
     window.__gtm_active = false;
     window.__gads_conversion_id = undefined;
     window.__gads_conversion_label = undefined;
+    window.__gads_conversion_labels = undefined;
   });
 
   it("does not emit an incomplete conversion", () => {
@@ -74,6 +75,40 @@ describe("Google Ads conversion events", () => {
     expect(window.gtag).toHaveBeenCalledWith("event", "conversion", {
       send_to: "AW-11017209497/conversion-label",
       event_label: "contact_form",
+      transaction_id: undefined,
+    });
+  });
+
+  it("emits separate secondary events and labels for WhatsApp and phone", () => {
+    window.__gtm_active = true;
+    setGoogleAdsConversion("AW-11017209497", "whatsapp-label", "whatsapp");
+    setGoogleAdsConversion("AW-11017209497", "phone-label", "phone");
+
+    expect(
+      fireGoogleAdsConversion({
+        kind: "whatsapp",
+        eventLabel: "floating_button",
+      }),
+    ).toBe(true);
+    expect(
+      fireGoogleAdsConversion({
+        kind: "phone",
+        eventLabel: "footer",
+      }),
+    ).toBe(true);
+
+    expect(window.dataLayer).toContainEqual({
+      event: "whatsapp_conversion",
+      conversion_id: "AW-11017209497",
+      conversion_label: "whatsapp-label",
+      event_label: "floating_button",
+      transaction_id: undefined,
+    });
+    expect(window.dataLayer).toContainEqual({
+      event: "phone_conversion",
+      conversion_id: "AW-11017209497",
+      conversion_label: "phone-label",
+      event_label: "footer",
       transaction_id: undefined,
     });
   });

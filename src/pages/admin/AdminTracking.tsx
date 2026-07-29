@@ -29,6 +29,8 @@ interface TrackingConfig {
   google_analytics_enabled: string;
   google_ads_id: string;
   google_ads_conversion_label: string;
+  google_ads_whatsapp_conversion_label: string;
+  google_ads_phone_conversion_label: string;
   google_ads_enabled: string;
   meta_pixel_id: string;
   meta_pixel_enabled: string;
@@ -41,6 +43,8 @@ const TRACKING_KEYS: (keyof TrackingConfig)[] = [
   "google_analytics_enabled",
   "google_ads_id",
   "google_ads_conversion_label",
+  "google_ads_whatsapp_conversion_label",
+  "google_ads_phone_conversion_label",
   "google_ads_enabled",
   "meta_pixel_id",
   "meta_pixel_enabled",
@@ -53,6 +57,8 @@ const DEFAULT_CONFIG: TrackingConfig = {
   google_analytics_enabled: "false",
   google_ads_id: "",
   google_ads_conversion_label: "",
+  google_ads_whatsapp_conversion_label: "",
+  google_ads_phone_conversion_label: "",
   google_ads_enabled: "false",
   meta_pixel_id: "",
   meta_pixel_enabled: "false",
@@ -119,6 +125,18 @@ const AdminTracking = () => {
         config.google_ads_conversion_label,
       )
         ? "La etiqueta de conversión de Google Ads es obligatoria y no puede ser una URL."
+        : null,
+      config.google_ads_whatsapp_conversion_label.trim() &&
+      !validators.google_ads_conversion_label(
+        config.google_ads_whatsapp_conversion_label,
+      )
+        ? "La etiqueta de conversión de WhatsApp no tiene un formato válido."
+        : null,
+      config.google_ads_phone_conversion_label.trim() &&
+      !validators.google_ads_conversion_label(
+        config.google_ads_phone_conversion_label,
+      )
+        ? "La etiqueta de conversión de teléfono no tiene un formato válido."
         : null,
       config.meta_pixel_enabled === "true" &&
       !validators.meta_pixel_id(config.meta_pixel_id)
@@ -410,7 +428,9 @@ const AdminTracking = () => {
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="gads-label">Conversion Label</Label>
+            <Label htmlFor="gads-label">
+              Conversion Label principal — solicitud de presupuesto
+            </Label>
             <Input
               id="gads-label"
               placeholder="AbCdEfGhIjKlMn"
@@ -429,9 +449,70 @@ const AdminTracking = () => {
               />
             )}
             <p className="text-xs text-muted-foreground">
-              Etiqueta de conversión específica para rastrear acciones (ej.
-              solicitud de presupuesto).
+              Esta es la acción principal que puede utilizarse para optimizar
+              campañas.
             </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="gads-whatsapp-label">
+                Conversion Label — WhatsApp
+              </Label>
+              <Input
+                id="gads-whatsapp-label"
+                placeholder="AbCdEfGhIjKlMn"
+                value={config.google_ads_whatsapp_conversion_label}
+                onChange={(e) =>
+                  setField(
+                    "google_ads_whatsapp_conversion_label",
+                    e.target.value,
+                  )
+                }
+              />
+              {config.google_ads_whatsapp_conversion_label && (
+                <ValidationStatus
+                  valid={validators.google_ads_conversion_label(
+                    config.google_ads_whatsapp_conversion_label,
+                  )}
+                  validText="Etiqueta secundaria válida"
+                  invalidText="Introduce solo la etiqueta, nunca una URL"
+                />
+              )}
+              <p className="text-xs text-muted-foreground">
+                Acción secundaria de observación para clics que abren WhatsApp.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gads-phone-label">
+                Conversion Label — teléfono
+              </Label>
+              <Input
+                id="gads-phone-label"
+                placeholder="AbCdEfGhIjKlMn"
+                value={config.google_ads_phone_conversion_label}
+                onChange={(e) =>
+                  setField("google_ads_phone_conversion_label", e.target.value)
+                }
+              />
+              {config.google_ads_phone_conversion_label && (
+                <ValidationStatus
+                  valid={validators.google_ads_conversion_label(
+                    config.google_ads_phone_conversion_label,
+                  )}
+                  validText="Etiqueta secundaria válida"
+                  invalidText="Introduce solo la etiqueta, nunca una URL"
+                />
+              )}
+              <p className="text-xs text-muted-foreground">
+                Acción secundaria de observación para clics en enlaces de
+                llamada.
+              </p>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border bg-secondary/40 p-3 text-xs leading-relaxed text-muted-foreground">
+            WhatsApp y teléfono deben mantenerse como conversiones secundarias
+            en Google Ads. Se medirán en «Todas las conversiones», pero no
+            sustituirán a una solicitud de presupuesto real al optimizar pujas.
           </div>
         </CardContent>
       </Card>

@@ -14,6 +14,8 @@ const TRACKING_KEYS = [
   "google_analytics_enabled",
   "google_ads_id",
   "google_ads_conversion_label",
+  "google_ads_whatsapp_conversion_label",
+  "google_ads_phone_conversion_label",
   "google_ads_enabled",
   "meta_pixel_id",
   "meta_pixel_enabled",
@@ -105,6 +107,16 @@ const TrackingScripts = () => {
         )
           ? cfg.google_ads_conversion_label
           : null;
+        const adsWhatsappConversionLabel = isValidConversionLabel(
+          cfg.google_ads_whatsapp_conversion_label,
+        )
+          ? cfg.google_ads_whatsapp_conversion_label
+          : null;
+        const adsPhoneConversionLabel = isValidConversionLabel(
+          cfg.google_ads_phone_conversion_label,
+        )
+          ? cfg.google_ads_phone_conversion_label
+          : null;
         const pixelId =
           isEnabled(cfg.meta_pixel_enabled) &&
           isValidMetaPixelId(cfg.meta_pixel_id)
@@ -141,6 +153,18 @@ const TrackingScripts = () => {
           }
         } else if (gtmId && adsId && adsConversionLabel) {
           setGoogleAdsConversion(adsId, adsConversionLabel);
+        }
+
+        if (adsId && adsWhatsappConversionLabel) {
+          setGoogleAdsConversion(
+            adsId,
+            adsWhatsappConversionLabel,
+            "whatsapp",
+          );
+        }
+
+        if (adsId && adsPhoneConversionLabel) {
+          setGoogleAdsConversion(adsId, adsPhoneConversionLabel, "phone");
         }
 
         if (pixelId) {

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Eye, MailOpen, MessageSquare, TrendingUp, BarChart3, Camera, FileText,
   FolderOpen, Layers, Image as ImageIcon, Users, Clock, Globe, Zap,
-  CreditCard, Monitor,
+  CreditCard, Monitor, Phone,
 } from "lucide-react";
 import {
   AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid,
@@ -118,7 +118,11 @@ const AdminDashboard = () => {
     const prevSessions = uniqueSessions(prevViews);
     const viewsCount = views.length;
     const prevCount = prevViews.length;
-    const measuredContactActions = counts.messagesInPeriod + counts.quoteRequestsInPeriod + conversions.whatsappClicks;
+    const measuredContactActions =
+      counts.messagesInPeriod +
+      counts.quoteRequestsInPeriod +
+      conversions.whatsappClicks +
+      conversions.phoneClicks;
 
     // Bounce: sessions with only 1 view
     const sessionViewCounts: Record<string, number> = {};
@@ -257,7 +261,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* KPIs row 2 */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-8">
         <KPICard
           label="Leads sin leer"
           value={counts.unread + counts.unreadQuotes}
@@ -279,6 +283,12 @@ const AdminDashboard = () => {
           hint={conversions.available ? "Eventos reales medidos" : "Pendiente de desplegar medición"}
         />
         <KPICard
+          label="Clicks teléfono"
+          value={conversions.phoneClicks.toLocaleString()}
+          icon={Phone}
+          hint={conversions.available ? "Llamadas iniciadas desde la web" : "Pendiente de desplegar medición"}
+        />
+        <KPICard
           label="Tasa contacto"
           value={`${stats.conversionRate.toFixed(2)}%`}
           icon={BarChart3}
@@ -293,10 +303,11 @@ const AdminDashboard = () => {
       </div>
 
       {/* Commercial signals */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
         {[
           { label: "Formularios reales", value: counts.messagesInPeriod, icon: MailOpen, hint: "Mensajes recibidos" },
           { label: "WhatsApp", value: conversions.whatsappClicks, icon: MessageSquare, hint: "Clicks de contacto" },
+          { label: "Teléfono", value: conversions.phoneClicks, icon: Phone, hint: "Llamadas iniciadas" },
           { label: "Solicitudes IA", value: counts.quoteRequestsInPeriod, icon: Zap, hint: "Leads guardados" },
           { label: "CTAs presupuesto", value: conversions.ctaClicks, icon: BarChart3, hint: "Intención previa" },
         ].map((item) => (

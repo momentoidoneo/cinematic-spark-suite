@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Eye, Users, Globe, Smartphone, Monitor, Tablet, Download, TrendingUp, Clock,
-  Link2, Megaphone, FileText, Sparkles,
+  Link2, Megaphone, FileText, Sparkles, Phone,
 } from "lucide-react";
 import {
   AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer,
@@ -117,7 +117,8 @@ const AdminAnalytics = () => {
   const formatDuration = (s: number) => s < 60 ? `${Math.round(s)}s` : `${Math.floor(s / 60)}m ${Math.round(s % 60)}s`;
   const hasVisitData = stats.viewsCount > 0;
   const engagedSessions = Math.max(0, stats.sessions - Math.round(stats.sessions * stats.bounceRate / 100));
-  const measuredContactActions = messagesCount + conversions.whatsappClicks;
+  const measuredContactActions =
+    messagesCount + conversions.whatsappClicks + conversions.phoneClicks;
 
   const handleExport = () => {
     exportCSV(
@@ -175,11 +176,13 @@ const AdminAnalytics = () => {
         <KPICard label="Duración media" value={formatDuration(stats.avgDuration)} icon={Clock} />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-8">
         <KPICard label="Mensajes reales" value={messagesCount.toLocaleString()} icon={FileText}
           hint="Formulario, sin demos obvias" />
         <KPICard label="Clicks WhatsApp" value={conversions.whatsappClicks.toLocaleString()} icon={Megaphone}
           hint={conversions.available ? "Eventos medidos" : "Pendiente de desplegar medición"} />
+        <KPICard label="Clicks teléfono" value={conversions.phoneClicks.toLocaleString()} icon={Phone}
+          hint={conversions.available ? "Llamadas iniciadas desde la web" : "Pendiente de desplegar medición"} />
         <KPICard label="Cotizador IA" value={conversions.quoteCompletions.toLocaleString()} icon={TrendingUp}
           hint="Presupuestos generados" />
         <KPICard label="Tráfico IA" value={stats.aiReferralCount.toLocaleString()} icon={Sparkles}

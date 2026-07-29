@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getStoredCookieConsent } from "@/lib/cookieConsent";
 
+export type GoogleAdsConversionKind = "lead" | "whatsapp" | "phone";
+
 declare global {
   interface Window {
     dataLayer?: unknown[];
@@ -8,6 +10,9 @@ declare global {
     fbq?: (...args: unknown[]) => void;
     __gads_conversion_id?: string;
     __gads_conversion_label?: string;
+    __gads_conversion_labels?: Partial<
+      Record<GoogleAdsConversionKind, string>
+    >;
     __gtm_active?: boolean;
   }
 }
@@ -22,10 +27,16 @@ const conversionEventNames = new Set([
   "cta_click",
   "whatsapp_click",
   "quoter_whatsapp",
+  "phone_click",
   "generate_lead",
   "quoter_complete",
 ]);
 const lastPersistedEvents = new Map<string, number>();
+const googleAdsEventNames: Record<GoogleAdsConversionKind, string> = {
+  lead: "lead_conversion",
+  whatsapp: "whatsapp_conversion",
+  phone: "phone_conversion",
+};
 
 export const ensureDataLayer = () => {
   window.dataLayer = window.dataLayer || [];
@@ -35,26 +46,43 @@ export const ensureDataLayer = () => {
 export const setGoogleAdsConversion = (
   conversionId: string,
   conversionLabel: string,
+  kind: GoogleAdsConversionKind = "lead",
 ) => {
   window.__gads_conversion_id = conversionId;
-  window.__gads_conversion_label = conversionLabel;
+  window.__gads_conversion_labels = {
+    ...window.__gads_conversion_labels,
+    [kind]: conversionLabel,
+  };
+
+  // Keep the original property for backwards compatibility with existing
+  // deployments and tests that only know about the main lead conversion.
+  if (kind === "lead") {
+    window.__gads_conversion_label = conversionLabel;
+  }
 };
 
 export const fireGoogleAdsConversion = ({
+  kind = "lead",
   eventLabel,
   transactionId,
 }: {
+  kind?: GoogleAdsConversionKind;
   eventLabel?: string;
   transactionId?: string;
 } = {}) => {
+  const conversionLabel =
+    window.__gads_conversion_labels?.[kind] ||
+    (kind === "lead" ? window.__gads_conversion_label : undefined);
+  const eventName = googleAdsEventNames[kind];
+
   if (window.__gtm_active) {
     ensureDataLayer().push({
-      event: "lead_conversion",
+      event: eventName,
       ...(window.__gads_conversion_id
         ? { conversion_id: window.__gads_conversion_id }
         : {}),
-      ...(window.__gads_conversion_label
-        ? { conversion_label: window.__gads_conversion_label }
+      ...(conversionLabel
+        ? { conversion_label: conversionLabel }
         : {}),
       event_label: eventLabel,
       transaction_id: transactionId,
@@ -62,13 +90,13 @@ export const fireGoogleAdsConversion = ({
     return true;
   }
 
-  if (!window.__gads_conversion_id || !window.__gads_conversion_label) {
+  if (!window.__gads_conversion_id || !conversionLabel) {
     return false;
   }
 
   if (typeof window.gtag === "function") {
     window.gtag("event", "conversion", {
-      send_to: `${window.__gads_conversion_id}/${window.__gads_conversion_label}`,
+      send_to: `${window.__gads_conversion_id}/${conversionLabel}`,
       event_label: eventLabel,
       transaction_id: transactionId,
     });
@@ -77,9 +105,9 @@ export const fireGoogleAdsConversion = ({
 
   if (window.dataLayer) {
     window.dataLayer.push({
-      event: "lead_conversion",
+      event: eventName,
       conversion_id: window.__gads_conversion_id,
-      conversion_label: window.__gads_conversion_label,
+      conversion_label: conversionLabel,
       event_label: eventLabel,
       transaction_id: transactionId,
     });

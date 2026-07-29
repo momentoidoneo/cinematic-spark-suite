@@ -18,7 +18,10 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
-import { trackEvent } from "@/lib/trackingEvents";
+import {
+  fireGoogleAdsConversion,
+  trackEvent,
+} from "@/lib/trackingEvents";
 import { openCookieSettings } from "@/lib/cookieConsent";
 
 interface SocialLink {
@@ -59,6 +62,10 @@ const Footer = () => {
     trackEvent("whatsapp_click", {
       event_category: "contact",
       event_label: label,
+    });
+    fireGoogleAdsConversion({
+      kind: "whatsapp",
+      eventLabel: label,
     });
   };
 

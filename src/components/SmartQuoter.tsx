@@ -182,6 +182,11 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
       event_category: "contact",
       event_label: form.service,
     });
+    fireGoogleAdsConversion({
+      kind: "whatsapp",
+      eventLabel: "smart_quoter_result",
+      transactionId: result.requestId || undefined,
+    });
     window.open(url, "_blank");
   };
 

@@ -5,6 +5,7 @@ export interface ConversionSummary {
   total: number;
   ctaClicks: number;
   whatsappClicks: number;
+  phoneClicks: number;
   formLeads: number;
   quoteCompletions: number;
   quoteWhatsappClicks: number;
@@ -17,6 +18,7 @@ export const emptyConversionSummary: ConversionSummary = {
   total: 0,
   ctaClicks: 0,
   whatsappClicks: 0,
+  phoneClicks: 0,
   formLeads: 0,
   quoteCompletions: 0,
   quoteWhatsappClicks: 0,
@@ -36,4 +38,3 @@ export const fetchConversionSummary = async (since?: string): Promise<Conversion
     return emptyConversionSummary;
   }
 };
-

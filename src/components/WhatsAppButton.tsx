@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { trackEvent } from "@/lib/trackingEvents";
+import {
+  fireGoogleAdsConversion,
+  trackEvent,
+} from "@/lib/trackingEvents";
 
 const WhatsAppButton = () => {
   const [phone, setPhone] = useState<string | null>(null);
@@ -34,6 +37,10 @@ const WhatsAppButton = () => {
     trackEvent("whatsapp_click", {
       event_category: "contact",
       event_label: label,
+    });
+    fireGoogleAdsConversion({
+      kind: "whatsapp",
+      eventLabel: label,
     });
   };
 
