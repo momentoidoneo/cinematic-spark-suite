@@ -23,6 +23,7 @@ const contactSchema = z.object({
 });
 
 const serviceOptions = [
+  "Fotografía profesional para empresas",
   "Fotografía inmobiliaria",
   "Arquitectura e interiorismo",
   "Tour virtual 360",
@@ -41,15 +42,35 @@ const timingOptions = [
   "Solo quiero orientación",
 ];
 
-const CTASection = () => {
+type CTASectionProps = {
+  defaultService?: string;
+  eyebrow?: string;
+  title?: string;
+  titleAccent?: string;
+  description?: string;
+  trackingLabel?: string;
+};
+
+const initialForm = (defaultService = "") => ({
+  name: "",
+  email: "",
+  phone: "",
+  service: defaultService,
+  timing: "",
+  message: "",
+  website: "",
+});
+
+const CTASection = ({
+  defaultService = "",
+  eyebrow = "Contacto",
+  title = "Cuéntanos qué necesitas",
+  titleAccent = "y te proponemos el plan",
+  description = "Respuesta en menos de 24 horas con alcance recomendado, disponibilidad y presupuesto orientativo.",
+  trackingLabel = "contact_form",
+}: CTASectionProps = {}) => {
   const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    service: "",
-    timing: "",
-    message: "",
-    website: "",
+    ...initialForm(defaultService),
   });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -89,6 +110,9 @@ const CTASection = () => {
     }
 
     const enrichedMessage = [
+      trackingLabel !== "contact_form"
+        ? `Origen: ${trackingLabel}`
+        : null,
       result.data.service ? `Servicio: ${result.data.service}` : null,
       result.data.timing ? `Plazo: ${result.data.timing}` : null,
       result.data.message,
@@ -114,22 +138,14 @@ const CTASection = () => {
       toast.error(msg);
     } else {
       setSent(true);
-      setForm({
-        name: "",
-        email: "",
-        phone: "",
-        service: "",
-        timing: "",
-        message: "",
-        website: "",
-      });
+      setForm(initialForm(defaultService));
       toast.success("¡Mensaje enviado correctamente!");
       trackEvent("generate_lead", {
         event_category: "contact",
-        event_label: "contact_form",
+        event_label: trackingLabel,
       });
       fireGoogleAdsConversion({
-        eventLabel: "contact_form",
+        eventLabel: trackingLabel,
         transactionId: data?.id,
       });
     }
@@ -161,17 +177,16 @@ const CTASection = () => {
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
             <Sparkles className="w-4 h-4" />
-            Contacto
+            {eyebrow}
           </div>
           <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold text-foreground mb-4">
-            Cuéntanos qué necesitas{" "}
+            {title}{" "}
             <span className="text-gradient-primary italic">
-              y te proponemos el plan
+              {titleAccent}
             </span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Respuesta en menos de 24 horas con alcance recomendado,
-            disponibilidad y presupuesto orientativo.
+            {description}
           </p>
         </div>
 

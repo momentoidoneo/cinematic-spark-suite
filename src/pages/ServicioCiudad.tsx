@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import FloatingCTA from "@/components/FloatingCTA";
 import CTASection from "@/components/CTASection";
+import AdsLandingBody from "@/components/ads/AdsLandingBody";
 import SEOHead, { breadcrumbSchema, getSiteUrl, personSchema } from "@/components/SEOHead";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import heroImg from "@/assets/servicio-foto-hero.jpg";
 import NotFound from "@/pages/NotFound";
 import { priorityServiceCitySlugs } from "@/content/regionalCoverage";
+import { adsServiceCityConfigs } from "@/content/adsLandingConfigs";
 
 /**
  * Long-tail SEO landing: /{servicio}-{ciudad}
@@ -189,6 +191,60 @@ export default function ServicioCiudad() {
         ),
     )
     .slice(0, 6);
+
+  const adsConfig = adsServiceCityConfigs[slug];
+
+  if (adsConfig) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SEOHead
+          title={title}
+          description={description}
+          canonical={url}
+          ogType="website"
+          noindex={!isPriorityLocation}
+          jsonLd={jsonLd}
+        />
+        <Navbar contactHref="#contacto" />
+        <AdsLandingBody
+          config={adsConfig}
+          afterContact={
+            <section className="border-t border-border/60 bg-card/25 px-5 py-12 md:px-6">
+              <div className="mx-auto max-w-6xl">
+                <h2 className="font-display text-2xl font-bold text-foreground">
+                  Otros servicios disponibles en {city.name}
+                </h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Si tu proyecto necesita más de una disciplina, podemos
+                  coordinar toda la producción.
+                </p>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {RELATED_SERVICE_PAGES.filter(
+                    ({ href }) => href !== pathname,
+                  ).map(({ title: relatedTitle, href }) => (
+                    <Link
+                      key={href}
+                      to={href}
+                      className="rounded-xl border border-border bg-background/70 p-4 transition-colors hover:border-primary/45"
+                    >
+                      <span className="text-sm font-semibold text-foreground">
+                        {relatedTitle}
+                      </span>
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        Ver entregables y trabajos
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </section>
+          }
+        />
+        <Footer />
+        <WhatsAppButton budgetHref="#contacto" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

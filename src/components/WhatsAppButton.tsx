@@ -6,7 +6,11 @@ import {
   trackEvent,
 } from "@/lib/trackingEvents";
 
-const WhatsAppButton = () => {
+const WhatsAppButton = ({
+  budgetHref = "/#contacto",
+}: {
+  budgetHref?: string;
+} = {}) => {
   const [phone, setPhone] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [showTooltip, setShowTooltip] = useState(false);
@@ -79,7 +83,7 @@ const WhatsAppButton = () => {
       <div className="md:hidden fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-8px_28px_rgba(0,0,0,0.35)]">
         <div className="grid grid-cols-2 gap-2 max-w-md mx-auto">
           <a
-            href="/#contacto"
+            href={budgetHref}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground"
           >
             Presupuesto <ArrowRight className="h-4 w-4" />

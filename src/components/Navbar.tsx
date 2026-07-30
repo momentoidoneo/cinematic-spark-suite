@@ -200,7 +200,11 @@ const MobileMenuItem = ({
   );
 };
 
-const Navbar = () => {
+const Navbar = ({
+  contactHref = "/#contacto",
+}: {
+  contactHref?: string;
+} = {}) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [navItems, setNavItems] = useState<NavItem[]>(staticNavItems);
@@ -233,7 +237,12 @@ const Navbar = () => {
   const closeMobile = () => setMobileOpen(false);
   const openQuoter = () =>
     window.dispatchEvent(new CustomEvent("open-smart-quoter"));
-  const desktopItems = navItems.filter((item) => desktopLabels.has(item.label));
+  const itemsWithContactHref = navItems.map((item) =>
+    item.label === "Contacto" ? { ...item, href: contactHref } : item,
+  );
+  const desktopItems = itemsWithContactHref.filter((item) =>
+    desktopLabels.has(item.label),
+  );
 
   return (
     <nav
@@ -268,7 +277,7 @@ const Navbar = () => {
                 id="mobile-navigation"
                 className="flex-1 overflow-y-auto px-3 py-4 space-y-1"
               >
-                {navItems.map((item) => (
+                {itemsWithContactHref.map((item) => (
                   <MobileMenuItem
                     key={item.label}
                     item={item}
@@ -288,7 +297,7 @@ const Navbar = () => {
                   <Sparkles className="h-4 w-4 text-primary" /> Cotizador IA
                 </button>
                 <a
-                  href="/#contacto"
+                  href={contactHref}
                   onClick={closeMobile}
                   className="block w-full rounded-xl bg-gradient-primary px-5 py-3 text-center text-sm font-semibold text-primary-foreground"
                 >
@@ -337,7 +346,7 @@ const Navbar = () => {
             <Sparkles className="h-4 w-4 text-primary" /> Cotizador IA
           </button>
           <a
-            href="/#contacto"
+            href={contactHref}
             className="ml-1 rounded-full bg-gradient-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
           >
             Pedir presupuesto
