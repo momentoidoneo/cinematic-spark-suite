@@ -129,4 +129,24 @@ describe("Google Ads landing conversion flow", () => {
       .filter((image) => image.includes("/assets/ads/"))
       .forEach((image) => expect(image).toMatch(/\.jpg$/));
   });
+
+  it("does not repeat a photo within or across the four Ads landings", () => {
+    const configs = [
+      photographyServiceAdsConfig,
+      videoDronAdsConfig,
+      adsServiceCityConfigs["fotografia-madrid"],
+      adsServiceCityConfigs["fotografia-inmobiliaria-madrid"],
+    ];
+    const landingImageSets = configs.map((config) => [
+      config.heroImage,
+      ...config.proof.map(({ image }) => image),
+    ]);
+
+    landingImageSets.forEach((images) => {
+      expect(new Set(images).size).toBe(images.length);
+    });
+
+    const allImages = landingImageSets.flat();
+    expect(new Set(allImages).size).toBe(allImages.length);
+  });
 });

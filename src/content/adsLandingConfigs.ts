@@ -12,9 +12,17 @@ import type { AdsLandingConfig } from "@/components/ads/AdsLandingBody";
 import corporativo from "@/assets/ads/corporativo.jpg";
 import eventos from "@/assets/ads/eventos.jpg";
 import gastronomia from "@/assets/ads/gastronomia.jpg";
+import madridCorporateHero from "@/assets/ads/madrid-corporate-hero.jpg";
+import madridSpace from "@/assets/ads/madrid-space.jpg";
+import realEstateAltHero from "@/assets/ads/real-estate-alt-hero.jpg";
 import realEstateDetail from "@/assets/ads/real-estate-detail.jpg";
 import realEstateHero from "@/assets/ads/real-estate-hero.jpg";
 import realEstateWide from "@/assets/ads/real-estate-wide.jpg";
+import serviceCompany from "@/assets/ads/service-company.jpg";
+import serviceLifestyleHero from "@/assets/ads/service-lifestyle-hero.jpg";
+import serviceProduct from "@/assets/ads/service-product.jpg";
+import serviceSpace from "@/assets/ads/service-space.jpg";
+import videoEventHero from "@/assets/ads/video-event-hero.jpg";
 import portfolioDron from "@/assets/portfolio-dron.jpg";
 import portfolioVideo from "@/assets/portfolio-video.jpg";
 
@@ -151,24 +159,24 @@ const broadPhotographyProof = [
     title: "Espacios e inmobiliaria",
     description:
       "Luz, composición y perspectiva pensadas para presentar cada espacio con claridad.",
-    image: realEstateHero,
-    alt: "Dormitorio fotografiado profesionalmente para un proyecto inmobiliario",
+    image: serviceSpace,
+    alt: "Salón fotografiado profesionalmente para un proyecto inmobiliario",
     href: "/portafolio/fotografia/real-estate-e-interiorismo",
   },
   {
     title: "Producto y gastronomía",
     description:
       "Producción controlada para catálogos, cartas, e-commerce y campañas.",
-    image: gastronomia,
-    alt: "Fotografía gastronómica profesional sobre fondo oscuro",
+    image: serviceProduct,
+    alt: "Fotografía profesional de producto para catálogo y campañas",
     href: "/portafolio/fotografia/gastronomia",
   },
   {
     title: "Empresa y eventos",
     description:
       "Personas, marca y momentos clave con una cobertura natural y consistente.",
-    image: corporativo,
-    alt: "Retrato corporativo profesional en unas oficinas",
+    image: serviceCompany,
+    alt: "Equipo trabajando en unas oficinas fotografiadas profesionalmente",
     href: "/portafolio/fotografia/corporativa",
   },
 ] as AdsLandingConfig["proof"];
@@ -180,9 +188,9 @@ export const photographyServiceAdsConfig = {
   titleAccent: "pensada para vender mejor",
   description:
     "Creamos imágenes de inmobiliaria, producto, gastronomía, empresa y eventos que comunican valor y llegan listas para publicar.",
-  heroImage: realEstateWide,
+  heroImage: serviceLifestyleHero,
   heroAlt:
-    "Fotografía profesional de un interior realizada por Silvio Costa Photography",
+    "Equipo profesional trabajando en un espacio fotografiado por Silvio Costa Photography",
   primaryCta: "Pedir presupuesto",
   defaultService: "Fotografía profesional para empresas",
   trust: [
@@ -222,9 +230,9 @@ export const photographyMadridAdsConfig = {
   titleAccent: "que hace destacar tu proyecto",
   description:
     "Una sesión bien planificada para renovar la imagen de tu empresa, equipo, local o producto sin perder semanas coordinando proveedores.",
-  heroImage: corporativo,
+  heroImage: madridCorporateHero,
   heroAlt:
-    "Retrato corporativo realizado por Silvio Costa Photography en Madrid",
+    "Equipo reunido durante una sesión corporativa de Silvio Costa Photography en Madrid",
   primaryCta: "Consultar fecha en Madrid",
   defaultService: "Fotografía profesional para empresas",
   trust: [
@@ -249,7 +257,7 @@ export const photographyMadridAdsConfig = {
       title: "Locales, espacios e inmobiliaria",
       description:
         "Interiores luminosos y proporcionados para presentar el lugar antes de la primera visita.",
-      image: realEstateWide,
+      image: madridSpace,
       alt: "Interior profesional fotografiado para presentar un espacio en Madrid",
       href: "/portafolio/fotografia/real-estate-e-interiorismo",
     },
@@ -323,9 +331,9 @@ export const realEstateMadridAdsConfig = {
   titleAccent: "destaque desde la primera visita",
   description:
     "Fotografía HDR profesional con perspectiva corregida y entrega en 24–48 horas para agencias, promotoras, alquiler y venta de propiedades en Madrid.",
-  heroImage: realEstateHero,
+  heroImage: realEstateAltHero,
   heroAlt:
-    "Dormitorio preparado para una sesión de fotografía inmobiliaria profesional en Madrid",
+    "Salón luminoso preparado para una sesión de fotografía inmobiliaria profesional en Madrid",
   primaryCta: "Reservar sesión",
   defaultService: "Fotografía inmobiliaria",
   trust: [
@@ -424,9 +432,9 @@ export const videoDronAdsConfig = {
   titleAccent: "con trabajo real que puedes ver",
   description:
     "Creamos piezas corporativas, publicitarias, inmobiliarias y de eventos en 4K, con planificación, rodaje, edición y versiones para cada canal.",
-  heroImage: portfolioVideo,
+  heroImage: videoEventHero,
   heroAlt:
-    "Producción de vídeo profesional realizada por Silvio Costa Photography",
+    "Cobertura audiovisual de un evento realizada por Silvio Costa Photography",
   primaryCta: "Pedir propuesta audiovisual",
   defaultService: "Vídeo y dron",
   trust: [

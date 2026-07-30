@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -14,6 +15,18 @@ import {
 } from "@/content/regionalCoverage";
 
 const html = readFileSync(resolve(process.cwd(), "index.html"), "utf8");
+const faviconIco = readFileSync(
+  resolve(process.cwd(), "public/favicon.ico"),
+);
+const namedFaviconIco = readFileSync(
+  resolve(process.cwd(), "public/favicon-silvio-costa.ico"),
+);
+const faviconPng = readFileSync(
+  resolve(process.cwd(), "public/favicon.png"),
+);
+const namedFaviconPng = readFileSync(
+  resolve(process.cwd(), "public/favicon-silvio-costa.png"),
+);
 const robots = readFileSync(
   resolve(process.cwd(), "public/robots.txt"),
   "utf8",
@@ -35,6 +48,21 @@ describe("initial SEO shell", () => {
     expect(html).not.toMatch(/<link\s+rel="canonical"/);
     expect(html).not.toMatch(/<link\s+rel="alternate"\s+hreflang=/);
     expect(html).not.toMatch(/<meta\s+property="og:url"/);
+  });
+
+  it("uses Silvio Costa branding for explicit and fallback favicons", () => {
+    const lovableFaviconHash =
+      "dd821076a9b03adc2173c93956226aea3d92482d7578fc4339c5d3a2e9c24586";
+    const currentFaviconHash = createHash("sha256")
+      .update(faviconIco)
+      .digest("hex");
+
+    expect(html).toContain("/favicon-silvio-costa.png");
+    expect(html).toContain("/favicon-silvio-costa.ico");
+    expect(html).toContain("/apple-touch-icon.png");
+    expect(currentFaviconHash).not.toBe(lovableFaviconHash);
+    expect(faviconIco.equals(namedFaviconIco)).toBe(true);
+    expect(faviconPng.equals(namedFaviconPng)).toBe(true);
   });
 });
 

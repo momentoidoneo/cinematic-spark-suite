@@ -362,7 +362,7 @@ export function blogPostSchema(post: {
       name: "Silvio Costa Photography",
       logo: {
         "@type": "ImageObject",
-        url: `${SITE_URL}/favicon.png`,
+        url: `${SITE_URL}/favicon-silvio-costa.png`,
       },
     },
     mainEntityOfPage: {
