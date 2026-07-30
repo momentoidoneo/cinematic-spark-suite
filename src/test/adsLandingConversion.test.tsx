@@ -96,4 +96,37 @@ describe("Google Ads landing conversion flow", () => {
     expect(copy).toContain("24–48");
     expect(videoDronAdsConfig.showreel?.youtubeId).toBe("-ZiwLZlG76o");
   });
+
+  it("keeps the Madrid photographer landing distinct from the general photography service", () => {
+    const madridConfig = adsServiceCityConfigs["fotografia-madrid"];
+
+    expect(madridConfig.primaryCta).toBe("Consultar fecha en Madrid");
+    expect(madridConfig.proofHeading).not.toBe(
+      photographyServiceAdsConfig.proofHeading,
+    );
+    expect(madridConfig.outcomesHeading).not.toBe(
+      photographyServiceAdsConfig.outcomesHeading,
+    );
+    expect(madridConfig.deliverables).not.toEqual(
+      photographyServiceAdsConfig.deliverables,
+    );
+    expect(madridConfig.faqs).not.toEqual(photographyServiceAdsConfig.faqs);
+  });
+
+  it("uses reliable JPEG portfolio assets for every Ads proof card", () => {
+    const configs = [
+      photographyServiceAdsConfig,
+      videoDronAdsConfig,
+      adsServiceCityConfigs["fotografia-madrid"],
+      adsServiceCityConfigs["fotografia-inmobiliaria-madrid"],
+    ];
+
+    configs
+      .flatMap((config) => [
+        config.heroImage,
+        ...config.proof.map(({ image }) => image),
+      ])
+      .filter((image) => image.includes("/assets/ads/"))
+      .forEach((image) => expect(image).toMatch(/\.jpg$/));
+  });
 });

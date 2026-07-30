@@ -9,12 +9,12 @@ import {
   Video,
 } from "lucide-react";
 import type { AdsLandingConfig } from "@/components/ads/AdsLandingBody";
-import corporativo from "@/assets/ads/corporativo.avif";
-import eventos from "@/assets/ads/eventos.avif";
-import gastronomia from "@/assets/ads/gastronomia.avif";
-import realEstateDetail from "@/assets/ads/real-estate-detail.avif";
-import realEstateHero from "@/assets/ads/real-estate-hero.avif";
-import realEstateWide from "@/assets/ads/real-estate-wide.avif";
+import corporativo from "@/assets/ads/corporativo.jpg";
+import eventos from "@/assets/ads/eventos.jpg";
+import gastronomia from "@/assets/ads/gastronomia.jpg";
+import realEstateDetail from "@/assets/ads/real-estate-detail.jpg";
+import realEstateHero from "@/assets/ads/real-estate-hero.jpg";
+import realEstateWide from "@/assets/ads/real-estate-wide.jpg";
 import portfolioDron from "@/assets/portfolio-dron.jpg";
 import portfolioVideo from "@/assets/portfolio-video.jpg";
 
@@ -38,6 +38,29 @@ const photographyFaqs = [
     question: "¿Puedo usar las imágenes en web, redes y publicidad?",
     answer:
       "Sí. Definimos los usos necesarios en la propuesta para que recibas los archivos y la licencia adecuados a tus canales.",
+  },
+];
+
+const madridPhotographyFaqs = [
+  {
+    question: "¿Trabajáis en mi oficina, local o espacio de Madrid?",
+    answer:
+      "Sí. Nos desplazamos por toda la Comunidad de Madrid con iluminación y equipo profesional. Antes de reservar revisamos la ubicación, el horario y las imágenes que necesitas.",
+  },
+  {
+    question: "¿Cuánto cuesta una sesión de fotografía en Madrid?",
+    answer:
+      "Las sesiones parten de 200 €. El importe final depende del tiempo de producción, el número de espacios o personas, los usos y la cantidad de fotografías que debamos entregar.",
+  },
+  {
+    question: "¿Podemos crear contenido para varios canales en una sola sesión?",
+    answer:
+      "Sí. Planificamos una lista de tomas para obtener en la misma producción imágenes para web, Google, redes, prensa, campañas y perfiles profesionales.",
+  },
+  {
+    question: "¿Cuándo recibiré el material?",
+    answer:
+      "La entrega habitual es de 24 a 72 horas según el alcance. Si tienes una inauguración, campaña o fecha de publicación, fijamos el calendario antes de confirmar la sesión.",
   },
 ];
 
@@ -193,22 +216,104 @@ export const photographyServiceAdsConfig = {
 } satisfies AdsLandingConfig;
 
 export const photographyMadridAdsConfig = {
-  ...photographyServiceAdsConfig,
   trackingLabel: "ads_fotografia_madrid",
   eyebrow: "Fotógrafo profesional en Madrid",
   title: "Fotografía en Madrid",
   titleAccent: "que hace destacar tu proyecto",
   description:
-    "Producción fotográfica para empresas, inmuebles, restaurantes, productos y eventos en Madrid, con dirección visual, edición y entrega lista para publicar.",
+    "Una sesión bien planificada para renovar la imagen de tu empresa, equipo, local o producto sin perder semanas coordinando proveedores.",
   heroImage: corporativo,
   heroAlt:
     "Retrato corporativo realizado por Silvio Costa Photography en Madrid",
+  primaryCta: "Consultar fecha en Madrid",
+  defaultService: "Fotografía profesional para empresas",
   trust: [
     "+10 años de experiencia",
     "Respuesta en menos de 24 h",
     "Cobertura en toda la Comunidad",
     "Edición profesional incluida",
   ],
+  proofHeading: "Trabajo realizado para negocios y espacios reales",
+  proofDescription:
+    "Tres tipos de producción habituales en Madrid, resueltos con una dirección visual coherente y archivos listos para utilizar.",
+  proof: [
+    {
+      title: "Retratos y equipos",
+      description:
+        "Una imagen profesional y cercana para web, LinkedIn, prensa y comunicación corporativa.",
+      image: corporativo,
+      alt: "Retrato corporativo profesional realizado en unas oficinas de Madrid",
+      href: "/portafolio/fotografia/corporativa",
+    },
+    {
+      title: "Locales, espacios e inmobiliaria",
+      description:
+        "Interiores luminosos y proporcionados para presentar el lugar antes de la primera visita.",
+      image: realEstateWide,
+      alt: "Interior profesional fotografiado para presentar un espacio en Madrid",
+      href: "/portafolio/fotografia/real-estate-e-interiorismo",
+    },
+    {
+      title: "Producto y gastronomía",
+      description:
+        "Fotografías con intención comercial para carta, catálogo, e-commerce y campañas locales.",
+      image: gastronomia,
+      alt: "Fotografía gastronómica profesional preparada para una campaña",
+      href: "/portafolio/fotografia/gastronomia",
+    },
+  ],
+  outcomesHeading: "Una jornada pensada para aprovechar cada fotografía",
+  outcomesDescription:
+    "Acordamos el objetivo y la lista de tomas antes de llegar para producir el material que realmente vas a publicar.",
+  outcomes: [
+    {
+      icon: Camera,
+      title: "Marca personal y equipo",
+      description:
+        "Retratos naturales y consistentes para que todas las personas de la empresa comuniquen la misma identidad.",
+      bullets: [
+        "Dirección durante la sesión",
+        "Retrato individual y de equipo",
+        "Encuadres para web y perfiles",
+      ],
+    },
+    {
+      icon: Building2,
+      title: "Tu espacio como argumento",
+      description:
+        "Oficinas, clínicas, tiendas, restaurantes y viviendas presentados con luz, orden y proporción.",
+      bullets: [
+        "Interiores, exteriores y detalles",
+        "Corrección de perspectiva",
+        "Material para Google, web y prensa",
+      ],
+    },
+    {
+      icon: Megaphone,
+      title: "Banco visual para campañas",
+      description:
+        "Una producción coordinada para cubrir lanzamientos, temporadas o varios canales de comunicación.",
+      bullets: [
+        "Lista de tomas priorizada",
+        "Formatos horizontales y verticales",
+        "Archivos preparados para publicar",
+      ],
+    },
+  ],
+  deliverablesHeading: "Qué recibes después de la sesión",
+  deliverables: [
+    "Plan de tomas adaptado a tus canales",
+    "Dirección fotográfica en la localización",
+    "Selección y edición profesional",
+    "Alta resolución y copias optimizadas para web",
+    "Encuadres horizontales y verticales acordados",
+    "Entrega ordenada y licencia de uso definida",
+  ],
+  priceEyebrow: "Presupuesto claro antes de reservar",
+  priceTitle: "Sesiones en Madrid desde 200 €",
+  priceDescription:
+    "Cuéntanos qué necesitas fotografiar, dónde y para qué canales. Te respondemos con alcance, fecha disponible, entrega e importe cerrado.",
+  faqs: madridPhotographyFaqs,
 } satisfies AdsLandingConfig;
 
 export const realEstateMadridAdsConfig = {
