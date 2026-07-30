@@ -333,8 +333,8 @@ export const scorePricingReference = (
     if (itemName.includes(word)) score += 6;
   });
 
-  const requestedNumbers = scopeText.match(/\d+/g) || [];
-  const itemNumbers = itemName.match(/\d+/g) || [];
+  const requestedNumbers: string[] = scopeText.match(/\d+/g) ?? [];
+  const itemNumbers: string[] = itemName.match(/\d+/g) ?? [];
   if (requestedNumbers.some((number) => itemNumbers.includes(number))) {
     score += 18;
   }
