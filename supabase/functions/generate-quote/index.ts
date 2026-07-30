@@ -1,9 +1,17 @@
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import {
+  createClient,
+  type SupabaseClient,
+} from "jsr:@supabase/supabase-js@2";
 import {
   callLovableChat,
   getAssistantText,
   parseJsonFromText,
 } from "../_shared/lovableAi.ts";
+import {
+  getCatalogBaseRange,
+  matchPricingReferences,
+  type PricingReference,
+} from "./pricing.ts";
 
 declare const EdgeRuntime:
   | { waitUntil?: (promise: Promise<unknown>) => void }
@@ -41,15 +49,6 @@ interface QuoteResult {
   source?: "ai" | "fallback";
   pricingSource?: "admin-pricing" | "default-rules";
   pricingReferences?: PricingReference[];
-}
-
-interface PricingReference {
-  name: string;
-  category: string | null;
-  description: string | null;
-  price: number;
-  priceSuffix: string | null;
-  source: "plan" | "service" | "default";
 }
 
 interface PricingPlanRow {
@@ -278,7 +277,9 @@ Tarifas de referencia visibles en el panel de administración (EUR, sin IVA):
 ${pricingContext}
 
 Factores de incremento: urgencia (<48h: +20-30%), desplazamiento >50km, post-producción avanzada, exclusividad de derechos, fines de semana.
-Usa las tarifas visibles del panel como base principal cuando encajen con el servicio solicitado. Ajusta por alcance, superficie, número de piezas, duración, ubicación y urgencia. No presentes el importe como cerrado: siempre es orientativo hasta revisar briefing.
+Usa las tarifas visibles del panel como base principal cuando encajen con el servicio solicitado. Ajusta por alcance, superficie, número de piezas, duración, ubicación y urgencia.
+Si una tarifa está expresada por foto, imagen, pieza, persona, hora o ronda, multiplícala por la cantidad indicada. Nunca uses el precio unitario como precio total del proyecto. No mezcles servicios de familias distintas solo porque compartan la palabra fotografía o vídeo.
+No presentes el importe como cerrado: siempre es orientativo hasta revisar briefing.
 
 Devuelve SIEMPRE JSON válido con esta estructura exacta:
 {
@@ -409,90 +410,6 @@ const checkVies = async (
   }
 };
 
-const serviceSignals = (body: QuoteRequest) => {
-  const text = normalize(`${body.service} ${body.scope} ${body.details || ""}`);
-  if (
-    text.includes("matterport") || text.includes("tour") || text.includes("360")
-  ) {
-    return ["matterport", "tour", "360", "plano", "street view", "espacio"];
-  }
-  if (text.includes("stream") || text.includes("directo")) {
-    return ["streaming", "multicamara", "evento", "conferencia"];
-  }
-  if (text.includes("render") || text.includes("3d")) {
-    return ["render", "3d", "visualizacion", "modelo"];
-  }
-  if (
-    text.includes("dron") || text.includes("aereo") || text.includes("aerea")
-  ) {
-    return ["dron", "aereo", "fotogrametria", "video"];
-  }
-  if (
-    text.includes("video") || text.includes("reel") || text.includes("spot")
-  ) {
-    return ["video", "reel", "spot", "corporativo", "inmobiliario"];
-  }
-  if (
-    text.includes("evento") || text.includes("boda") ||
-    text.includes("congreso") || text.includes("feria")
-  ) {
-    return ["evento", "boda", "congreso", "feria", "streaming"];
-  }
-  return [
-    "fotografia",
-    "producto",
-    "gastronomia",
-    "arquitectura",
-    "inmobiliaria",
-    "retrato",
-  ];
-};
-
-const scorePricingReference = (body: QuoteRequest, item: PricingReference) => {
-  const text = normalize(
-    `${item.name} ${item.category || ""} ${item.description || ""}`,
-  );
-  const input = normalize(
-    `${body.service} ${body.scope} ${body.details || ""}`,
-  );
-  const signals = serviceSignals(body);
-  let score = 0;
-
-  signals.forEach((signal) => {
-    if (text.includes(signal)) score += 4;
-    if (input.includes(signal) && text.includes(signal)) score += 2;
-  });
-
-  normalize(body.service)
-    .split(" ")
-    .filter((word) => word.length > 3)
-    .forEach((word) => {
-      if (text.includes(word)) score += 1;
-    });
-
-  if (item.source === "plan") score += 0.5;
-  return score;
-};
-
-const matchPricingReferences = (
-  body: QuoteRequest,
-  catalog: PricingReference[],
-) => {
-  const scored = catalog
-    .map((item) => ({ item, score: scorePricingReference(body, item) }))
-    .filter(({ score }) => score > 0)
-    .sort((a, b) => b.score - a.score || a.item.price - b.item.price)
-    .map(({ item }) => item);
-
-  const unique = new Map<string, PricingReference>();
-  scored.forEach((item) => {
-    const key = normalize(item.name);
-    if (!unique.has(key)) unique.set(key, item);
-  });
-
-  return [...unique.values()].slice(0, 8);
-};
-
 const loadPricingCatalog = async (): Promise<PricingReference[]> => {
   const url = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -567,23 +484,8 @@ const loadPricingCatalog = async (): Promise<PricingReference[]> => {
   }
 };
 
-const getBaseRange = (
-  service: string,
-  pricingReferences: PricingReference[] = [],
-): [number, number] => {
-  if (pricingReferences.length > 0) {
-    const prices = pricingReferences.map((item) => item.price).filter((price) =>
-      Number.isFinite(price)
-    );
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-    return [
-      min,
-      Math.max(min + 90, max * 1.35, min * 1.6),
-    ];
-  }
-
-  const s = service.toLowerCase();
+const getDefaultBaseRange = (body: QuoteRequest): [number, number] => {
+  const s = body.service.toLowerCase();
   if (s.includes("matterport") || s.includes("tour")) return [250, 450];
   if (s.includes("dron")) return [350, 800];
   if (s.includes("vídeo") || s.includes("video")) return [800, 2500];
@@ -608,7 +510,10 @@ const scopeMultiplier = (scope: string, service: string) => {
     (s.includes("m2") || s.includes("m²") || s.includes("metros")) &&
     maxNumber > 250
   ) return 1.55;
-  if ((s.includes("hora") || s.includes("h")) && maxNumber >= 8) return 1.75;
+  if (
+    (s.includes("hora") || /\b\d+(?:[.,]\d+)?\s*h\b/.test(s)) &&
+    maxNumber >= 8
+  ) return 1.75;
   if (
     (s.includes("render") || s.includes("foto") || s.includes("pieza")) &&
     maxNumber >= 10
@@ -628,8 +533,11 @@ const buildFallbackQuote = (
   body: QuoteRequest,
   pricingReferences: PricingReference[] = [],
 ): QuoteResult => {
-  const [baseMin, baseMax] = getBaseRange(body.service, pricingReferences);
-  const multiplier = scopeMultiplier(body.scope, body.service) *
+  const catalogRange = getCatalogBaseRange(body, pricingReferences);
+  const [baseMin, baseMax] = catalogRange || getDefaultBaseRange(body);
+  const multiplier = (catalogRange
+    ? 1
+    : scopeMultiplier(body.scope, body.service)) *
     urgencyMultiplier(body.urgency);
   const min = roundAmount(baseMin * multiplier);
   const max = Math.max(min + 80, roundAmount(baseMax * multiplier));
@@ -856,7 +764,7 @@ const commercialQuoteNumber = (settings: ERPSettingsRow) => {
 };
 
 const findOrCreateCommercialClient = async (
-  supabase: any,
+  supabase: SupabaseClient,
   body: QuoteRequest,
   vies: ViesCheckResult,
   clientCountryCode: string,

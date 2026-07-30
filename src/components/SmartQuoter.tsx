@@ -55,13 +55,22 @@ const EU_COUNTRIES = [
 ] as const;
 
 const SERVICES = [
-  "Fotografía profesional",
+  "Fotografía inmobiliaria",
+  "Fotografía corporativa y de empresa",
+  "Fotografía de producto y ecommerce",
+  "Fotografía gastronómica",
+  "Retrato corporativo y equipos",
+  "Fotografía de eventos",
   "Vídeo corporativo",
+  "Vídeo de producto o publicitario",
+  "Reels y contenido para redes",
+  "Vídeo inmobiliario",
   "Vídeo con dron",
   "Tour Virtual Matterport",
-  "Cobertura de eventos",
   "Renders 3D",
   "Streaming profesional",
+  "Podcast y videopodcast",
+  "Otro servicio audiovisual",
 ];
 
 const URGENCY = ["Esta semana", "Este mes", "Próximos 3 meses", "Sin prisa"];
