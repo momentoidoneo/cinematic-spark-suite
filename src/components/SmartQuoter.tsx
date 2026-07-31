@@ -11,6 +11,10 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
+import {
+  isValidQuoteLeadEmail,
+  isValidQuoteLeadName,
+} from "../../supabase/functions/_shared/quoteLeadValidation";
 import { toast } from "sonner";
 
 interface QuoteResult {
@@ -97,8 +101,8 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
   const [result, setResult] = useState<QuoteResult | null>(null);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
 
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
-  const vatValid = form.vatNumber.trim().length >= 3;
+  const nameValid = isValidQuoteLeadName(form.name);
+  const emailValid = isValidQuoteLeadEmail(form.email);
 
   const reset = () => {
     setStep(0);
@@ -144,12 +148,12 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
   }, []);
 
   const handleGenerate = async () => {
-    if (!emailValid) {
-      toast.error("Introduce un email válido para guardar la solicitud");
+    if (!nameValid) {
+      toast.error("Introduce tu nombre para ver el presupuesto");
       return;
     }
-    if (!vatValid) {
-      toast.error("Introduce el NIF/CIF/VAT para preparar el presupuesto");
+    if (!emailValid) {
+      toast.error("Introduce un email válido para ver el presupuesto");
       return;
     }
 
@@ -205,7 +209,7 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
     (step === 2 && form.location.trim().length > 0) ||
     (step === 3 && form.urgency) ||
     step === 4 ||
-    (step === 5 && emailValid && vatValid);
+    (step === 5 && nameValid && emailValid);
 
   return (
     <>
@@ -365,22 +369,46 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
                     {step === 5 && (
                       <div>
                         <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                          ¿Dónde enviamos la estimación?
+                          Antes de mostrarte la estimación
                         </h3>
                         <p className="text-sm text-muted-foreground mb-4">
-                          Guardaremos la solicitud para poder preparar una
-                          propuesta con los datos fiscales correctos.
+                          Déjanos tu nombre y email. Guardaremos la solicitud
+                          para poder hacer seguimiento y preparar una propuesta
+                          definitiva si te interesa.
                         </p>
                         <div className="space-y-3">
                           <input
                             autoFocus
+                            value={form.name}
+                            onChange={(e) =>
+                              setForm({ ...form, name: e.target.value })
+                            }
+                            placeholder="Nombre y apellidos *"
+                            autoComplete="name"
+                            aria-label="Nombre y apellidos"
+                            required
+                            className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                          <input
                             value={form.email}
                             onChange={(e) =>
                               setForm({ ...form, email: e.target.value })
                             }
-                            placeholder="Email"
+                            placeholder="Email *"
                             type="email"
                             autoComplete="email"
+                            aria-label="Email"
+                            required
+                            className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                          <input
+                            value={form.phone}
+                            onChange={(e) =>
+                              setForm({ ...form, phone: e.target.value })
+                            }
+                            placeholder="Teléfono o WhatsApp (opcional)"
+                            type="tel"
+                            autoComplete="tel"
                             className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                           />
                           <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-3">
@@ -413,30 +441,24 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
                                   vatNumber: e.target.value.toUpperCase(),
                                 })
                               }
-                              placeholder="NIF/CIF/VAT *"
+                              placeholder="NIF/CIF/VAT (opcional)"
                               autoComplete="organization"
                               className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                             />
                           </div>
-                          <input
-                            value={form.name}
-                            onChange={(e) =>
-                              setForm({ ...form, name: e.target.value })
-                            }
-                            placeholder="Nombre (opcional)"
-                            autoComplete="name"
-                            className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                          />
-                          <input
-                            value={form.phone}
-                            onChange={(e) =>
-                              setForm({ ...form, phone: e.target.value })
-                            }
-                            placeholder="Teléfono o WhatsApp (opcional)"
-                            type="tel"
-                            autoComplete="tel"
-                            className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                          />
+                          <p className="text-xs leading-relaxed text-muted-foreground">
+                            Usaremos estos datos para gestionar y dar seguimiento
+                            a tu solicitud. Consulta la{" "}
+                            <a
+                              href="/legal/privacy-policy"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary underline underline-offset-2"
+                            >
+                              política de privacidad
+                            </a>
+                            .
+                          </p>
                         </div>
                       </div>
                     )}
@@ -463,7 +485,8 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
                           disabled={!canNext}
                           className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-primary text-primary-foreground text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity"
                         >
-                          <Sparkles className="w-4 h-4" /> Calcular y guardar
+                          <Sparkles className="w-4 h-4" /> Calcular y ver
+                          presupuesto
                         </button>
                       )}
                     </div>

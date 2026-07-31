@@ -8,6 +8,10 @@ import {
   parseJsonFromText,
 } from "../_shared/lovableAi.ts";
 import {
+  isValidQuoteLeadEmail,
+  isValidQuoteLeadName,
+} from "../_shared/quoteLeadValidation.ts";
+import {
   getCatalogBaseRange,
   matchPricingReferences,
   type PricingReference,
@@ -32,7 +36,7 @@ interface QuoteRequest {
   urgency: string;
   details?: string;
   email: string;
-  name?: string;
+  name: string;
   phone?: string;
   countryCode?: string;
   countryName?: string;
@@ -301,9 +305,6 @@ const jsonResponse = (body: unknown, status = 200) =>
 
 const cleanText = (value: unknown, max = 500) =>
   typeof value === "string" ? value.trim().slice(0, max) : "";
-
-const isValidEmail = (email: string) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254;
 
 const roundAmount = (value: number) =>
   Math.max(90, Math.round(value / 10) * 10);
@@ -646,7 +647,7 @@ const saveQuoteRequest = async (body: QuoteRequest, quote: QuoteResult) => {
 
   const supabase = createClient(url, key);
   const payload = {
-    name: body.name || null,
+    name: body.name,
     email: body.email.toLowerCase(),
     phone: body.phone || null,
     service: body.service,
@@ -725,7 +726,7 @@ const createDronePermitRequest = async (
     const { error } = await supabase.from("drone_permit_requests").insert({
       quote_request_id: requestId,
       title: `Permisos dron · ${body.service}`,
-      client_name: body.name || null,
+      client_name: body.name,
       client_email: body.email.toLowerCase(),
       client_phone: body.phone || null,
       service: body.service,
@@ -793,7 +794,7 @@ const findOrCreateCommercialClient = async (
     }
 
     const payload = {
-      name: body.name || body.email,
+      name: body.name,
       company: vies.name && vies.name !== "---" ? vies.name : null,
       email: body.email.toLowerCase(),
       phone: body.phone || null,
@@ -956,7 +957,7 @@ const createCommercialQuoteDraft = async (
         status: "draft",
         client_id: clientId,
         source_quote_request_id: requestId,
-        client_name: body.name || body.email,
+        client_name: body.name,
         client_company: vies.name && vies.name !== "---" ? vies.name : null,
         client_email: body.email.toLowerCase(),
         client_phone: body.phone || null,
@@ -1007,7 +1008,8 @@ const createCommercialQuoteDraft = async (
   }
 };
 
-const ADMIN_EMAIL = "silvio@silviocosta.net";
+const ADMIN_EMAIL = Deno.env.get("ADMIN_NOTIFICATION_EMAIL") ||
+  "silvio@silviocosta.net";
 const GMAIL_GATEWAY =
   "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
 
@@ -1029,6 +1031,17 @@ const buildRawEmail = (
     .replace(/=+$/, "");
 };
 
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+const sanitizeEmailHeader = (value: string) =>
+  value.replace(/[\r\n]+/g, " ").trim();
+
 const sendNotificationEmails = async (
   body: QuoteRequest,
   quote: QuoteResult,
@@ -1043,12 +1056,18 @@ const sendNotificationEmails = async (
     return;
   }
 
-  const safeName = body.name || "Cliente";
-  const safeDetails = (body.details || "—").replace(/</g, "&lt;");
-  const safeVat = (body.vatNumber || "—").replace(/</g, "&lt;");
-  const safeCountry = `${body.countryCode || "PT"} · ${
+  const safeName = escapeHtml(body.name);
+  const safeEmail = escapeHtml(body.email);
+  const safePhone = escapeHtml(body.phone || "");
+  const safeService = escapeHtml(body.service);
+  const safeScope = escapeHtml(body.scope);
+  const safeLocation = escapeHtml(body.location);
+  const safeUrgency = escapeHtml(body.urgency);
+  const safeDetails = escapeHtml(body.details || "—");
+  const safeVat = escapeHtml(body.vatNumber || "—");
+  const safeCountry = escapeHtml(`${body.countryCode || "PT"} · ${
     body.countryName || countryLabel(body.countryCode || "PT")
-  }`.replace(/</g, "&lt;");
+  }`);
   const rangeText = `${quote.min} – ${quote.max} €`;
 
   const html = `
@@ -1059,25 +1078,23 @@ const sendNotificationEmails = async (
         <p style="margin:0;color:#94A3B8;font-size:13px;">Presupuesto orientativo IA</p>
         <p style="margin:6px 0 0;color:#5EEAD4;font-size:22px;font-weight:700;">${rangeText}</p>
         <p style="margin:8px 0 0;color:#CBD5E1;font-size:14px;">${
-    quote.summary.replace(/</g, "&lt;")
+    escapeHtml(quote.summary)
   }</p>
       </div>
       <table style="width:100%;border-collapse:collapse;background:#1E293B;border-radius:8px;overflow:hidden;">
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;width:140px;">Cliente</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeName}</td></tr>
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Email</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="mailto:${body.email}">${body.email}</a></td></tr>
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Email</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="mailto:${safeEmail}">${safeEmail}</a></td></tr>
         ${
     body.phone
-      ? `<tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Teléfono</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="tel:${body.phone}">${body.phone}</a></td></tr>`
+      ? `<tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Teléfono</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="tel:${safePhone}">${safePhone}</a></td></tr>`
       : ""
   }
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">País fiscal</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeCountry}</td></tr>
         <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">NIF/CIF/VAT</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeVat}</td></tr>
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Servicio</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.service}</td></tr>
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Alcance</td><td style="padding:12px;border-bottom:1px solid #334155;white-space:pre-wrap;">${
-    body.scope.replace(/</g, "&lt;")
-  }</td></tr>
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Ubicación</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.location}</td></tr>
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Urgencia</td><td style="padding:12px;border-bottom:1px solid #334155;">${body.urgency}</td></tr>
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Servicio</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeService}</td></tr>
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Alcance</td><td style="padding:12px;border-bottom:1px solid #334155;white-space:pre-wrap;">${safeScope}</td></tr>
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Ubicación</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeLocation}</td></tr>
+        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Urgencia</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeUrgency}</td></tr>
         <tr><td style="padding:12px;color:#94A3B8;vertical-align:top;">Detalles</td><td style="padding:12px;white-space:pre-wrap;">${safeDetails}</td></tr>
       </table>
       ${
@@ -1091,7 +1108,9 @@ const sendNotificationEmails = async (
 
   const raw = buildRawEmail({
     to: ADMIN_EMAIL,
-    subject: `🤖 Nueva solicitud cotizador IA — ${body.service}`,
+    subject: sanitizeEmailHeader(
+      `🤖 Nueva solicitud cotizador IA — ${body.service}`,
+    ),
     html,
     replyTo: body.email,
   });
@@ -1146,14 +1165,14 @@ Deno.serve(async (req) => {
         400,
       );
     }
-    if (!isValidEmail(body.email)) {
+    if (!isValidQuoteLeadName(body.name)) {
       return jsonResponse({
-        error: "Introduce un email válido para recibir el presupuesto",
+        error: "Introduce tu nombre para ver el presupuesto",
       }, 400);
     }
-    if (!body.vatNumber) {
+    if (!isValidQuoteLeadEmail(body.email)) {
       return jsonResponse({
-        error: "Introduce el NIF/CIF/VAT para preparar el presupuesto",
+        error: "Introduce un email válido para ver el presupuesto",
       }, 400);
     }
 
@@ -1184,6 +1203,8 @@ Deno.serve(async (req) => {
       typeof EdgeRuntime.waitUntil === "function"
     ) {
       EdgeRuntime.waitUntil(emailPromise);
+    } else {
+      await emailPromise;
     }
 
     return jsonResponse({ ...quote, requestId });
