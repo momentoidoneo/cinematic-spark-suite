@@ -12,14 +12,6 @@ const eventTypes: Record<string, "cta" | "whatsapp" | "form" | "quote"> = {
   phone_click: "cta",
   generate_lead: "form",
   quoter_complete: "quote",
-  quoter_open: "cta",
-  quoter_step: "cta",
-  quoter_submit: "cta",
-  quoter_error: "cta",
-  quoter_abandon: "cta",
-  contact_form_start: "cta",
-  contact_form_submit: "cta",
-  contact_form_error: "cta",
 };
 
 const cleanText = (value: unknown, maxLength: number) => {
