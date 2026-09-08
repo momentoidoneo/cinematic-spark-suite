@@ -11,7 +11,7 @@ import KPICard from "@/components/admin/dashboard/KPICard";
 import HeatmapChart from "@/components/admin/dashboard/HeatmapChart";
 import ConversionFunnel from "@/components/admin/dashboard/ConversionFunnel";
 import {
-  fetchRealContactMessages, fetchViews, groupByDay, uniqueSessions, topBy, referrerHost, exportCSV,
+  fetchRealQuoteRequests, fetchRealContactMessages, fetchViews, groupByDay, uniqueSessions, topBy, referrerHost, exportCSV,
   pctChange, periodLabel, aiReferralCount, topAIReferrers, type Period, type PageViewRow,
 } from "@/lib/analytics";
 import { emptyConversionSummary, fetchConversionSummary, type ConversionSummary } from "@/lib/conversionSummary";
@@ -23,6 +23,7 @@ const AdminAnalytics = () => {
   const [period, setPeriod] = useState<Period>("7d");
   const [views, setViews] = useState<PageViewRow[]>([]);
   const [prevViews, setPrevViews] = useState<PageViewRow[]>([]);
+  const [quotesCount, setQuotesCount] = useState<number | null>(null);
   const [messagesCount, setMessagesCount] = useState(0);
   const [conversions, setConversions] = useState<ConversionSummary>(emptyConversionSummary);
   const [loading, setLoading] = useState(true);
@@ -35,15 +36,17 @@ const AdminAnalytics = () => {
       const prevSince = new Date(Date.now() - days * 2 * 86400_000).toISOString();
       const cutoff = new Date(since).getTime();
 
-      const [v, pv, realMessages, conversionSummary] = await Promise.all([
+      const [v, pv, realMessages, conversionSummary, quotes] = await Promise.all([
         fetchViews(since),
         period === "all" ? Promise.resolve([] as PageViewRow[]) : fetchViews(prevSince),
         fetchRealContactMessages(since),
         fetchConversionSummary(period === "all" ? undefined : since),
+        fetchRealQuoteRequests(period === "all" ? undefined : since),
       ]);
       setViews(v);
       setPrevViews(pv.filter((r) => new Date(r.created_at).getTime() < cutoff));
       setMessagesCount(realMessages.length);
+      setQuotesCount(quotes.error ? null : quotes.data.length);
       setConversions(conversionSummary);
       setLoading(false);
     };
@@ -178,17 +181,22 @@ const AdminAnalytics = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-8">
         <KPICard label="Mensajes reales" value={messagesCount.toLocaleString()} icon={FileText}
-          hint="Formulario, sin demos obvias" />
+          hint="Sin pruebas identificadas; no implica cliente cualificado" />
         <KPICard label="Clicks WhatsApp" value={conversions.whatsappClicks.toLocaleString()} icon={Megaphone}
           hint={conversions.available ? "Eventos medidos" : "Pendiente de desplegar medición"} />
         <KPICard label="Clicks teléfono" value={conversions.phoneClicks.toLocaleString()} icon={Phone}
           hint={conversions.available ? "Llamadas iniciadas desde la web" : "Pendiente de desplegar medición"} />
-        <KPICard label="Cotizador IA" value={conversions.quoteCompletions.toLocaleString()} icon={TrendingUp}
-          hint="Presupuestos generados" />
+        <KPICard label="Cotizador IA" value={quotesCount === null ? "—" : quotesCount.toLocaleString()} icon={TrendingUp}
+          hint="Solicitudes guardadas, sin pruebas identificadas" />
         <KPICard label="Tráfico IA" value={stats.aiReferralCount.toLocaleString()} icon={Sparkles}
           hint="ChatGPT, Perplexity, Gemini, Copilot..." />
         <KPICard label="Tasa contacto" value={`${(stats.sessions > 0 ? (measuredContactActions / stats.sessions) * 100 : 0).toFixed(2)}%`} icon={Users}
           hint={`${measuredContactActions} acciones / sesiones`} />
+      </div>
+
+      <div className="rounded-xl bg-card border border-border p-6 mb-8">
+        <h2 className="font-display text-lg font-bold mb-2">Recorrido de contacto y cotizador</h2>
+        <p className="text-sm text-muted-foreground">La web emite eventos de inicio, pasos, intentos, errores y cierre del cotizador para Analytics. El registro detallado en este panel está pendiente de verificar con el acceso directo a Supabase; no se muestran ceros como si estuviera activo.</p>
       </div>
 
       <div className="rounded-xl bg-card border border-border p-6 mb-8">
@@ -231,7 +239,7 @@ const AdminAnalytics = () => {
             steps={[
               { label: "Visitas totales", value: stats.viewsCount },
               { label: "Sesiones únicas", value: stats.sessions, hint: "Visitantes diferentes" },
-              { label: "Sesiones engaged", value: engagedSessions, hint: ">1 página" },
+              { label: "Sesiones de varias páginas", value: engagedSessions, hint: ">1 página" },
               { label: "Acciones contacto", value: measuredContactActions, hint: "Mensajes reales + WhatsApp" },
             ]}
           />

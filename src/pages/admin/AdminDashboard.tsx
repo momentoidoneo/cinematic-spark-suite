@@ -12,6 +12,7 @@ import {
 import KPICard from "@/components/admin/dashboard/KPICard";
 import {
   fetchRealContactMessages,
+  fetchRealQuoteRequests,
   fetchViews,
   groupByDay,
   pctChange,
@@ -55,8 +56,8 @@ const AdminDashboard = () => {
           supabase.from("portfolio_subcategories").select("id,category_id").eq("is_visible", true),
           fetchRealContactMessages(),
           fetchRealContactMessages(since),
-          supabase.from("quote_requests").select("id,is_read,created_at"),
-          supabase.from("quote_requests").select("id,is_read,created_at").gte("created_at", since),
+          fetchRealQuoteRequests(),
+          fetchRealQuoteRequests(since),
           supabase.from("page_views").select("id", { count: "exact", head: true }),
           supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("status", "published"),
           fetchConversionSummary(since),
@@ -270,7 +271,7 @@ const AdminDashboard = () => {
           highlight={counts.unread + counts.unreadQuotes > 0}
         />
         <KPICard
-          label="Tasa rebote"
+          label="Sesiones de 1 página"
           value={`${stats.bounceRate.toFixed(0)}%`}
           icon={TrendingUp}
           invertChange

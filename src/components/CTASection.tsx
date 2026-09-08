@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Sparkles,
   Send,
@@ -66,12 +66,13 @@ const CTASection = ({
   eyebrow = "Contacto",
   title = "Cuéntanos qué necesitas",
   titleAccent = "y te proponemos el plan",
-  description = "Respuesta en menos de 24 horas con alcance recomendado, disponibilidad y presupuesto orientativo.",
+  description = "Trabajamos desde Madrid. Respuesta en menos de 24 horas con alcance recomendado, disponibilidad y presupuesto orientativo.",
   trackingLabel = "contact_form",
 }: CTASectionProps = {}) => {
   const [form, setForm] = useState({
     ...initialForm(defaultService),
   });
+  const formStarted = useRef(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -97,6 +98,8 @@ const CTASection = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (sending) return;
+    trackEvent("contact_form_submit", { event_category: "funnel", event_label: trackingLabel });
     setErrors({});
 
     const result = contactSchema.safeParse(form);
@@ -105,6 +108,7 @@ const CTASection = ({
       result.error.errors.forEach((err) => {
         if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
       });
+      trackEvent("contact_form_error", { event_category: "funnel", event_label: "validation" });
       setErrors(fieldErrors);
       return;
     }
@@ -121,6 +125,7 @@ const CTASection = ({
       .join("\n\n");
 
     setSending(true);
+    try {
     const { data, error } = await supabase.functions.invoke("submit-contact", {
       body: {
         name: result.data.name,
@@ -135,6 +140,7 @@ const CTASection = ({
       const msg =
         (data?.error as string) ||
         "Error al enviar el mensaje. Inténtalo de nuevo.";
+      trackEvent("contact_form_error", { event_category: "funnel", event_label: "server" });
       toast.error(msg);
     } else {
       setSent(true);
@@ -149,7 +155,12 @@ const CTASection = ({
         transactionId: data?.id,
       });
     }
-    setSending(false);
+    } catch {
+      trackEvent("contact_form_error", { event_category: "funnel", event_label: "network" });
+      toast.error("No se ha podido enviar. Inténtalo de nuevo o contáctanos por WhatsApp.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -214,6 +225,12 @@ const CTASection = ({
                 </div>
               ) : (
                 <form
+                  onFocus={() => {
+                    if (!formStarted.current) {
+                      formStarted.current = true;
+                      trackEvent("contact_form_start", { event_category: "funnel", event_label: trackingLabel });
+                    }
+                  }}
                   id="contact-form"
                   onSubmit={handleSubmit}
                   className="space-y-5"

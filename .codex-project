@@ -5,7 +5,7 @@ type=web-app
 local_root=/Users/silviocosta_m5/Documents/Silvio Projects/cinematic-spark-suite
 github_repo=momentoidoneo/cinematic-spark-suite
 production_url=https://silviocosta.net
-lovable_project_id=fe5fb065-a82f-4e14-9e41-abf41661d2fd
+legacy_lovable_project_id=fe5fb065-a82f-4e14-9e41-abf41661d2fd
 forbid_project=nexus-ia-academy
 forbid_project=neon-checkmate
 forbid_project=youtube-assistant-pro
@@ -15,3 +15,8 @@ forbid_project=video-to-project
 policy=isolated-project
 
 # Codex/Engram must use this name as the project namespace for memories and prompts.
+
+deployment_provider=cloudflare
+cloudflare_worker=silviocosta-net
+legacy_lovable_operations=forbidden
+automatic_git_deployments=disconnected-2026-09-08

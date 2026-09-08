@@ -81,6 +81,8 @@ const URGENCY = ["Esta semana", "Este mes", "Próximos 3 meses", "Sin prisa"];
 
 const initialForm = {
   service: "",
+  services: [] as string[],
+  serviceScopes: {} as Record<string, string>,
   scope: "",
   location: "",
   urgency: "",
@@ -88,8 +90,8 @@ const initialForm = {
   name: "",
   email: "",
   phone: "",
-  countryCode: "PT",
-  countryName: "Portugal",
+  countryCode: "ES",
+  countryName: "España",
   vatNumber: "",
 };
 
@@ -117,6 +119,7 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
   };
 
   const handleClose = () => {
+    if (!result) trackEvent("quoter_abandon", { event_category: "funnel", event_label: `step_${step + 1}` });
     setOpen(false);
     setTimeout(reset, 300);
   };
@@ -147,7 +150,12 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
     return () => window.removeEventListener("open-smart-quoter", onOpenQuoter);
   }, []);
 
+  useEffect(() => {
+    if (open && !result) trackEvent("quoter_step", { event_category: "funnel", event_label: `step_${step + 1}` });
+  }, [open, step, result]);
+
   const handleGenerate = async () => {
+    if (loading) return;
     if (!nameValid) {
       toast.error("Introduce tu nombre para ver el presupuesto");
       return;
@@ -157,6 +165,7 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
       return;
     }
 
+    trackEvent("quoter_submit", { event_category: "funnel" });
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke(
@@ -164,6 +173,7 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
         { body: form },
       );
       if (error || data?.error) {
+        trackEvent("quoter_error", { event_category: "funnel", event_label: "generation" });
         toast.error(data?.error || "No se pudo generar el presupuesto");
         setLoading(false);
         return;
@@ -181,10 +191,42 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
         eventLabel: "smart_quoter",
         transactionId: quote.requestId || undefined,
       });
-    } catch (err) {
+    } catch {
+      trackEvent("quoter_error", { event_category: "funnel", event_label: "network" });
       toast.error("Error al generar el presupuesto");
     }
     setLoading(false);
+  };
+
+  const toggleService = (service: string) => {
+    const selected = form.services.includes(service);
+    const services = selected
+      ? form.services.filter((item) => item !== service)
+      : [...form.services, service];
+    const serviceScopes = { ...form.serviceScopes };
+    if (selected) delete serviceScopes[service];
+    const scope = services
+      .map((item) => `${item}: ${serviceScopes[item] || ""}`)
+      .join("\n");
+
+    setForm({
+      ...form,
+      services,
+      service: services.join(" + "),
+      serviceScopes,
+      scope,
+    });
+  };
+
+  const updateServiceScope = (service: string, value: string) => {
+    const serviceScopes = { ...form.serviceScopes, [service]: value };
+    setForm({
+      ...form,
+      serviceScopes,
+      scope: form.services
+        .map((item) => `${item}: ${serviceScopes[item] || ""}`)
+        .join("\n"),
+    });
   };
 
   const sendWhatsApp = () => {
@@ -204,12 +246,12 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
   };
 
   const canNext =
-    (step === 0 && form.service) ||
-    (step === 1 && form.scope.trim().length > 0) ||
-    (step === 2 && form.location.trim().length > 0) ||
-    (step === 3 && form.urgency) ||
-    step === 4 ||
-    (step === 5 && nameValid && emailValid);
+    (step === 0 && form.services.length > 0) ||
+    (step === 1 && form.services.every((service) =>
+      form.serviceScopes[service]?.trim().length > 0
+    )) ||
+    (step === 2 && form.location.trim().length > 0 && !!form.urgency) ||
+    (step === 3 && nameValid && emailValid);
 
   return (
     <>
@@ -249,9 +291,10 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
               <div className="p-6">
                 {!result && !loading && (
                   <>
+                    <p className="text-sm text-primary mb-3">Trabajamos desde Madrid · Paso {step + 1} de 4</p>
                     {/* Progress */}
                     <div className="flex gap-1.5 mb-6">
-                      {[0, 1, 2, 3, 4, 5].map((i) => (
+                      {[0, 1, 2, 3].map((i) => (
                         <div
                           key={i}
                           className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-secondary"}`}
@@ -262,42 +305,67 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
                     {step === 0 && (
                       <div>
                         <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                          ¿Qué servicio necesitas?
+                          ¿Qué servicios necesitas?
                         </h3>
                         <p className="text-sm text-muted-foreground mb-4">
-                          Elige el tipo de proyecto.
+                          Puedes elegir uno o varios. Compararemos servicios
+                          individuales y packs para recomendar la combinación
+                          más adecuada.
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {SERVICES.map((s) => (
                             <button
                               key={s}
-                              onClick={() => setForm({ ...form, service: s })}
-                              className={`text-left px-4 py-3 rounded-lg text-sm border transition-all ${form.service === s ? "border-primary bg-primary/10 text-foreground" : "border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-primary/40"}`}
+                              type="button"
+                              aria-pressed={form.services.includes(s)}
+                              onClick={() => toggleService(s)}
+                              className={`flex items-start justify-between gap-3 text-left px-4 py-3 rounded-lg text-sm border transition-all ${form.services.includes(s) ? "border-primary bg-primary/10 text-foreground" : "border-border bg-secondary text-muted-foreground hover:text-foreground hover:border-primary/40"}`}
                             >
-                              {s}
+                              <span>{s}</span>
+                              {form.services.includes(s) && (
+                                <CheckCircle className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                              )}
                             </button>
                           ))}
                         </div>
+                        {form.services.length > 0 && (
+                          <p className="mt-3 text-xs font-medium text-primary">
+                            {form.services.length === 1
+                              ? "1 servicio seleccionado"
+                              : `${form.services.length} servicios seleccionados`}
+                          </p>
+                        )}
                       </div>
                     )}
 
                     {step === 1 && (
                       <div>
                         <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                          Tamaño o alcance
+                          Alcance de cada servicio
                         </h3>
                         <p className="text-sm text-muted-foreground mb-4">
-                          Ej: "120 m²", "vídeo 60s", "evento 4h", "5 renders".
+                          Indica la cantidad o alcance por separado para calcular
+                          correctamente el pack o la suma de servicios.
                         </p>
-                        <input
-                          autoFocus
-                          value={form.scope}
-                          onChange={(e) =>
-                            setForm({ ...form, scope: e.target.value })
-                          }
-                          placeholder="Describe el alcance"
-                          className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
+                        <div className="space-y-4">
+                          {form.services.map((service, index) => (
+                            <label key={service} className="block">
+                              <span className="block text-sm font-medium text-foreground mb-1.5">
+                                {service}
+                              </span>
+                              <input
+                                autoFocus={index === 0}
+                                value={form.serviceScopes[service] || ""}
+                                onChange={(e) =>
+                                  updateServiceScope(service, e.target.value)
+                                }
+                                placeholder="Describe el alcance"
+                                aria-label={`Alcance para ${service}`}
+                                className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                              />
+                            </label>
+                          ))}
+                        </div>
                       </div>
                     )}
 
@@ -307,7 +375,7 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
                           Ubicación
                         </h3>
                         <p className="text-sm text-muted-foreground mb-4">
-                          Ciudad o zona del proyecto.
+                          Nuestro equipo trabaja desde Madrid. Indica la ciudad o zona del proyecto.
                         </p>
                         <input
                           autoFocus
@@ -315,13 +383,14 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
                           onChange={(e) =>
                             setForm({ ...form, location: e.target.value })
                           }
-                          placeholder="Ej: Lisboa, Madrid, Algarve..."
+                          aria-label="Ciudad o zona del proyecto"
+                          placeholder="Ej: Madrid, Getafe, Alcalá de Henares…"
                           className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                         />
                       </div>
                     )}
 
-                    {step === 3 && (
+                    {step === 2 && (
                       <div>
                         <h3 className="font-display text-xl font-bold text-foreground mb-2">
                           ¿Cuándo lo necesitas?
@@ -343,7 +412,7 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
                       </div>
                     )}
 
-                    {step === 4 && (
+                    {step === 2 && (
                       <div>
                         <h3 className="font-display text-xl font-bold text-foreground mb-2">
                           Detalles adicionales{" "}
@@ -366,7 +435,7 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
                       </div>
                     )}
 
-                    {step === 5 && (
+                    {step === 3 && (
                       <div>
                         <h3 className="font-display text-xl font-bold text-foreground mb-2">
                           Antes de mostrarte la estimación
@@ -411,6 +480,9 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
                             autoComplete="tel"
                             className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                           />
+                          <details className="text-sm text-muted-foreground">
+                            <summary className="cursor-pointer py-2">Datos fiscales (opcional) · {form.countryName}</summary>
+                            <p className="mb-2">País fiscal del cliente, no la ubicación del proyecto. Puedes cambiarlo.</p>
                           <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-3">
                             <select
                               value={form.countryCode}
@@ -446,6 +518,7 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
                               className="w-full px-4 py-3 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                             />
                           </div>
+                          </details>
                           <p className="text-xs leading-relaxed text-muted-foreground">
                             Usaremos estos datos para gestionar y dar seguimiento
                             a tu solicitud. Consulta la{" "}
@@ -471,7 +544,7 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
                       >
                         Atrás
                       </button>
-                      {step < 5 ? (
+                      {step < 3 ? (
                         <button
                           onClick={() => setStep(step + 1)}
                           disabled={!canNext}

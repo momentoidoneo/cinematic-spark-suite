@@ -13,7 +13,7 @@ import logo from "@/assets/logo.png";
 
 const trustSignals = [
   { icon: Clock, label: "Respuesta en menos de 24h" },
-  { icon: MapPin, label: "Madrid · Castilla-La Mancha" },
+  { icon: MapPin, label: "Equipo con base en Madrid" },
   { icon: Sparkles, label: "Foto · vídeo · dron · 360° · 3D" },
 ];
 
@@ -94,7 +94,7 @@ const HeroSection = () => {
         />
 
         <p className="inline-flex items-center rounded-full border border-primary/25 bg-background/55 px-4 py-2 text-xs sm:text-sm font-semibold tracking-wide text-foreground backdrop-blur-sm mb-5">
-          Fotografía y producción audiovisual para empresas
+          Fotografía y vídeo para empresas · Desde Madrid
         </p>
 
         <h1 className="font-display text-[2.55rem] sm:text-6xl lg:text-7xl font-bold leading-[1.04] tracking-[-0.035em] text-foreground max-w-5xl mx-auto">
@@ -105,7 +105,7 @@ const HeroSection = () => {
         </h1>
 
         <p className="mt-6 max-w-3xl mx-auto text-base sm:text-lg lg:text-xl leading-relaxed text-foreground/75">
-          Cobertura prioritaria en Madrid y Castilla-La Mancha para fotografía,
+          Trabajamos desde Madrid, con cobertura en Madrid y Castilla-La Mancha para fotografía,
           vídeo, dron, Matterport y renders 3D. También nos desplazamos por
           España y Portugal cuando el proyecto lo requiere.
         </p>

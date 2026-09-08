@@ -88,7 +88,7 @@ export const isLikelyDemoLead = (row: Pick<ContactMessageMetricRow, "name" | "em
   return (
     DEMO_EMAIL_DOMAINS.some((domain) => email.endsWith(`@${domain}`)) ||
     DEMO_EMAIL_PREFIXES.includes(emailLocal) ||
-    /\b(lorem ipsum|mensaje de prueba|esto es una prueba|demo lead|test lead|prueba dashboard)\b/i.test(text)
+    /\b(lorem ipsum|mensaje de prueba|esto es una prueba|demo lead|test lead|prueba dashboard|prueba codex|prueba técnica autorizada|sc-ads-\d{8}-\d+)\b/i.test(text)
   );
 };
 
@@ -211,4 +211,15 @@ export const buildHeatmap = (rows: PageViewRow[]) => {
     grid[d.getDay()][d.getHours()]++;
   });
   return grid;
+};
+
+export const fetchRealQuoteRequests = async (sinceIso?: string) => {
+  let query = supabase.from("quote_requests")
+    .select("id,name,email,details,is_read,created_at")
+    .order("created_at", { ascending: false }).limit(5000);
+  if (sinceIso) query = query.gte("created_at", sinceIso);
+  const { data, error } = await query;
+  return { error, data: (data || []).filter(row => !isLikelyDemoLead({
+    name: row.name, email: row.email, message: row.details || "",
+  })) };
 };
