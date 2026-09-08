@@ -18,3 +18,10 @@ Local additional telemetry persistence/admin counters are newer than the restore
 
 ## Prevention
 Follow the project AGENTS.md. Validate source SHA, deployed version, backend destination and trigger chain before any change. Never use a legacy platform merely because its connector is accessible.
+
+## Controlled release completed — 2026-09-08 22:42 CEST
+This status supersedes the earlier source/publication status above. Reviewed Madrid frontend, lead filtering, tests and guards are committed on remote main at `6aed0ec40f7cbfaaa1756997fd6a95b449457a26`. Clean build from the renamed `release-checkout` worktree passed 77 tests in 16 suites, generated 66 public routes, and was manually deployed to Cloudflare version `e01518b4-9899-4b91-9852-ac79d5dbd348` at 100% traffic. The production smoke script passed pages, sitemap, Admin, GTM, robots, redirects, 404 and intentional 410 checks. Chrome verified Madrid copy and the four-step multiselect cotizador after publication.
+
+Git automatic builds remain disconnected. No Ads settings changed. Original dirty checkout and preexisting backend/pricing edits remain preserved and were not included in this release. Test runner in the nested worktree required an absolute setupFiles/root override; product source was not altered for that workaround. Evidence: `/tmp/sc-release-absolute-tests.log`, `/tmp/sc-clean-build.log`, `/tmp/sc-controlled-deploy.log`.
+
+Backend limits above remain OPEN: direct management access is denied, actual deployed source/provider independence and the residual event allowlist are not verified. Await the user's identification/open session for the migrated backend; never fall back to Lovable. Contact/quote owner notification E2E evidence predates this final source-coherence release; no additional submissions were made during it.
