@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -147,7 +148,7 @@ const Precios = () => {
                   >
                     Planes
                   </motion.h2>
-                  <div className={`grid gap-6 ${plans.length === 1 ? "max-w-md mx-auto" : plans.length === 2 ? "sm:grid-cols-2 max-w-3xl mx-auto" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
+                  <div style={{ "--pack-feature-count": Math.max(1, ...plans.map(p => p.features.length)) } as CSSProperties} className={`grid gap-x-6 gap-y-8 ${plans.length === 1 ? "max-w-md mx-auto" : plans.length === 2 ? "sm:grid-cols-2 max-w-3xl mx-auto" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
                     {plans.map((plan, i) => (
                       <motion.div
                         key={plan.id}
@@ -155,31 +156,31 @@ const Precios = () => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: i * 0.1, duration: 0.5 }}
-                        className={`rounded-2xl border p-6 md:p-8 flex flex-col ${
+                        className={`rounded-2xl border p-6 md:p-8 pack-card pack-card-catalog ${
                           plan.is_highlighted
                             ? "bg-primary/5 border-primary/30 ring-1 ring-primary/20"
                             : "bg-card/80 border-border"
                         }`}
                       >
                         <h3 className="font-display text-xl font-bold text-foreground mb-2">{plan.name}</h3>
-                        {plan.description && <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>}
+                        <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
+                        <div className="mb-6">
                         {plan.price != null && (
-                          <div className="mb-6">
+                          <>
                             {plan.show_from && <span className="text-sm text-muted-foreground">desde </span>}
                             <span className="text-4xl font-bold text-primary">{plan.price}€</span>
                             {plan.price_suffix && <span className="text-muted-foreground ml-1">{plan.price_suffix}</span>}
-                          </div>
+                          </>
                         )}
-                        {plan.features.length > 0 && (
-                          <ul className="space-y-3 flex-1 mb-6">
+                        </div>
+                          <ul className="pack-features mb-6">
                             {plan.features.map((f, fi) => (
-                              <li key={fi} className="flex items-start gap-2 text-sm text-muted-foreground">
+                              <li key={fi} className="flex items-start gap-2 pb-3 text-sm text-muted-foreground">
                                 <CheckCircle className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                                 {f}
                               </li>
                             ))}
                           </ul>
-                        )}
                         <a
                           href="/#contacto"
                           className="w-full py-3 rounded-lg bg-gradient-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
