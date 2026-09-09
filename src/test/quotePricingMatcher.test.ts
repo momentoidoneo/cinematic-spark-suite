@@ -5,6 +5,7 @@ import {
 } from "../lib/defaultPricing";
 import {
   getCatalogBaseRange,
+  reconcileMultiserviceRange,
   matchPricingReferences,
   type PricingReference,
   type PricingRequest,
@@ -248,5 +249,30 @@ describe("AI quote pricing matcher", () => {
 
     expect(references[0].name).toBe("Pack evento foto + vídeo resumen");
     expect(getCatalogBaseRange(body, references)).toEqual([1100, 1485]);
+  });
+});
+
+
+describe("live pack regression", () => {
+  it("keeps ecommerce out and uses the least expensive covering property pack", () => {
+    const body = request({
+      service: "Fotografía inmobiliaria + Tour Virtual Matterport",
+      services: ["Fotografía inmobiliaria", "Tour Virtual Matterport"],
+      serviceScopes: {"Fotografía inmobiliaria": "Una vivienda de 80 m2, 20 fotografías",
+        "Tour Virtual Matterport": "La misma vivienda de 80 m2, un tour virtual"},
+      scope: "Una vivienda de 80 m2, 20 fotografías y un tour virtual",
+    });
+    const refs: PricingReference[] = [
+      {name: "Inmobiliario Esencial", category: "Plan", description: "Vivienda estándar. 15-25 fotografías editadas. Tour Virtual Matterport",price:150,priceSuffix:"/inmueble",source:"plan"},
+      {name: "Inmobiliario Premium", category: "Plan", description: "Fotografía inmobiliaria premium. Vídeo, dron y Tour Virtual Matterport",price:350,priceSuffix:"/inmueble",source:"plan"},
+      {name: "Pack ecommerce hasta 20 productos", category: "Fotografía",description:"20 productos con fotografías para tienda online",price:280,priceSuffix:"/sesión",source:"service"},
+    ];
+    const matches = matchPricingReferences(body, refs);
+    expect(matches.map((r) => r.name)).not.toContain("Pack ecommerce hasta 20 productos");
+    expect(getCatalogBaseRange(body, matches)).toEqual([150, 240]);
+  });
+  it("does not let AI replace a covering pack with individual prices", () => {
+    expect(reconcileMultiserviceRange(["Foto", "Matterport"],
+      {min:370,max:420},{min:150,max:240})).toEqual({min:150,max:240});
   });
 });

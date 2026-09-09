@@ -14,6 +14,7 @@ import {
 import {
   getCatalogBaseRange,
   getCatalogPricingBreakdown,
+  reconcileMultiserviceRange,
   matchPricingReferences,
   type PricingReference,
 } from "./pricing.ts";
@@ -27,7 +28,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "X-Quote-Catalog-Version": "2026-08-04-multiservice",
+  "X-Quote-Catalog-Version": "2026-09-09-multiservice-v2",
 };
 
 interface QuoteRequest {
@@ -667,8 +668,7 @@ Genera el presupuesto orientativo en JSON.`;
 
     return {
       ...normalized,
-      min: Math.max(normalized.min, fallback.min),
-      max: Math.max(normalized.max, fallback.max, normalized.min),
+      ...reconcileMultiserviceRange(body.services, normalized, fallback),
     };
   } catch (error) {
     console.error("[generate-quote] AI fallback:", error);

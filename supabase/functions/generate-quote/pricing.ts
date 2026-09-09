@@ -399,6 +399,12 @@ export const scorePricingReference = (
     normalizePricingText(item.category || ""),
   );
 
+  // Explicit service families outrank incidental numbers and words in the scope.
+  const requestedCoreFamilies = detectServiceFamilies(body.service)
+    .filter((family) => family !== "postproduction");
+  if (!itemIsExtra && requestedCoreFamilies.length > 0 &&
+      !requestedCoreFamilies.some((family) => itemFamilies.includes(family))) return 0;
+
   if (itemIsExtra && !isDirectExtraMatch(input, item)) return 0;
   if (!itemIsExtra && !mediaKindsAreCompatible(body.service, itemText)) {
     return 0;
@@ -631,7 +637,7 @@ const findFullBundleReference = (
       ),
     }))
     .filter(({ coverage }) => coverage === services.length)
-    .sort((a, b) => b.score - a.score || a.item.price - b.item.price)[0]
+    .sort((a, b) => a.item.price - b.item.price || b.score - a.score)[0]
     ?.item || null;
 };
 
@@ -744,3 +750,9 @@ export const getCatalogBaseRange = (
   const max = Math.max(anchor * 1.35, ...nearby);
   return [min, Math.max(min + 90, max)];
 };
+
+
+// For multiservice estimates AI writes prose, not an alternative catalog price.
+export const reconcileMultiserviceRange = (
+  services: string[], ai: { min: number; max: number }, catalog: { min: number; max: number },
+) => services.length > 1 ? { min: catalog.min, max: catalog.max } : { min: ai.min, max: ai.max };
