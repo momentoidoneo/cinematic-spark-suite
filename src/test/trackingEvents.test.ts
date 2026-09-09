@@ -11,6 +11,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 import {
   fireGoogleAdsConversion,
   setGoogleAdsConversion,
+  trackEvent,
 } from "@/lib/trackingEvents";
 
 describe("Google Ads conversion events", () => {
@@ -111,5 +112,56 @@ describe("Google Ads conversion events", () => {
       event_label: "footer",
       transaction_id: undefined,
     });
+  });
+});
+
+
+describe("persistent funnel diagnostics", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    let values: Record<string, string> = {};
+    const storage: Storage = {
+      get length() {
+        return Object.keys(values).length;
+      },
+      clear: () => {
+        values = {};
+      },
+      getItem: (key) => values[key] ?? null,
+      key: (index) => Object.keys(values)[index] ?? null,
+      removeItem: (key) => {
+        delete values[key];
+      },
+      setItem: (key, value) => {
+        values[key] = value;
+      },
+    };
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: storage,
+    });
+    window.localStorage.clear();
+    window.gtag = vi.fn();
+    window.dataLayer = [];
+  });
+  it("does not persist without consent", async () => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    trackEvent("quoter_open");
+    expect(supabase.functions.invoke).not.toHaveBeenCalled();
+  });
+  it("persists all eight diagnostics without firing Ads conversion events", async () => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    window.localStorage.setItem("sc_cookie_consent", JSON.stringify({
+      version: 1, updatedAt: new Date().toISOString(), analytics: true, marketing: false,
+    }));
+    const events = ["quoter_open", "quoter_step", "quoter_submit", "quoter_error",
+      "quoter_abandon", "contact_form_start", "contact_form_submit", "contact_form_error"];
+    for (const event of events) trackEvent(event, { event_label: "test_diagnostic" });
+    expect(supabase.functions.invoke).toHaveBeenCalledTimes(8);
+    for (const event of events) expect(supabase.functions.invoke).toHaveBeenCalledWith(
+      "track-conversion-event", { body: expect.objectContaining({event_name: event}) });
+    expect(window.gtag).not.toHaveBeenCalledWith("event", "conversion", expect.anything());
+    trackEvent("quoter_open", { event_label: "test_diagnostic" });
+    expect(supabase.functions.invoke).toHaveBeenCalledTimes(8);
   });
 });

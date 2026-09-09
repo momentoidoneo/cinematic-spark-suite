@@ -24,6 +24,9 @@ type TrackingParams = Record<
 
 const SESSION_KEY = "sc_session_id";
 const conversionEventNames = new Set([
+  // Funnel diagnostics are persisted, never fired as Google Ads conversions.
+  "quoter_open", "quoter_step", "quoter_submit", "quoter_error",
+  "quoter_abandon", "contact_form_start", "contact_form_submit", "contact_form_error",
   "cta_click",
   "whatsapp_click",
   "quoter_whatsapp",

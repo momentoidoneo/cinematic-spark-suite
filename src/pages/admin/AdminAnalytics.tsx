@@ -196,7 +196,22 @@ const AdminAnalytics = () => {
 
       <div className="rounded-xl bg-card border border-border p-6 mb-8">
         <h2 className="font-display text-lg font-bold mb-2">Recorrido de contacto y cotizador</h2>
-        <p className="text-sm text-muted-foreground">La web emite eventos de inicio, pasos, intentos, errores y cierre del cotizador para Analytics. El registro detallado en este panel está pendiente de verificar con el acceso directo a Supabase; no se muestran ceros como si estuviera activo.</p>
+        <p className="text-sm text-muted-foreground">Eventos registrados con consentimiento desde la actualización del 9 de septiembre de 2026. Son acciones de diagnóstico, no clientes ni conversiones de puja. Los cierres miden el cierre del cotizador sin resultado; no todos los abandonos de la web. Pueden incluir pruebas técnicas.</p>
+        {!conversions.available ? (
+          <p className="text-sm mt-3">Registro no disponible: no se puede interpretar como cero actividad.</p>
+        ) : (
+          <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+            {[
+              ["quoter_open", "Aperturas cotizador"], ["quoter_step", "Pasos vistos"],
+              ["quoter_submit", "Intentos presupuesto"], ["quoter_error", "Errores cotizador"],
+              ["quoter_abandon", "Cierres sin resultado"], ["contact_form_start", "Inicios formulario"],
+              ["contact_form_submit", "Intentos formulario"], ["contact_form_error", "Errores formulario"],
+            ].map(([event, label]) => (
+              <div key={event}><dt className="text-sm text-muted-foreground">{label}</dt>
+                <dd className="text-xl font-semibold">{conversions.byName[event] ?? 0}</dd></div>
+            ))}
+          </dl>
+        )}
       </div>
 
       <div className="rounded-xl bg-card border border-border p-6 mb-8">
