@@ -15,10 +15,10 @@ interface ApiKeyInfo {
 const REGISTRY: ApiKeyInfo[] = [
   {
     name: "LOVABLE_API_KEY",
-    service: "Lovable AI Gateway",
-    description: "Acceso a modelos de IA (Gemini, GPT) para cotizador, generación de imágenes, copys y miniaturas. Se gestiona automáticamente.",
-    docsUrl: "https://docs.lovable.dev/features/ai",
-    required: true,
+    service: "Credencial heredada de IA — uso pendiente de verificar",
+    description: "Identificador conservado para auditar la migración. Que exista no demuestra que se esté utilizando. No configurar ni reactivar servicios antiguos desde este panel.",
+    docsUrl: "",
+    required: false,
   },
   {
     name: "RESEND_API_KEY",
@@ -37,7 +37,7 @@ const REGISTRY: ApiKeyInfo[] = [
   {
     name: "RUNWARE_API_KEY",
     service: "Runware (Imágenes IA)",
-    description: "Generación alternativa de imágenes IA. El sistema prioriza Lovable AI (Gemini).",
+    description: "Credencial de generación de imágenes. El proveedor utilizado debe verificarse en el código desplegado.",
     docsUrl: "https://runware.ai/",
     required: false,
   },
@@ -65,7 +65,7 @@ const REGISTRY: ApiKeyInfo[] = [
   {
     name: "OPENAI_API_KEY",
     service: "OpenAI (alternativa)",
-    description: "Acceso directo a OpenAI. No es necesario: la IA del proyecto usa Lovable AI Gateway.",
+    description: "Credencial de acceso directo a OpenAI. Su presencia no confirma qué proveedor usa actualmente el cotizador.",
     docsUrl: "https://platform.openai.com/api-keys",
     required: false,
   },
@@ -128,15 +128,13 @@ const AdminApiKeys = () => {
     load();
   }, []);
 
-  const openSecretsPanel = (secretName: string) => {
-    // Lovable Cloud secrets are managed in the Cloud panel. Surface clear
-    // instructions to the admin and copy the secret name to the clipboard.
-    navigator.clipboard?.writeText(secretName).catch(() => {});
-    toast({
-      title: `Configurar ${secretName}`,
-      description:
-        "Abre Lovable Cloud → Secretos. Pega el nombre (ya copiado al portapapeles) y guarda el valor. Vuelve aquí y pulsa Refrescar.",
-    });
+  const copySecretName = async (secretName: string) => {
+    try {
+      await navigator.clipboard.writeText(secretName);
+      toast({ title: "Nombre copiado", description: "Solo se ha copiado el identificador. No se ha configurado ni modificado ningún secreto." });
+    } catch {
+      toast({ title: "No se pudo copiar", description: "Puedes seleccionar el nombre visible manualmente.", variant: "destructive" });
+    }
   };
 
   return (
@@ -145,7 +143,7 @@ const AdminApiKeys = () => {
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground mb-2">API Keys & Secretos</h1>
           <p className="text-sm text-muted-foreground">
-            Estado real de los secretos del backend. Los valores nunca se exponen al cliente.
+            Presencia de credenciales informada por el servidor. No acredita su uso ni el estado de la migración. Los valores nunca se exponen al cliente.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={load} disabled={loading} className="gap-2">
@@ -159,9 +157,9 @@ const AdminApiKeys = () => {
         <div className="space-y-1">
           <p className="text-sm font-medium text-blue-400">Cómo configurar un secreto</p>
           <p className="text-xs text-muted-foreground">
-            Por seguridad los valores se introducen en <strong>Lovable Cloud → Secretos</strong> (no desde el navegador).
-            Pulsa "Configurar" en cualquier fila: copiamos el nombre del secreto al portapapeles para que solo
-            tengas que pegarlo y guardar el valor.
+            Este panel no permite publicar código ni guardar valores secretos. La gestión técnica requiere
+            el acceso autorizado al entorno que sirve actualmente silviocosta.net. No utilices plataformas
+            antiguas por encontrar aquí una referencia heredada. "Copiar nombre" solo copia el identificador.
           </p>
         </div>
       </div>
@@ -175,7 +173,8 @@ const AdminApiKeys = () => {
 
       <div className="space-y-3">
         {REGISTRY.map((key) => {
-          const configured = !!statuses[key.name];
+          const known = !loading && !error && typeof statuses[key.name] === "boolean";
+          const configured = known && statuses[key.name];
           return (
             <div key={key.name} className="rounded-xl bg-card border border-border p-5">
               <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -203,7 +202,7 @@ const AdminApiKeys = () => {
                             : "bg-muted text-muted-foreground"
                         }`}
                       >
-                        {configured ? "Configurado" : key.required ? "Requerido" : "Opcional"}
+                        {!known ? "Sin verificar" : configured ? "Presente en servidor" : "No informado como presente"}
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-0.5">{key.description}</p>
@@ -211,20 +210,20 @@ const AdminApiKeys = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <a
+                  {key.docsUrl && <a
                     href={key.docsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-border text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <ExternalLink className="w-3 h-3" /> Docs
-                  </a>
+                  </a>}
                   <Button
                     size="sm"
                     variant={configured ? "outline" : "default"}
-                    onClick={() => openSecretsPanel(key.name)}
+                    onClick={() => copySecretName(key.name)}
                   >
-                    {configured ? "Actualizar" : "Configurar"}
+                    Copiar nombre
                   </Button>
                 </div>
               </div>
@@ -236,8 +235,8 @@ const AdminApiKeys = () => {
       <div className="mt-6 rounded-xl bg-card border border-border p-5">
         <h2 className="font-semibold text-foreground mb-2">¿Necesitas otro secreto?</h2>
         <p className="text-sm text-muted-foreground">
-          Cualquier secreto adicional que añadas en <strong>Lovable Cloud → Secretos</strong> estará disponible
-          inmediatamente para las edge functions. Para que aparezca en esta lista, pídeme que lo añada al registro.
+          Confirma primero el proveedor y el proyecto de destino con el responsable técnico. No introduzcas
+          contraseñas en este panel ni uses instrucciones antiguas de migración.
         </p>
       </div>
     </div>
