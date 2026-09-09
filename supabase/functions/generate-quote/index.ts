@@ -13,6 +13,7 @@ import {
 } from "../_shared/quoteLeadValidation.ts";
 import {
   getCatalogBaseRange,
+  getCatalogPricingBreakdown,
   matchPricingReferences,
   type PricingReference,
 } from "./pricing.ts";
@@ -26,11 +27,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "X-Quote-Catalog-Version": "2026-07-30",
+  "X-Quote-Catalog-Version": "2026-08-04-multiservice",
 };
 
 interface QuoteRequest {
   service: string;
+  services: string[];
+  serviceScopes: Record<string, string>;
   scope: string;
   location: string;
   urgency: string;
@@ -257,11 +260,14 @@ const DEFAULT_PRICING_REFERENCES: PricingReference[] = [
 const buildSystemPrompt = (pricingReferences: PricingReference[]) => {
   const pricingContext = pricingReferences.length > 0
     ? pricingReferences
-      .slice(0, 12)
+      .slice(0, 16)
       .map((item) => {
         const suffix = item.priceSuffix ? ` ${item.priceSuffix}` : "";
         const category = item.category ? ` (${item.category})` : "";
-        return `- ${item.name}${category}: desde ${item.price} €${suffix}${
+        const kind = item.source === "plan" || /pack|plan/i.test(item.name)
+          ? "[PACK/PLAN] "
+          : "";
+        return `- ${kind}${item.name}${category}: desde ${item.price} €${suffix}${
           item.description ? ` — ${item.description}` : ""
         }`;
       })
@@ -284,6 +290,7 @@ ${pricingContext}
 Factores de incremento: urgencia (<48h: +20-30%), desplazamiento >50km, post-producción avanzada, exclusividad de derechos, fines de semana.
 Usa las tarifas visibles del panel como base principal cuando encajen con el servicio solicitado. Ajusta por alcance, superficie, número de piezas, duración, ubicación y urgencia.
 Si una tarifa está expresada por foto, imagen, pieza, persona, hora o ronda, multiplícala por la cantidad indicada. Nunca uses el precio unitario como precio total del proyecto. No mezcles servicios de familias distintas solo porque compartan la palabra fotografía o vídeo.
+Si el cliente solicita varios servicios, debes incluirlos todos. Prioriza un pack o plan únicamente cuando cubra de forma real todos los servicios solicitados; si no existe, suma las bases de cada servicio y sus extras sin omitir ninguno. No añadas servicios que el cliente no haya seleccionado.
 No presentes el importe como cerrado: siempre es orientativo hasta revisar briefing.
 
 Devuelve SIEMPRE JSON válido con esta estructura exacta:
@@ -455,8 +462,10 @@ const loadPricingCatalog = async (): Promise<PricingReference[]> => {
         return {
           name: plan.name,
           category: "Plan",
-          description: plan.description ||
-            plan.features?.slice(0, 2).join(". ") || null,
+          description: [
+            plan.description,
+            ...(plan.features || []),
+          ].filter(Boolean).join(". ") || null,
           price,
           priceSuffix: plan.price_suffix,
           source: "plan" as const,
@@ -486,8 +495,8 @@ const loadPricingCatalog = async (): Promise<PricingReference[]> => {
   }
 };
 
-const getDefaultBaseRange = (body: QuoteRequest): [number, number] => {
-  const s = body.service.toLowerCase();
+const getSingleDefaultBaseRange = (service: string): [number, number] => {
+  const s = service.toLowerCase();
   if (s.includes("matterport") || s.includes("tour")) return [250, 450];
   if (s.includes("dron")) return [350, 800];
   if (s.includes("vídeo") || s.includes("video")) return [800, 2500];
@@ -495,6 +504,17 @@ const getDefaultBaseRange = (body: QuoteRequest): [number, number] => {
   if (s.includes("render")) return [180, 500];
   if (s.includes("stream")) return [600, 1800];
   return [250, 650];
+};
+
+const getDefaultBaseRange = (body: QuoteRequest): [number, number] => {
+  if (body.services.length <= 1) {
+    return getSingleDefaultBaseRange(body.service);
+  }
+
+  return body.services.reduce<[number, number]>((total, service) => {
+    const [min, max] = getSingleDefaultBaseRange(service);
+    return [total[0] + min, total[1] + max];
+  }, [0, 0]);
 };
 
 const scopeMultiplier = (scope: string, service: string) => {
@@ -543,25 +563,29 @@ const buildFallbackQuote = (
     urgencyMultiplier(body.urgency);
   const min = roundAmount(baseMin * multiplier);
   const max = Math.max(min + 80, roundAmount(baseMax * multiplier));
-  const referenceNames = pricingReferences.slice(0, 3).map((item) => item.name)
+  const referenceNames = pricingReferences.slice(0, 5).map((item) => item.name)
     .join(", ");
   const pricingSource =
     pricingReferences.some((item) => item.source !== "default")
       ? "admin-pricing"
       : "default-rules";
 
+  const requestedIncludes = body.services.map((service) =>
+    `Producción de ${service.toLowerCase()}`
+  );
   const includes = [
+    ...requestedIncludes,
     "Preparación del proyecto y revisión de necesidades",
-    "Producción profesional adaptada al alcance indicado",
     "Edición y entrega digital optimizada para uso comercial",
     "Revisión básica incluida antes de la entrega final",
-  ];
+  ].slice(0, 5);
 
   return {
     min,
     max,
-    summary:
-      `Para ${body.service.toLowerCase()} en ${body.location}, el alcance indicado encaja en una producción personalizada con entrega profesional.`,
+    summary: body.services.length > 1
+      ? `La estimación combina ${body.services.length} servicios para el proyecto en ${body.location} y compara los packs disponibles con sus tarifas individuales.`
+      : `Para ${body.service.toLowerCase()} en ${body.location}, el alcance indicado encaja en una producción personalizada con entrega profesional.`,
     includes,
     notes: referenceNames
       ? `Referencia usada del panel: ${referenceNames}. El precio final puede variar por desplazamiento, urgencia, derechos de uso, número de piezas finales o postproducción.`
@@ -607,9 +631,12 @@ const generateWithAI = async (
   if (!LOVABLE_API_KEY) return fallback;
 
   const userPrompt = `Cliente solicita presupuesto:
-- Servicio: ${body.service}
-- Alcance/Tamaño: ${body.scope}
-- Ubicación: ${body.location}
+  - Servicios (${body.services.length}): ${body.services.join("; ")}
+  - Alcance por servicio:
+${body.services.map((service) =>
+  `    · ${service}: ${body.serviceScopes[service] || body.scope}`
+).join("\n")}
+  - Ubicación: ${body.location}
 - Urgencia: ${body.urgency}
 - País fiscal: ${body.countryCode || "PT"} ${
     body.countryName ? `· ${body.countryName}` : ""
@@ -632,7 +659,17 @@ Genera el presupuesto orientativo en JSON.`;
       response_format: { type: "json_object" },
     });
     const content = getAssistantText(data) || "{}";
-    return normalizeQuote(parseJsonFromText(content, "object"), fallback);
+    const normalized = normalizeQuote(
+      parseJsonFromText(content, "object"),
+      fallback,
+    );
+    if (body.services.length <= 1) return normalized;
+
+    return {
+      ...normalized,
+      min: Math.max(normalized.min, fallback.min),
+      max: Math.max(normalized.max, fallback.max, normalized.min),
+    };
   } catch (error) {
     console.error("[generate-quote] AI fallback:", error);
     return fallback;
@@ -939,12 +976,46 @@ const createCommercialQuoteDraft = async (
       vies,
       clientCountryCode,
     );
-    const lineItems = [{
-      id: crypto.randomUUID(),
-      description: `${body.service} · ${body.scope} · ${body.location}`,
-      quantity: 1,
-      unitPrice: quote.min,
-    }];
+    const catalogBreakdown = getCatalogPricingBreakdown(
+      body,
+      quote.pricingReferences || [],
+    );
+    const breakdown = catalogBreakdown.length > 0
+      ? catalogBreakdown
+      : body.services.map((service) => ({
+        service,
+        referenceName: null,
+        amount: null,
+        isBundle: false,
+      }));
+    const allAmountsKnown = breakdown.every((item) =>
+      typeof item.amount === "number" && item.amount > 0
+    );
+    const weights = breakdown.map((item) =>
+      allAmountsKnown ? Number(item.amount) : 1
+    );
+    const totalWeight = weights.reduce((total, weight) => total + weight, 0) ||
+      1;
+    let allocated = 0;
+    const lineItems = breakdown.map((item, index) => {
+      const unitPrice = index === breakdown.length - 1
+        ? roundCurrency(quote.min - allocated)
+        : roundCurrency(quote.min * (weights[index] / totalWeight));
+      allocated = roundCurrency(allocated + unitPrice);
+      const scope = item.isBundle
+        ? body.scope
+        : body.serviceScopes[item.service] || body.scope;
+      const reference = item.referenceName
+        ? ` · Referencia: ${item.referenceName}`
+        : "";
+      return {
+        id: crypto.randomUUID(),
+        description:
+          `${item.service}${reference} · ${scope} · ${body.location}`,
+        quantity: 1,
+        unitPrice,
+      };
+    });
     const subtotal = roundCurrency(quote.min);
     const vatAmount = roundCurrency(subtotal * (decision.rate / 100));
     const total = roundCurrency(subtotal + vatAmount);
@@ -1144,9 +1215,33 @@ Deno.serve(async (req) => {
 
   try {
     const raw = await req.json();
+    const legacyService = cleanText(raw.service, 120);
+    const requestedServices = Array.isArray(raw.services)
+      ? raw.services.map((service: unknown) => cleanText(service, 120)).filter(
+        Boolean,
+      )
+      : [];
+    if (requestedServices.length === 0 && legacyService) {
+      requestedServices.push(legacyService);
+    }
+    const services = [...new Map(requestedServices.map((service: string) => [
+      normalize(service),
+      service,
+    ])).values()].slice(0, 8);
+    const serviceScopes = Object.fromEntries(
+      services.map((service) => [
+        service,
+        cleanText(raw.serviceScopes?.[service], 500),
+      ]).filter(([, scope]) => scope),
+    );
+    const combinedScope = cleanText(raw.scope, 2000) || services
+      .map((service) => `${service}: ${serviceScopes[service] || ""}`)
+      .join("\n");
     const body: QuoteRequest = {
-      service: cleanText(raw.service, 120),
-      scope: cleanText(raw.scope, 500),
+      service: services.join(" + "),
+      services,
+      serviceScopes,
+      scope: combinedScope,
       location: cleanText(raw.location, 180),
       urgency: cleanText(raw.urgency, 80),
       details: cleanText(raw.details, 1200),

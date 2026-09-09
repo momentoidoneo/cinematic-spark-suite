@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { defaultPricingServices } from "../lib/defaultPricing";
+import {
+  defaultPricingPlans,
+  defaultPricingServices,
+} from "../lib/defaultPricing";
 import {
   getCatalogBaseRange,
   matchPricingReferences,
@@ -16,6 +19,18 @@ const catalog: PricingReference[] = defaultPricingServices.map((service) => ({
   source: "service",
 }));
 
+const catalogWithPlans: PricingReference[] = [
+  ...defaultPricingPlans.map((plan) => ({
+    name: plan.name,
+    category: "Plan",
+    description: [plan.description, ...plan.features].join(". "),
+    price: plan.price,
+    priceSuffix: plan.price_suffix,
+    source: "plan" as const,
+  })),
+  ...catalog,
+];
+
 const request = (
   overrides: Partial<PricingRequest>,
 ): PricingRequest => ({
@@ -30,6 +45,16 @@ const matchedNames = (body: PricingRequest) =>
   matchPricingReferences(body, catalog).map((item) => item.name);
 
 describe("AI quote pricing matcher", () => {
+  it.each([
+    ["Retrato corporativo y equipos", "5 personas, entrega en 48 horas", "/persona", 50, 250],
+    ["Reels y contenido para redes", "3 reels de 90 segundos", "/pieza", 100, 300],
+    ["Fotografía de producto y ecommerce", "10 fotos para la campaña 2026", "/foto", 20, 200],
+  ])("uses the quantity of the billing unit, not unrelated numbers: %s", (service, scope, priceSuffix, price, expected) => {
+    const body = request({ service, scope });
+    const reference: PricingReference = { name: service, category: "Servicio", priceSuffix, price, source: "service" };
+    expect(getCatalogBaseRange(body, [reference])?.[0]).toBe(expected);
+  });
+
   it("prioritizes ecommerce references without mixing real-estate photography", () => {
     const names = matchedNames(request({
       service: "Fotografía de producto y ecommerce",
@@ -69,6 +94,35 @@ describe("AI quote pricing matcher", () => {
 
     expect(names).toContain("Fotografía de eventos 4 horas");
     expect(names).not.toContain("Fotografía gastronómica");
+  });
+
+  it("does not treat a streaming plan as event photography", () => {
+    const body = request({
+      service: "Fotografía de eventos",
+      scope: "Congreso corporativo de 4 horas",
+    });
+    const references: PricingReference[] = [
+      {
+        name: "Streaming - Video",
+        category: "Plan",
+        description:
+          "Transmite en vivo tu evento y recibe el vídeo del streaming",
+        price: 300,
+        priceSuffix: "/proyecto",
+        source: "plan",
+      },
+      {
+        name: "Fotografía de eventos 4 horas",
+        category: "Fotografía",
+        description: "Cobertura fotográfica de congresos y eventos",
+        price: 400,
+        priceSuffix: "/evento",
+        source: "service",
+      },
+    ];
+
+    expect(matchPricingReferences(body, references).map((item) => item.name))
+      .toEqual(["Fotografía de eventos 4 horas"]);
   });
 
   it("adds extras only when the request asks for them directly", () => {
@@ -111,5 +165,88 @@ describe("AI quote pricing matcher", () => {
     const references = matchPricingReferences(body, catalog);
 
     expect(getCatalogBaseRange(body, references)).toBeNull();
+  });
+
+  it("matches every requested service and prioritizes a plan covering the combination", () => {
+    const body = request({
+      service:
+        "Fotografía corporativa y de empresa + Vídeo corporativo",
+      services: [
+        "Fotografía corporativa y de empresa",
+        "Vídeo corporativo",
+      ],
+      serviceScopes: {
+        "Fotografía corporativa y de empresa":
+          "Retratos del equipo e instalaciones",
+        "Vídeo corporativo": "Vídeo de presentación de 90 segundos",
+      },
+      scope:
+        "Fotografía corporativa y de empresa: Retratos del equipo e instalaciones\nVídeo corporativo: Vídeo de presentación de 90 segundos",
+    });
+    const references = matchPricingReferences(body, catalogWithPlans);
+    const names = references.map((item) => item.name);
+
+    expect(names[0]).toBe("Producción Empresa");
+    expect(names).toContain("Fotografía corporativa media jornada");
+    expect(names).toContain("Vídeo corporativo");
+    expect(getCatalogBaseRange(body, references)).toEqual([800, 1080]);
+  });
+
+  it("adds the individual bases when no pack covers all selected services", () => {
+    const body = request({
+      service: "Fotografía de producto y ecommerce + Reels y contenido para redes",
+      services: [
+        "Fotografía de producto y ecommerce",
+        "Reels y contenido para redes",
+      ],
+      serviceScopes: {
+        "Fotografía de producto y ecommerce": "Una sesión de producto",
+        "Reels y contenido para redes": "Una pieza vertical",
+      },
+      scope:
+        "Fotografía de producto y ecommerce: Una sesión de producto\nReels y contenido para redes: Una pieza vertical",
+    });
+    const references: PricingReference[] = [
+      {
+        name: "Fotografía de producto y ecommerce",
+        category: "Fotografía",
+        description: "Sesión para catálogo y tienda online",
+        price: 250,
+        priceSuffix: "/sesión",
+        source: "service",
+      },
+      {
+        name: "Reels y piezas para redes",
+        category: "Vídeo y dron",
+        description: "Pieza vertical para redes sociales",
+        price: 350,
+        priceSuffix: "/pieza",
+        source: "service",
+      },
+    ];
+    const matches = matchPricingReferences(body, references);
+
+    expect(matches.map((item) => item.name)).toEqual([
+      "Fotografía de producto y ecommerce",
+      "Reels y piezas para redes",
+    ]);
+    expect(getCatalogBaseRange(body, matches)).toEqual([600, 812.5]);
+  });
+
+  it("uses the event photo and video pack instead of pricing both separately", () => {
+    const body = request({
+      service: "Fotografía de eventos + Vídeo corporativo",
+      services: ["Fotografía de eventos", "Vídeo corporativo"],
+      serviceScopes: {
+        "Fotografía de eventos": "Congreso corporativo de 4 horas",
+        "Vídeo corporativo": "Vídeo resumen highlight del evento",
+      },
+      scope:
+        "Fotografía de eventos: Congreso corporativo de 4 horas\nVídeo corporativo: Vídeo resumen highlight del evento",
+    });
+    const references = matchPricingReferences(body, catalogWithPlans);
+
+    expect(references[0].name).toBe("Pack evento foto + vídeo resumen");
+    expect(getCatalogBaseRange(body, references)).toEqual([1100, 1485]);
   });
 });

@@ -1,5 +1,7 @@
 export interface PricingRequest {
   service: string;
+  services?: string[];
+  serviceScopes?: Record<string, string>;
   scope: string;
   urgency: string;
   location?: string;
@@ -46,6 +48,7 @@ const FAMILY_TERMS: Record<ServiceFamily, string[]> = {
   "corporate-photo": [
     "fotografia corporativa",
     "fotografia industrial",
+    "produccion visual",
     "empresa",
     "instalaciones",
     "proceso industrial",
@@ -53,6 +56,9 @@ const FAMILY_TERMS: Record<ServiceFamily, string[]> = {
   ],
   "corporate-video": [
     "video corporativo",
+    "produccion visual",
+    "contenido mixto",
+    "video highlight",
     "entrevista",
     "testimonio",
     "caso de exito",
@@ -208,6 +214,42 @@ export const normalizePricingText = (value: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
+export const getRequestedServices = (body: PricingRequest) => {
+  const requested = Array.isArray(body.services)
+    ? body.services
+    : [];
+  const values = requested.length > 0 ? requested : [body.service];
+  const unique = new Map<string, string>();
+
+  values.forEach((service) => {
+    if (typeof service !== "string") return;
+    const clean = service.trim();
+    const key = normalizePricingText(clean);
+    if (clean && key && !unique.has(key)) unique.set(key, clean);
+  });
+
+  return [...unique.values()];
+};
+
+const scopeForService = (body: PricingRequest, service: string) => {
+  const direct = body.serviceScopes?.[service]?.trim();
+  if (direct) return direct;
+
+  const normalizedService = normalizePricingText(service);
+  const matchingEntry = Object.entries(body.serviceScopes || {}).find(
+    ([key, value]) =>
+      normalizePricingText(key) === normalizedService && value.trim(),
+  );
+  return matchingEntry?.[1].trim() || body.scope;
+};
+
+const requestForService = (body: PricingRequest, service: string) => ({
+  ...body,
+  service,
+  services: [service],
+  scope: scopeForService(body, service),
+});
+
 const includesTerm = (text: string, term: string) =>
   text.includes(normalizePricingText(term));
 
@@ -255,6 +297,53 @@ const itemBroadFamily = (item: PricingReference) => {
     text.includes("grabacion")
   ) return "video";
   return "photo";
+};
+
+type MediaKind =
+  | "photo"
+  | "video"
+  | "drone"
+  | "matterport"
+  | "render"
+  | "streaming";
+
+const detectMediaKinds = (value: string) => {
+  const text = normalizePricingText(value);
+  const kinds = new Set<MediaKind>();
+  if (/fotografia|foto|retrato|headshot|imagen/.test(text)) {
+    kinds.add("photo");
+  }
+  if (/video|reel|grabacion|spot|highlight/.test(text)) kinds.add("video");
+  if (/dron|aereo|aerea|fotogrametria|inspeccion/.test(text)) {
+    kinds.add("drone");
+  }
+  if (/matterport|tour virtual|recorrido 360|street view/.test(text)) {
+    kinds.add("matterport");
+  }
+  if (/render|3d|home staging|fotorrealista/.test(text)) {
+    kinds.add("render");
+  }
+  if (/stream|directo|webinar|podcast/.test(text)) kinds.add("streaming");
+  return kinds;
+};
+
+const mediaKindsAreCompatible = (requested: string, reference: string) => {
+  const requestedKinds = detectMediaKinds(requested);
+  if (requestedKinds.size === 0) return true;
+  const referenceKinds = detectMediaKinds(reference);
+  const specialized: MediaKind[] = [
+    "drone",
+    "matterport",
+    "render",
+    "streaming",
+  ];
+  const requiredSpecialized = specialized.filter((kind) =>
+    requestedKinds.has(kind)
+  );
+  if (requiredSpecialized.length > 0) {
+    return requiredSpecialized.some((kind) => referenceKinds.has(kind));
+  }
+  return [...requestedKinds].some((kind) => referenceKinds.has(kind));
 };
 
 const meaningfulTokens = (value: string) =>
@@ -311,6 +400,9 @@ export const scorePricingReference = (
   );
 
   if (itemIsExtra && !isDirectExtraMatch(input, item)) return 0;
+  if (!itemIsExtra && !mediaKindsAreCompatible(body.service, itemText)) {
+    return 0;
+  }
 
   let score = 0;
   const matchingFamilies = inputFamilies.filter((family) =>
@@ -348,7 +440,7 @@ export const scorePricingReference = (
   return Math.max(0, score);
 };
 
-export const matchPricingReferences = (
+const matchSinglePricingReferences = (
   body: PricingRequest,
   catalog: PricingReference[],
 ) => {
@@ -392,19 +484,119 @@ export const matchPricingReferences = (
   return [...unique.values()].slice(0, 10);
 };
 
-const extractQuantity = (value: string) => {
-  const numbers = [...value.matchAll(/(\d+(?:[.,]\d+)?)/g)]
-    .map((match) => {
-      const raw = match[1];
-      const separator = raw.includes(",") ? "," : ".";
-      const [whole, fraction] = raw.split(separator);
-      if (!fraction) return Number(whole);
-      return fraction.length === 3
-        ? Number(`${whole}${fraction}`)
-        : Number(`${whole}.${fraction}`);
-    })
-    .filter((number) => Number.isFinite(number) && number > 0);
-  return numbers.length ? Math.max(...numbers) : null;
+const isBundleReference = (item: PricingReference) => {
+  const text = normalizePricingText(
+    `${item.name} ${item.priceSuffix || ""}`,
+  );
+  return item.source === "plan" || /\bpack\b|\bplan\b/.test(text);
+};
+
+const referenceMatchesService = (
+  body: PricingRequest,
+  service: string,
+  item: PricingReference,
+) => {
+  const serviceBody = requestForService(body, service);
+  const serviceText = normalizePricingText(
+    `${service} ${serviceBody.scope} ${body.details || ""}`,
+  );
+  const itemText = normalizePricingText(
+    `${item.name} ${item.category || ""} ${item.description || ""}`,
+  );
+  const requestedFamilies = detectServiceFamilies(serviceText);
+  const itemFamilies = detectServiceFamilies(itemText);
+  const score = scorePricingReference(serviceBody, item);
+  const sharesSpecificFamily = requestedFamilies.some((family) =>
+    itemFamilies.includes(family)
+  );
+
+  if (score === 0) return false;
+  if (sharesSpecificFamily) return true;
+  return broadFamily(service) === itemBroadFamily(item) &&
+    score >= 8;
+};
+
+const bundleCoverage = (
+  body: PricingRequest,
+  item: PricingReference,
+) => getRequestedServices(body).filter((service) =>
+  referenceMatchesService(body, service, item)
+).length;
+
+export const matchPricingReferences = (
+  body: PricingRequest,
+  catalog: PricingReference[],
+) => {
+  const services = getRequestedServices(body);
+  if (services.length <= 1) {
+    return matchSinglePricingReferences(
+      services.length === 1 ? requestForService(body, services[0]) : body,
+      catalog,
+    );
+  }
+
+  const unique = new Map<string, PricingReference>();
+  const add = (item: PricingReference) => {
+    const key = normalizePricingText(item.name);
+    if (!unique.has(key)) unique.set(key, item);
+  };
+
+  catalog
+    .filter(isBundleReference)
+    .map((item) => ({
+      item,
+      coverage: bundleCoverage(body, item),
+      score: services.reduce(
+        (total, service) =>
+          total + scorePricingReference(requestForService(body, service), item),
+        0,
+      ),
+    }))
+    .filter(({ coverage }) => coverage >= 2)
+    .sort((a, b) =>
+      b.coverage - a.coverage || b.score - a.score ||
+      a.item.price - b.item.price
+    )
+    .slice(0, 3)
+    .forEach(({ item }) => add(item));
+
+  services.forEach((service) => {
+    matchSinglePricingReferences(requestForService(body, service), catalog)
+      .filter((item) =>
+        !EXTRA_CATEGORY.test(normalizePricingText(item.category || ""))
+      )
+      .slice(0, 3)
+      .forEach(add);
+  });
+
+  matchSinglePricingReferences(body, catalog)
+    .filter((item) =>
+      EXTRA_CATEGORY.test(normalizePricingText(item.category || ""))
+    )
+    .slice(0, 2)
+    .forEach(add);
+
+  return [...unique.values()].slice(0, 12);
+};
+
+// Quantities must belong to the billed unit, never to deadlines, years or duration.
+const extractUnitQuantity = (scope: string, suffix: string) => {
+  const unit = suffix.includes("foto") ? "fotos?|fotografias?|imagen(?:es)?|productos?|packshots?"
+    : suffix.includes("imagen") ? "imagen(?:es)?|renders?|vistas?"
+    : suffix.includes("pieza") ? "piezas?|reels?|videos?|formatos?"
+    : suffix.includes("persona") ? "personas?|retratos?|headshots?"
+    : suffix.includes("hora") ? "horas?"
+    : suffix.includes("ronda") ? "rondas?|revision(?:es)?|cambios?"
+    : null;
+  if (!unit) return null;
+  const pattern = new RegExp(`(\\d+(?:[.,]\\d+)?)\\s*(?:${unit})\\b`, "g");
+  const quantities = [...scope.matchAll(pattern)].map((match) => {
+    const [whole, fraction] = match[1].split(/[.,]/);
+    return fraction?.length === 3
+      ? Number(`${whole}${fraction}`)
+      : Number(match[1].replace(",", "."));
+  }).filter((number) => Number.isFinite(number) && number > 0);
+  return quantities.length ? Math.max(...quantities) : null;
 };
 
 const estimatedReferencePrice = (
@@ -413,25 +605,123 @@ const estimatedReferencePrice = (
 ) => {
   const suffix = normalizePricingText(item.priceSuffix || "");
   const scope = normalizePricingText(`${body.scope} ${body.details || ""}`);
-  const quantity = extractQuantity(scope);
-  if (!quantity) return item.price;
+  const quantity = extractUnitQuantity(scope, suffix);
+  return quantity ? item.price * quantity : item.price;
+};
 
-  const unitMatches =
-    (suffix.includes("foto") &&
-      /foto|imagen|producto|packshot/.test(scope)) ||
-    (suffix.includes("imagen") && /imagen|render|vista/.test(scope)) ||
-    (suffix.includes("pieza") && /pieza|reel|video|formato/.test(scope)) ||
-    (suffix.includes("persona") && /persona|retrato|headshot|equipo/.test(scope)) ||
-    (suffix.includes("hora") && /hora/.test(scope)) ||
-    (suffix.includes("ronda") && /ronda|revision|cambio/.test(scope));
+const findFullBundleReference = (
+  body: PricingRequest,
+  pricingReferences: PricingReference[],
+) => {
+  const services = getRequestedServices(body);
+  if (services.length <= 1) return null;
 
-  return unitMatches ? item.price * quantity : item.price;
+  return pricingReferences
+    .filter(isBundleReference)
+    .map((item) => ({
+      item,
+      coverage: bundleCoverage(body, item),
+      score: services.reduce(
+        (total, service) =>
+          total + scorePricingReference(
+            requestForService(body, service),
+            item,
+          ),
+        0,
+      ),
+    }))
+    .filter(({ coverage }) => coverage === services.length)
+    .sort((a, b) => b.score - a.score || a.item.price - b.item.price)[0]
+    ?.item || null;
+};
+
+export const getCatalogPricingBreakdown = (
+  body: PricingRequest,
+  pricingReferences: PricingReference[] = [],
+) => {
+  const services = getRequestedServices(body);
+  const bundle = findFullBundleReference(body, pricingReferences);
+  if (bundle) {
+    return [{
+      service: services.join(" + "),
+      referenceName: bundle.name,
+      amount: estimatedReferencePrice(body, bundle),
+      isBundle: true,
+    }];
+  }
+
+  return services.map((service) => {
+    const serviceBody = requestForService(body, service);
+    const reference = matchSinglePricingReferences(
+      serviceBody,
+      pricingReferences,
+    ).find((item) =>
+      !isBundleReference(item) &&
+      !EXTRA_CATEGORY.test(normalizePricingText(item.category || ""))
+    );
+    return {
+      service,
+      referenceName: reference?.name || null,
+      amount: reference
+        ? estimatedReferencePrice(serviceBody, reference)
+        : null,
+      isBundle: false,
+    };
+  });
 };
 
 export const getCatalogBaseRange = (
   body: PricingRequest,
   pricingReferences: PricingReference[] = [],
 ): [number, number] | null => {
+  const services = getRequestedServices(body);
+  if (services.length > 1) {
+    const fullBundle = findFullBundleReference(body, pricingReferences);
+
+    if (fullBundle) {
+      const price = estimatedReferencePrice(body, fullBundle);
+      return [price, Math.max(price + 90, price * 1.35)];
+    }
+
+    const selectedPrices = services.map((service) => {
+      const serviceBody = requestForService(body, service);
+      const reference = matchSinglePricingReferences(
+        serviceBody,
+        pricingReferences,
+      ).find((item) =>
+        !isBundleReference(item) &&
+        !EXTRA_CATEGORY.test(normalizePricingText(item.category || ""))
+      );
+      return reference
+        ? estimatedReferencePrice(serviceBody, reference)
+        : null;
+    });
+
+    if (selectedPrices.some((price) => price === null)) return null;
+
+    const extras = pricingReferences.filter((item) =>
+      EXTRA_CATEGORY.test(normalizePricingText(item.category || "")) &&
+      isDirectExtraMatch(
+        normalizePricingText(`${body.scope} ${body.details || ""}`),
+        item,
+      )
+    );
+    const extrasTotal = extras.reduce(
+      (total, item) => total + estimatedReferencePrice(body, item),
+      0,
+    );
+    const min = selectedPrices.reduce<number>(
+      (total, price) => total + (price || 0),
+      extrasTotal,
+    );
+    const max = selectedPrices.reduce<number>(
+      (total, price) =>
+        total + Math.max((price || 0) + 90, (price || 0) * 1.35),
+      extrasTotal,
+    );
+    return min > 0 ? [min, Math.max(min + 90, max)] : null;
+  }
+
   const specificFamilies = detectServiceFamilies(
     `${body.service} ${body.scope} ${body.details || ""}`,
   );

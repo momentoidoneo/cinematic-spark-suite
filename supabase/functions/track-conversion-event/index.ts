@@ -6,6 +6,14 @@ const corsHeaders = {
 };
 
 const eventTypes: Record<string, "cta" | "whatsapp" | "form" | "quote"> = {
+  quoter_open: "cta",
+  quoter_step: "cta",
+  quoter_submit: "cta",
+  quoter_error: "cta",
+  quoter_abandon: "cta",
+  contact_form_start: "cta",
+  contact_form_submit: "cta",
+  contact_form_error: "cta",
   cta_click: "cta",
   whatsapp_click: "whatsapp",
   quoter_whatsapp: "whatsapp",
