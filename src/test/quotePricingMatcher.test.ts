@@ -51,7 +51,7 @@ describe("AI quote pricing matcher", () => {
     ["Fotografía de producto y ecommerce", "10 fotos para la campaña 2026", "/foto", 20, 200],
   ])("uses the quantity of the billing unit, not unrelated numbers: %s", (service, scope, priceSuffix, price, expected) => {
     const body = request({ service, scope });
-    const reference: PricingReference = { name: service, category: "Servicio", priceSuffix, price, source: "service" };
+    const reference: PricingReference = { name: service, category: "Servicio", description: "", priceSuffix, price, source: "service" };
     expect(getCatalogBaseRange(body, [reference])?.[0]).toBe(expected);
   });
 
