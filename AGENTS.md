@@ -19,3 +19,8 @@ Scope: this project only; production https://silviocosta.net.
 - AI text and images use dedicated OpenClaw agent `silviocosta-net` on silvio-server with OpenAI OAuth. Gmail direct sends owner notices. Never add API-key fallbacks or reuse sibling credentials.
 - Source backup and rollback release remain intact. Reconcile late source writes and destination-only leads before rollback. Never replay historical notifications or overwrite the advanced quote counter.
 - Read the migration report in the release worktree for evidence and limits. No Ads changes or recurring monitor were authorized by this migration.
+
+## Measurement correction release (2026-11-02; newer than migration cutover)
+- Current verified frontend release: `5cd06a71-c33d-416d-97fd-f4f615fbe60e`, app commit `b4cd1b2`. Rollback to the independent-backend cutover remains `54f639dc-2a68-4121-9369-a6c8f71b29ad`.
+- Google Ads changes were explicitly authorized for this correction: two exact negatives and four campaign sitelinks; campaign 24091355671 remains enabled, 9.70 EUR/day, Maximize Clicks, max CPC 2.50 EUR. No ongoing monitoring authorized.
+- Read docs/google-ads-corrections-2026-11-02.md for verification limits and the one identified diagnostic ping that must not be counted as a real lead. Do not claim real Ads attribution or enhanced-conversion warnings resolved from local tests.
