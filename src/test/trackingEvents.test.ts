@@ -11,8 +11,33 @@ vi.mock("@/integrations/supabase/client", () => ({
 import {
   fireGoogleAdsConversion,
   setGoogleAdsConversion,
+  reportSavedLead,
   trackEvent,
 } from "@/lib/trackingEvents";
+
+const installLocalStorage = () => {
+    let values: Record<string, string> = {};
+    const storage: Storage = {
+      get length() {
+        return Object.keys(values).length;
+      },
+      clear: () => {
+        values = {};
+      },
+      getItem: (key) => values[key] ?? null,
+      key: (index) => Object.keys(values)[index] ?? null,
+      removeItem: (key) => {
+        delete values[key];
+      },
+      setItem: (key, value) => {
+        values[key] = value;
+      },
+    };
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: storage,
+    });
+};
 
 describe("Google Ads conversion events", () => {
   beforeEach(() => {
@@ -115,31 +140,78 @@ describe("Google Ads conversion events", () => {
   });
 });
 
+describe("saved lead measurement", () => {
+  beforeEach(() => {
+    installLocalStorage();
+    vi.clearAllMocks();
+    window.dataLayer = [];
+    window.gtag = vi.fn();
+    window.__gtm_active = true;
+    setGoogleAdsConversion("AW-11017209497", "conversion-label");
+    window.localStorage.setItem("sc_cookie_consent", JSON.stringify({
+      version: 1, updatedAt: new Date().toISOString(), analytics: true, marketing: false,
+    }));
+  });
+
+  it("emits one GTM lead with a joinable first-party receipt, not a second GA4 lead", async () => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const input = { source: "contact" as const, transactionId: "unique-contact-receipt", eventLabel: "contact_form" };
+    expect(reportSavedLead(input)).toBe(true);
+    expect(reportSavedLead(input)).toBe(false);
+    expect(window.dataLayer).toHaveLength(1);
+    expect(window.dataLayer?.[0]).toMatchObject({ event: "lead_conversion", transaction_id: input.transactionId });
+    expect(window.gtag).not.toHaveBeenCalled();
+    expect(supabase.functions.invoke).toHaveBeenCalledExactlyOnceWith("track-conversion-event", {
+      body: expect.objectContaining({ event_name: "generate_lead", metadata: expect.objectContaining({ transaction_id: input.transactionId, lead_source: "contact" }) }),
+    });
+  });
+
+  it("keeps quote diagnostics separate from the one main lead conversion", () => {
+    expect(reportSavedLead({ source: "quote", transactionId: "unique-quote-receipt", eventLabel: "smart_quoter", service: "Fotografía inmobiliaria" })).toBe(true);
+    expect(window.dataLayer).toHaveLength(1);
+    expect(window.gtag).toHaveBeenCalledExactlyOnceWith("event", "quoter_complete", expect.objectContaining({ transaction_id: "unique-quote-receipt" }));
+    expect(window.gtag).not.toHaveBeenCalledWith("event", "generate_lead", expect.anything());
+  });
+
+  it("does not lose two different saved requests within the debounce interval", async () => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    reportSavedLead({ source: "contact", transactionId: "rapid-contact-a", eventLabel: "contact_form" });
+    reportSavedLead({ source: "contact", transactionId: "rapid-contact-b", eventLabel: "contact_form" });
+    expect(supabase.functions.invoke).toHaveBeenCalledTimes(2);
+    expect(window.dataLayer).toHaveLength(2);
+  });
+
+  it("sends one GA4 lead and one Ads event through the direct-tag fallback", () => {
+    window.__gtm_active = false;
+    reportSavedLead({ source: "contact", transactionId: "unique-direct-contact", eventLabel: "contact_form" });
+    expect(window.gtag).toHaveBeenCalledTimes(2);
+    expect(window.gtag).toHaveBeenCalledWith("event", "generate_lead", expect.objectContaining({ transaction_id: "unique-direct-contact" }));
+    expect(window.gtag).toHaveBeenCalledWith("event", "conversion", expect.objectContaining({ transaction_id: "unique-direct-contact" }));
+  });
+
+  it("does not persist the receipt when consent is denied", async () => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    window.localStorage.removeItem("sc_cookie_consent");
+    reportSavedLead({ source: "contact", transactionId: "unique-denied-contact", eventLabel: "contact_form" });
+    expect(supabase.functions.invoke).not.toHaveBeenCalled();
+    // Existing Google Consent Mode still governs the tag; no consent override.
+    expect(window.dataLayer).toHaveLength(1);
+  });
+
+  it.each(["", "SC-ADS-20261102-100", "SC-DIAGNOSTIC-NOT-A-LEAD-20261102"])("rejects missing or diagnostic receipt %s", async transactionId => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    expect(reportSavedLead({ source: "contact", transactionId, eventLabel: "contact_form" })).toBe(false);
+    expect(window.dataLayer).toEqual([]);
+    expect(window.gtag).not.toHaveBeenCalled();
+    expect(supabase.functions.invoke).not.toHaveBeenCalled();
+  });
+});
+
 
 describe("persistent funnel diagnostics", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    let values: Record<string, string> = {};
-    const storage: Storage = {
-      get length() {
-        return Object.keys(values).length;
-      },
-      clear: () => {
-        values = {};
-      },
-      getItem: (key) => values[key] ?? null,
-      key: (index) => Object.keys(values)[index] ?? null,
-      removeItem: (key) => {
-        delete values[key];
-      },
-      setItem: (key, value) => {
-        values[key] = value;
-      },
-    };
-    Object.defineProperty(window, "localStorage", {
-      configurable: true,
-      value: storage,
-    });
+    installLocalStorage();
     window.localStorage.clear();
     window.gtag = vi.fn();
     window.dataLayer = [];

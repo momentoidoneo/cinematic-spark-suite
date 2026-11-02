@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getStoredCookieConsent } from "@/lib/cookieConsent";
+import { isControlledTestLead } from "@/lib/leadSubmission";
 
 export type GoogleAdsConversionKind = "lead" | "whatsapp" | "phone";
 
@@ -35,6 +36,9 @@ const conversionEventNames = new Set([
   "quoter_complete",
 ]);
 const lastPersistedEvents = new Map<string, number>();
+// Page-lifetime deduplication: a saved request must not become two leads if a
+// component retries its success handler. Google also receives the saved ID.
+const reportedLeadIds = new Set<string>();
 const googleAdsEventNames: Record<GoogleAdsConversionKind, string> = {
   lead: "lead_conversion",
   whatsapp: "whatsapp_conversion",
@@ -73,6 +77,7 @@ export const fireGoogleAdsConversion = ({
   eventLabel?: string;
   transactionId?: string;
 } = {}) => {
+  if (isControlledTestLead(eventLabel, transactionId)) return false;
   const conversionLabel =
     window.__gads_conversion_labels?.[kind] ||
     (kind === "lead" ? window.__gads_conversion_label : undefined);
@@ -144,7 +149,7 @@ const persistConversionEvent = (eventName: string, params?: TrackingParams) => {
 
   const eventLabel =
     typeof params?.event_label === "string" ? params.event_label : null;
-  const dedupeKey = `${eventName}:${eventLabel || ""}:${window.location.pathname}`;
+  const dedupeKey = `${eventName}:${eventLabel || ""}:${window.location.pathname}:${params?.transaction_id || ""}`;
   const now = Date.now();
   const last = lastPersistedEvents.get(dedupeKey) || 0;
   if (now - last < 1500) return;
@@ -178,6 +183,49 @@ export const trackEvent = (eventName: string, params?: TrackingParams) => {
   }
 
   persistConversionEvent(eventName, params);
+};
+
+/** Call only after the backend confirms a persisted, non-test request.
+ * GTM owns generate_lead in production (triggered by lead_conversion). Sending
+ * it through gtag as well counted each contact twice in GA4. First-party funnel
+ * receipts keep the same saved ID, without sending names, emails or messages.
+ */
+export const reportSavedLead = ({
+  source,
+  transactionId,
+  eventLabel,
+  service,
+}: {
+  source: "contact" | "quote";
+  transactionId: string;
+  eventLabel: string;
+  service?: string;
+}) => {
+  if (!transactionId?.trim() || isControlledTestLead(transactionId, eventLabel)) return false;
+  const key = `${source}:${transactionId}`;
+  if (reportedLeadIds.has(key)) return false;
+  reportedLeadIds.add(key);
+  // Bounded in-memory receipt cache; no additional persistent tracking storage.
+  if (reportedLeadIds.size > 200) reportedLeadIds.delete(reportedLeadIds.values().next().value!);
+
+  const params = {
+    event_category: source === "contact" ? "contact" : "lead",
+    event_label: eventLabel,
+    transaction_id: transactionId,
+    lead_source: source,
+  };
+  if (source === "quote") {
+    trackEvent("quoter_complete", { ...params, event_label: service || eventLabel });
+  } else {
+    persistConversionEvent("generate_lead", params);
+  }
+
+  if (!window.__gtm_active) {
+    // Direct-tag fallback only. With GTM, its published lead tag is the single
+    // owner of the GA4 event, including its transaction_id.
+    window.gtag?.("event", "generate_lead", params);
+  }
+  return fireGoogleAdsConversion({ eventLabel, transactionId });
 };
 
 export {};

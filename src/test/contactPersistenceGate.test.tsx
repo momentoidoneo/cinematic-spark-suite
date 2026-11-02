@@ -1,13 +1,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import CTASection from "@/components/CTASection";
-import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
+import { fireGoogleAdsConversion, reportSavedLead, trackEvent } from "@/lib/trackingEvents";
 const { invoke } = vi.hoisted(() => ({ invoke: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
   from: () => ({ select: () => ({ maybeSingle: async () => ({ data: null }) }) }),
   functions: { invoke },
 } }));
-vi.mock("@/lib/trackingEvents", () => ({ fireGoogleAdsConversion: vi.fn(), trackEvent: vi.fn() }));
+vi.mock("@/lib/trackingEvents", () => ({ fireGoogleAdsConversion: vi.fn(), reportSavedLead: vi.fn(), trackEvent: vi.fn() }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const submit = (name="Ana Costa") => {
@@ -23,17 +23,19 @@ describe("contact persistence gate", () => {
     invoke.mockResolvedValueOnce({ data, error: null }); render(<CTASection />); submit();
     await waitFor(() => expect(trackEvent).toHaveBeenCalledWith("contact_form_error", { event_category: "funnel", event_label: "server" }));
     expect(fireGoogleAdsConversion).not.toHaveBeenCalled();
+    expect(reportSavedLead).not.toHaveBeenCalled();
     expect(screen.queryByText("¡Mensaje enviado!")).not.toBeInTheDocument();
   });
   it("uses the persisted ID for the real success event", async () => {
     invoke.mockResolvedValueOnce({ data: { success: true, id: "contact-1" }, error: null }); render(<CTASection />); submit();
     expect(await screen.findByText("¡Mensaje enviado!")).toBeInTheDocument();
-    expect(fireGoogleAdsConversion).toHaveBeenCalledExactlyOnceWith({ eventLabel: "contact_form", transactionId: "contact-1" });
+    expect(reportSavedLead).toHaveBeenCalledExactlyOnceWith({ source: "contact", eventLabel: "contact_form", transactionId: "contact-1" });
   });
   it("does not send a controlled test to advertising", async () => {
     invoke.mockResolvedValueOnce({ data: { success: true, id: "contact-qa" }, error: null }); render(<CTASection />); submit("SC-ADS-20261102-01");
     expect(await screen.findByText("¡Mensaje enviado!")).toBeInTheDocument();
     expect(fireGoogleAdsConversion).not.toHaveBeenCalled();
+    expect(reportSavedLead).not.toHaveBeenCalled();
     expect(trackEvent).not.toHaveBeenCalledWith("generate_lead", expect.anything());
   });
 });

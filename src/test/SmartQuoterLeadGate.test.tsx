@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { trackEvent, fireGoogleAdsConversion } from "@/lib/trackingEvents";
+import { trackEvent, fireGoogleAdsConversion, reportSavedLead } from "@/lib/trackingEvents";
 import SmartQuoter from "@/components/SmartQuoter";
 
 const { invokeMock } = vi.hoisted(() => ({
@@ -23,6 +23,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 
 vi.mock("@/lib/trackingEvents", () => ({
   fireGoogleAdsConversion: vi.fn(),
+  reportSavedLead: vi.fn(),
   trackEvent: vi.fn(),
 }));
 
@@ -79,6 +80,7 @@ describe("SmartQuoter identity gate", () => {
     fireEvent.click(screen.getByRole("button", { name: "Calcular y ver presupuesto" }));
     await waitFor(() => expect(trackEvent).toHaveBeenCalledWith("quoter_error", { event_category: "funnel", event_label: "generation" }));
     expect(fireGoogleAdsConversion).not.toHaveBeenCalled();
+    expect(reportSavedLead).not.toHaveBeenCalled();
     expect(screen.queryByText("120€ – 180€")).not.toBeInTheDocument();
   });
 
@@ -90,6 +92,7 @@ describe("SmartQuoter identity gate", () => {
     fireEvent.click(screen.getByRole("button", { name: "Calcular y ver presupuesto" }));
     expect(await screen.findByText("120€ – 180€")).toBeInTheDocument();
     expect(fireGoogleAdsConversion).not.toHaveBeenCalled();
+    expect(reportSavedLead).not.toHaveBeenCalled();
     expect(trackEvent).not.toHaveBeenCalledWith("quoter_complete", expect.anything());
   });
 
@@ -124,6 +127,7 @@ describe("SmartQuoter identity gate", () => {
       }),
     });
     expect(await screen.findByText("120€ – 180€")).toBeInTheDocument();
+    expect(reportSavedLead).toHaveBeenCalledExactlyOnceWith({ source: "quote", transactionId: "request-1", eventLabel: "smart_quoter", service: "Fotografía inmobiliaria" });
   });
 
   it("submits several services with a separate scope for each one", async () => {

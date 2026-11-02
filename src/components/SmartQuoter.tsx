@@ -10,7 +10,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
+import { fireGoogleAdsConversion, reportSavedLead, trackEvent } from "@/lib/trackingEvents";
 import { isControlledTestLead, isSavedQuote } from "@/lib/leadSubmission";
 import {
   isValidQuoteLeadEmail,
@@ -185,13 +185,11 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
         "Solicitud guardada. Aquí tienes una estimación orientativa.",
       );
       if (!isControlledTestLead(form.name, form.details)) {
-        trackEvent("quoter_complete", {
-          event_category: "lead",
-          event_label: form.service,
-        });
-        fireGoogleAdsConversion({
+        reportSavedLead({
+          source: "quote",
+          service: form.service,
           eventLabel: "smart_quoter",
-          transactionId: quote.requestId || undefined,
+          transactionId: quote.requestId!,
         });
       }
     } catch {

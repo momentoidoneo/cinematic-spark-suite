@@ -18,4 +18,4 @@ export const isSavedQuote = (data: unknown): boolean => {
 
 // Explicit diagnostic markers only; never send customer identity to analytics.
 export const isControlledTestLead = (...values: Array<string | undefined>): boolean =>
-  /\b(?:SC-ADS-\d{8}-\d+|prueba técnica autorizada)\b/i.test(values.join(" "));
+  /\b(?:SC-ADS-\d{8}-\d+|SC-DIAGNOSTIC-[\w-]+|prueba técnica autorizada)\b/i.test(values.join(" "));

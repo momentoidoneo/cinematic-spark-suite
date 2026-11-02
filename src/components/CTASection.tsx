@@ -11,7 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
-import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
+import { fireGoogleAdsConversion, reportSavedLead, trackEvent } from "@/lib/trackingEvents";
 import { isControlledTestLead, isSavedContact } from "@/lib/leadSubmission";
 
 const contactSchema = z.object({
@@ -148,11 +148,8 @@ const CTASection = ({
       setForm(initialForm(defaultService));
       toast.success("¡Mensaje enviado correctamente!");
       if (!isControlledTestLead(result.data.name, result.data.message)) {
-        trackEvent("generate_lead", {
-          event_category: "contact",
-          event_label: trackingLabel,
-        });
-        fireGoogleAdsConversion({
+        reportSavedLead({
+          source: "contact",
           eventLabel: trackingLabel,
           transactionId: data.id,
         });
