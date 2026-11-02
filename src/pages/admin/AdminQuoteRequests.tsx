@@ -1,3 +1,4 @@
+import { OwnerNotificationStatus } from "@/components/admin/OwnerNotificationStatus";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -249,6 +250,7 @@ const AdminQuoteRequests = () => {
 
   return (
     <div className="space-y-4">
+      <OwnerNotificationStatus kind="quote" leadId={selectedId} />
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">

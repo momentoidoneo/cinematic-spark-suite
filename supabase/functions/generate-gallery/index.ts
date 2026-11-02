@@ -1,11 +1,13 @@
+import {asyncAdminOperation} from '../_shared/asyncAdminOperation.ts';
+import { requireAdmin } from "../_shared/adminAuth.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
-  callLovableChat,
+  callIndependentChat,
   extractImageUrl,
   imageUrlToBytes,
-  isLovableStatus,
-} from "../_shared/lovableAi.ts";
+  isIndependentStatus,
+} from "../_shared/independentAi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,14 +15,15 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(asyncAdminOperation("generate-gallery", async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const adminAuth = await requireAdmin(req, corsHeaders);
+    if ("response" in adminAuth) return adminAuth.response;
+
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -35,7 +38,7 @@ serve(async (req) => {
     };
 
     if (!subcategory_id) throw new Error("subcategory_id is required");
-    const numImages = Math.min(Math.max(count || 4, 1), 20);
+    const numImages = 1;
 
     // Get subcategory + category info for better prompts
     const { data: sub } = await supabase
@@ -64,7 +67,7 @@ serve(async (req) => {
     for (let i = 0; i < numImages; i++) {
       try {
         // Build a varied prompt for each image
-        const variation = i + 1;
+        const variation = Number(body.variation) || i + 1;
         let prompt =
           `Generate a professional high-quality photograph for a ${catName} / ${subName} portfolio gallery. Variation ${variation} of ${numImages} — each image should be distinct.`;
         if (context?.trim()) prompt += ` Context: ${context.trim()}.`;
@@ -75,7 +78,7 @@ serve(async (req) => {
           `Generating gallery image ${variation}/${numImages} for ${subName}`,
         );
 
-        const aiData = await callLovableChat(LOVABLE_API_KEY, {
+        const aiData = await callIndependentChat({
           model: "google/gemini-2.5-flash-image",
           messages: [{ role: "user", content: prompt }],
           modalities: ["image", "text"],
@@ -112,7 +115,7 @@ serve(async (req) => {
         const publicUrl = urlData.publicUrl + `?t=${Date.now()}`;
 
         // Insert into portfolio_images
-        await supabase.from("portfolio_images").insert({
+        const {error:saveError}=await supabase.from("portfolio_images").insert({
           subcategory_id,
           image_url: publicUrl,
           title: `${subName} - AI ${variation}`,
@@ -122,13 +125,14 @@ serve(async (req) => {
           is_featured: false,
         });
 
+        if(saveError)throw new Error("No se pudo guardar la imagen en el portfolio");
         results.push({ index: i, status: "ok" });
         console.log(`✓ Gallery image ${variation}/${numImages}`);
 
         // Rate limit pause between generations
         if (i < numImages - 1) await new Promise((r) => setTimeout(r, 2000));
       } catch (e) {
-        if (isLovableStatus(e, 429)) {
+        if (isIndependentStatus(e, 429)) {
           await new Promise((r) => setTimeout(r, 5000));
         }
         results.push({ index: i, status: `error: ${(e as Error).message}` });
@@ -150,4 +154,4 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));

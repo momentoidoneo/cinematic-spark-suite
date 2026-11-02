@@ -1,11 +1,12 @@
+import { requireAdmin } from "../_shared/adminAuth.ts";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 import {
-  callLovableChat,
+  callIndependentChat,
   getAssistantText,
   getFirstToolArguments,
-  isLovableStatus,
+  isIndependentStatus,
   parseJsonFromText,
-} from "../_shared/lovableAi.ts";
+} from "../_shared/independentAi.ts";
 
 interface Body {
   title?: string;
@@ -22,8 +23,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
+    const adminAuth = await requireAdmin(req, corsHeaders);
+    if ("response" in adminAuth) return adminAuth.response;
 
     const body = (await req.json()) as Body;
     const context = [
@@ -48,11 +49,11 @@ Reglas estrictas:
 - meta_title: 50-60 caracteres, incluye marca al final si cabe (" | Silvio Costa"), sin clickbait.
 - meta_description: 140-160 caracteres, persuasiva, con CTA implícito y palabra clave principal al inicio.
 - Sin comillas dobles dentro de los valores.
-- Devuelve solo a través de la herramienta seo_meta.`;
+- Devuelve solo un objeto JSON con meta_title y meta_description. No ejecutes herramientas.`;
 
     let data: any;
     try {
-      data = await callLovableChat(apiKey, {
+      data = await callIndependentChat({
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
@@ -88,7 +89,7 @@ Reglas estrictas:
         tool_choice: { type: "function", function: { name: "seo_meta" } },
       });
     } catch (error) {
-      if (isLovableStatus(error, 429)) {
+      if (isIndependentStatus(error, 429)) {
         return new Response(
           JSON.stringify({
             error: "Límite de uso de IA alcanzado. Inténtalo en un momento.",
@@ -99,14 +100,14 @@ Reglas estrictas:
           },
         );
       }
-      if (isLovableStatus(error, 402)) {
+      if (isIndependentStatus(error, 503)) {
         return new Response(
           JSON.stringify({
             error:
-              "Créditos de IA agotados. Añade créditos en Settings → Workspace → Usage.",
+              "OpenClaw no está disponible temporalmente. Inténtalo más tarde.",
           }),
           {
-            status: 402,
+            status: 503,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           },
         );

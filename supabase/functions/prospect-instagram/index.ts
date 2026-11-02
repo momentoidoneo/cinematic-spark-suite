@@ -1,11 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAdmin } from "../_shared/adminAuth.ts";
 import {
-  callLovableChat,
+  callIndependentChat,
   getAssistantText,
-  isLovableStatus,
+  isIndependentStatus,
   parseJsonFromText,
-} from "../_shared/lovableAi.ts";
+} from "../_shared/independentAi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,10 +48,6 @@ async function handleSmartSearch(body: any) {
       error:
         "Firecrawl no está configurado. Conecta Firecrawl en Settings → Connectors.",
     }, 400);
-  }
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) {
-    return jsonResponse({ error: "LOVABLE_API_KEY no configurada." }, 400);
   }
 
   const { searchQuery, interests, location, followerRange } = body;
@@ -135,7 +131,7 @@ Devuelve JSON array: [{"username":"sin_arroba","followers_estimate":"~50K","nich
 Máximo 30 perfiles. Solo JSON.`;
 
   try {
-    const aiData = await callLovableChat(LOVABLE_API_KEY, {
+    const aiData = await callIndependentChat({
       model: "google/gemini-3-flash-preview",
       messages: [{
         role: "system",
@@ -196,8 +192,6 @@ async function handleProfileGather(body: any) {
 }
 
 async function handleAnalyzeProfile(body: any) {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
   const { profileData } = body;
 
   const systemPrompt =
@@ -208,7 +202,7 @@ Solo JSON.`;
 
   let aiData: any;
   try {
-    aiData = await callLovableChat(LOVABLE_API_KEY, {
+    aiData = await callIndependentChat({
       model: "google/gemini-3-flash-preview",
       messages: [{ role: "system", content: systemPrompt }, {
         role: "user",
@@ -219,11 +213,11 @@ Solo JSON.`;
       }],
     });
   } catch (error) {
-    if (isLovableStatus(error, 429)) {
+    if (isIndependentStatus(error, 429)) {
       return jsonResponse({ error: "Rate limit" }, 429);
     }
-    if (isLovableStatus(error, 402)) {
-      return jsonResponse({ error: "Créditos agotados" }, 402);
+    if (isIndependentStatus(error, 503)) {
+      return jsonResponse({ error: "OpenClaw temporalmente no disponible" }, 503);
     }
     throw new Error("Error analizando perfil");
   }
@@ -246,8 +240,6 @@ Solo JSON.`;
 }
 
 async function handleGenerateDM(body: any) {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
   const { profileData, profileAnalysis, brandContext, messageStyle } = body;
 
   const analysisCtx = profileAnalysis
@@ -275,7 +267,7 @@ Para cada versión incluye **Enfoque** y **Mensaje completo**.`;
 
   let aiData: any;
   try {
-    aiData = await callLovableChat(LOVABLE_API_KEY, {
+    aiData = await callIndependentChat({
       model: "google/gemini-3-flash-preview",
       messages: [{ role: "system", content: systemPrompt }, {
         role: "user",
@@ -286,11 +278,11 @@ Para cada versión incluye **Enfoque** y **Mensaje completo**.`;
       }],
     });
   } catch (error) {
-    if (isLovableStatus(error, 429)) {
+    if (isIndependentStatus(error, 429)) {
       return jsonResponse({ error: "Rate limit" }, 429);
     }
-    if (isLovableStatus(error, 402)) {
-      return jsonResponse({ error: "Créditos agotados" }, 402);
+    if (isIndependentStatus(error, 503)) {
+      return jsonResponse({ error: "OpenClaw temporalmente no disponible" }, 503);
     }
     throw new Error("Error generando DM");
   }

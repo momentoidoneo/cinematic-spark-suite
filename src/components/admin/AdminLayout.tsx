@@ -1,3 +1,4 @@
+import AdminAiRecovery from "@/components/admin/AdminAiRecovery";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import AdminSidebar from "@/components/admin/AdminSidebar";
@@ -112,6 +113,7 @@ const AdminLayout = () => {
             </div>
           </header>
           <main className="flex-1 p-3 md:p-6 overflow-auto">
+            <AdminAiRecovery />
             <Outlet />
           </main>
         </div>

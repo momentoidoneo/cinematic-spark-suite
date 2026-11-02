@@ -86,7 +86,7 @@ const PricingPreviewSection = () => {
         </div>
 
         <div
-          className={`flex gap-4 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-4 -mx-6 px-6 md:px-0 md:pb-0 md:grid md:overflow-visible ${
+          className={`pack-grid-preview grid gap-x-4 gap-y-6 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-4 -mx-6 px-6 md:px-0 md:pb-0 md:grid md:overflow-visible ${
             featuredPlans.length === 1
               ? "md:grid-cols-1 md:max-w-sm md:mx-auto"
               : featuredPlans.length === 2
@@ -97,25 +97,25 @@ const PricingPreviewSection = () => {
           {featuredPlans.map((plan) => (
             <article
               key={plan.id}
-              className={`min-w-[82vw] max-w-[340px] snap-start rounded-2xl border p-6 flex flex-col md:min-w-0 md:max-w-none ${
+              className={`min-w-[82vw] max-w-[340px] snap-start rounded-2xl border p-6 pack-card pack-card-preview md:min-w-0 md:max-w-none ${
                 plan.is_highlighted
                   ? "border-primary/40 bg-primary/5"
                   : "border-border bg-card/75"
               }`}
             >
+              <div className="h-6 mb-4">
               {plan.is_highlighted && (
-                <span className="self-start rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary mb-4">
+                <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                   Recomendado
                 </span>
               )}
+              </div>
               <h3 className="font-display text-xl font-bold text-foreground mb-2">
                 {plan.name}
               </h3>
-              {plan.description && (
                 <p className="text-sm text-muted-foreground mb-5">
                   {plan.description}
                 </p>
-              )}
               <p className="mb-5">
                 {plan.show_from && (
                   <span className="text-sm text-muted-foreground">desde </span>
@@ -132,11 +132,11 @@ const PricingPreviewSection = () => {
                   </span>
                 )}
               </p>
-              <ul className="space-y-2.5 mb-6 flex-1">
+              <ul className="pack-features mb-6">
                 {(plan.features || []).slice(0, 4).map((feature) => (
                   <li
                     key={feature}
-                    className="flex items-start gap-2 text-sm text-muted-foreground"
+                    className="flex items-start gap-2 pb-2.5 text-sm text-muted-foreground"
                   >
                     <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                     <span>{feature}</span>

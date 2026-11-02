@@ -1,44 +1,4 @@
-export const LOVABLE_AI_GATEWAY_URL =
-  "https://ai.gateway.lovable.dev/v1/chat/completions";
-
 type JsonRecord = Record<string, unknown>;
-
-export class LovableGatewayError extends Error {
-  status: number;
-  details: string;
-
-  constructor(status: number, details: string) {
-    super(`Lovable AI Gateway error [${status}]: ${details.slice(0, 500)}`);
-    this.name = "LovableGatewayError";
-    this.status = status;
-    this.details = details;
-  }
-}
-
-export async function callLovableChat(apiKey: string, payload: JsonRecord) {
-  const response = await fetch(LOVABLE_AI_GATEWAY_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const details = await response.text().catch(() => "");
-    throw new LovableGatewayError(
-      response.status,
-      details || response.statusText || "unknown error",
-    );
-  }
-
-  return await response.json();
-}
-
-export function isLovableStatus(error: unknown, status: number) {
-  return error instanceof LovableGatewayError && error.status === status;
-}
 
 function normalizeContentPart(part: unknown): string {
   if (typeof part === "string") return part;

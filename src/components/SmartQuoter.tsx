@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
+import { isControlledTestLead, isSavedQuote } from "@/lib/leadSubmission";
 import {
   isValidQuoteLeadEmail,
   isValidQuoteLeadName,
@@ -172,7 +173,7 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
         "generate-quote",
         { body: form },
       );
-      if (error || data?.error) {
+      if (error || !isSavedQuote(data)) {
         trackEvent("quoter_error", { event_category: "funnel", event_label: "generation" });
         toast.error(data?.error || "No se pudo generar el presupuesto");
         setLoading(false);
@@ -183,14 +184,16 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
       toast.success(
         "Solicitud guardada. Aquí tienes una estimación orientativa.",
       );
-      trackEvent("quoter_complete", {
-        event_category: "lead",
-        event_label: form.service,
-      });
-      fireGoogleAdsConversion({
-        eventLabel: "smart_quoter",
-        transactionId: quote.requestId || undefined,
-      });
+      if (!isControlledTestLead(form.name, form.details)) {
+        trackEvent("quoter_complete", {
+          event_category: "lead",
+          event_label: form.service,
+        });
+        fireGoogleAdsConversion({
+          eventLabel: "smart_quoter",
+          transactionId: quote.requestId || undefined,
+        });
+      }
     } catch {
       trackEvent("quoter_error", { event_category: "funnel", event_label: "network" });
       toast.error("Error al generar el presupuesto");
@@ -593,6 +596,7 @@ const SmartQuoter = ({ initialOpen = false }: { initialOpen?: boolean }) => {
                       <p className="text-sm text-muted-foreground">
                         {result.summary}
                       </p>
+                      {result.source === "fallback" && <p className="text-xs text-muted-foreground mt-3">Estimación calculada con nuestro catálogo de tarifas. La IA no está disponible en este momento; revisaremos personalmente tu solicitud.</p>}
                     </div>
 
                     <div className="mb-6">

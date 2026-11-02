@@ -14,16 +14,30 @@ interface ApiKeyInfo {
 
 const REGISTRY: ApiKeyInfo[] = [
   {
-    name: "LOVABLE_API_KEY",
-    service: "Credencial heredada de IA — uso pendiente de verificar",
-    description: "Identificador conservado para auditar la migración. Que exista no demuestra que se esté utilizando. No configurar ni reactivar servicios antiguos desde este panel.",
+    name: "GMAIL_CLIENT_ID",
+    service: "Gmail directo — aplicación",
+    description: "Autorización exclusiva de envío de los avisos de silviocosta.net. Los valores no se muestran.",
     docsUrl: "",
-    required: false,
+    required: true,
+  },
+  {
+    name: "GMAIL_CLIENT_SECRET",
+    service: "Gmail directo — credencial de aplicación",
+    description: "Autorización exclusiva de envío de los avisos de silviocosta.net. Los valores no se muestran.",
+    docsUrl: "",
+    required: true,
+  },
+  {
+    name: "GMAIL_REFRESH_TOKEN",
+    service: "Gmail directo — permiso del propietario",
+    description: "Autorización exclusiva de envío de los avisos de silviocosta.net. Los valores no se muestran.",
+    docsUrl: "",
+    required: true,
   },
   {
     name: "RESEND_API_KEY",
     service: "Resend (Emails)",
-    description: "Envío de notificaciones por email cuando llegan nuevos contactos o solicitudes IA.",
+    description: "Integración opcional de newsletters. Los avisos de contactos y presupuestos utilizan Gmail directo, no Resend.",
     docsUrl: "https://resend.com/api-keys",
     required: false,
   },
@@ -143,7 +157,7 @@ const AdminApiKeys = () => {
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground mb-2">API Keys & Secretos</h1>
           <p className="text-sm text-muted-foreground">
-            Presencia de credenciales informada por el servidor. No acredita su uso ni el estado de la migración. Los valores nunca se exponen al cliente.
+            La IA de texto e imágenes utiliza OpenClaw con OpenAI OAuth en silvio-server; no necesita una clave de Lovable. La presencia de una credencial no demuestra que se esté utilizando ni acredita el estado de la migración. Los valores nunca se exponen al cliente.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={load} disabled={loading} className="gap-2">

@@ -1,11 +1,12 @@
-// Generates social-ready images from portfolio pieces using Lovable AI (Nano Banana).
+import {asyncAdminOperation} from '../_shared/asyncAdminOperation.ts';
+// Generates social-ready images from portfolio pieces using OpenClaw and owner OpenAI OAuth.
 import { requireAdmin } from "../_shared/adminAuth.ts";
 import {
-  callLovableChat,
+  callIndependentChat,
   extractImageUrl,
   imageUrlToBytes,
-  isLovableStatus,
-} from "../_shared/lovableAi.ts";
+  isIndependentStatus,
+} from "../_shared/independentAi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,7 +24,7 @@ const FORMAT_PROMPTS: Record<string, string> = {
   "linkedin": "1.91:1 professional horizontal composition.",
 };
 
-Deno.serve(async (req) => {
+Deno.serve(asyncAdminOperation("generate-social-from-portfolio", async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -32,8 +33,6 @@ Deno.serve(async (req) => {
     const adminAuth = await requireAdmin(req, corsHeaders);
     if ("response" in adminAuth) return adminAuth.response;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const {
       image_ids,
@@ -68,7 +67,7 @@ Deno.serve(async (req) => {
               : ""
           } Keep brand aesthetic: dark, cinematic, teal and gold accents. High quality, professional.`;
 
-        const data = await callLovableChat(LOVABLE_API_KEY, {
+        const data = await callIndependentChat({
           model: "google/gemini-2.5-flash-image",
           messages: [{
             role: "user",
@@ -103,7 +102,7 @@ Deno.serve(async (req) => {
 
         // Save to bank
         if (save_to_bank) {
-          await supabase.from("social_content_bank").insert({
+          const {error:saveError}=await supabase.from("social_content_bank").insert({
             name: `${img.title || "Portfolio"} · ${format}`,
             type: "image",
             image_url: publicUrl,
@@ -111,15 +110,16 @@ Deno.serve(async (req) => {
             tags: [format, "ai-generated"],
             content: overlay_text || null,
           });
+          if(saveError)throw new Error("No se pudo guardar la imagen en el banco");
         }
 
         results.push({ id: img.id, url: publicUrl });
       } catch (e) {
         console.error("Generation failed", img.id, e);
-        const message = isLovableStatus(e, 429)
+        const message = isIndependentStatus(e, 429)
           ? "Rate limit (429)"
-          : isLovableStatus(e, 402)
-          ? "Insufficient credits (402)"
+          : isIndependentStatus(e, 503)
+          ? "OpenClaw temporalmente no disponible"
           : (e as Error).message;
         results.push({ id: img.id, error: message });
       }
@@ -135,4 +135,4 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));

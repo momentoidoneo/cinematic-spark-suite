@@ -1,3 +1,4 @@
+import {invokeAdminAi} from "@/lib/adminAiOperation";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Loader2, RefreshCw, ChevronDown, Check } from "lucide-react";
@@ -55,14 +56,15 @@ const CoverGenerator = ({ type, items, onComplete }: CoverGeneratorProps) => {
     toast.info(`Generando ${count} portadas con IA… esto puede tardar unos minutos.`);
 
     try {
-      const payload: any = { type };
-      if (mode === "all") payload.regenerate = true;
-      if (mode === "selected") payload.ids = Array.from(selectedIds);
-      if (style.trim()) payload.style = style.trim();
-
-      const { data, error } = await supabase.functions.invoke("generate-covers", { body: payload });
-      if (error) throw error;
-      toast.success(data?.message || "Portadas generadas");
+      const ids=mode==='missing'?items.filter(i=>!i.cover_image).map(i=>i.id):mode==='all'?items.map(i=>i.id):Array.from(selectedIds);
+      let completed=0;
+      for(const id of ids){
+        const {data,error}=await invokeAdminAi('generate-covers',{body:{type,ids:[id],style:style.trim()||undefined}});
+        if(error)throw error;
+        if(data?.results?.[0]?.status!=='ok')throw new Error(data?.results?.[0]?.status||'La portada no se guardó');
+        completed++;
+      }
+      toast.success(`${completed} portadas generadas y guardadas`);
       onComplete();
     } catch (e: any) {
       toast.error("Error generando portadas: " + (e.message || "desconocido"));

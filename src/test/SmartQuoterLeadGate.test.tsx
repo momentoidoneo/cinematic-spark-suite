@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { trackEvent } from "@/lib/trackingEvents";
+import { trackEvent, fireGoogleAdsConversion } from "@/lib/trackingEvents";
 import SmartQuoter from "@/components/SmartQuoter";
 
 const { invokeMock } = vi.hoisted(() => ({
@@ -54,6 +54,7 @@ const advanceToIdentityStep = () => {
 
 describe("SmartQuoter identity gate", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     invokeMock.mockReset();
     invokeMock.mockResolvedValue({
       data: {
@@ -67,6 +68,29 @@ describe("SmartQuoter identity gate", () => {
       },
       error: null,
     });
+  });
+
+  it.each([null, { min: 120, max: 180, summary: "Unsaved quote", includes: [], requestId: null }])("does not display success or fire a conversion without a saved ID", async data => {
+    invokeMock.mockResolvedValueOnce({ data, error: null });
+    render(<SmartQuoter initialOpen />);
+    advanceToIdentityStep();
+    fireEvent.change(screen.getByLabelText("Nombre y apellidos"), { target: { value: "Ana Costa" } });
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "cliente@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Calcular y ver presupuesto" }));
+    await waitFor(() => expect(trackEvent).toHaveBeenCalledWith("quoter_error", { event_category: "funnel", event_label: "generation" }));
+    expect(fireGoogleAdsConversion).not.toHaveBeenCalled();
+    expect(screen.queryByText("120€ – 180€")).not.toBeInTheDocument();
+  });
+
+  it("lets a marked diagnostic finish without an advertising conversion", async () => {
+    render(<SmartQuoter initialOpen />);
+    advanceToIdentityStep();
+    fireEvent.change(screen.getByLabelText("Nombre y apellidos"), { target: { value: "SC-ADS-20261102-02" } });
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "qa@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Calcular y ver presupuesto" }));
+    expect(await screen.findByText("120€ – 180€")).toBeInTheDocument();
+    expect(fireGoogleAdsConversion).not.toHaveBeenCalled();
+    expect(trackEvent).not.toHaveBeenCalledWith("quoter_complete", expect.anything());
   });
 
   it("does not reveal or request the quote until name and email are valid", async () => {

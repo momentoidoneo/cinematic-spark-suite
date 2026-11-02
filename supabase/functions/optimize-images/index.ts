@@ -1,4 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAdmin } from "../_shared/adminAuth.ts";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,7 +12,7 @@ const QUALITY = 80;
 const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|webp|bmp|tiff)$/i;
 
 async function listAllFiles(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   bucket: string,
   folder = ""
 ): Promise<{ path: string; size: number }[]> {
@@ -45,6 +46,9 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const adminAuth = await requireAdmin(req, corsHeaders);
+    if ("response" in adminAuth) return adminAuth.response;
+
     const { action, bucket, files } = await req.json();
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -156,7 +160,7 @@ Deno.serve(async (req) => {
             });
           }
         } catch (e) {
-          results.push({ path: file.path, bucket: file.bucket, status: "error", error: e.message });
+          results.push({ path: file.path, bucket: file.bucket, status: "error", error: e instanceof Error ? e.message : "Error al procesar la imagen" });
         }
       }
 
@@ -170,7 +174,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Error al procesar la imagen" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

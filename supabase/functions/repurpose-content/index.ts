@@ -1,11 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAdmin } from "../_shared/adminAuth.ts";
 import {
-  callLovableChat,
+  callIndependentChat,
   getAssistantText,
-  isLovableStatus,
+  isIndependentStatus,
   parseJsonFromText,
-} from "../_shared/lovableAi.ts";
+} from "../_shared/independentAi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,9 +21,6 @@ serve(async (req) => {
   try {
     const adminAuth = await requireAdmin(req, corsHeaders);
     if ("response" in adminAuth) return adminAuth.response;
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const {
       sourceContent,
@@ -72,7 +69,7 @@ Responde en JSON:
 
     let data: any;
     try {
-      data = await callLovableChat(LOVABLE_API_KEY, {
+      data = await callIndependentChat({
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
@@ -90,15 +87,15 @@ Responde en JSON:
         temperature: 0.7,
       });
     } catch (error) {
-      if (isLovableStatus(error, 429)) {
+      if (isIndependentStatus(error, 429)) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (isLovableStatus(error, 402)) {
-        return new Response(JSON.stringify({ error: "Payment required" }), {
-          status: 402,
+      if (isIndependentStatus(error, 503)) {
+        return new Response(JSON.stringify({ error: "OpenClaw temporalmente no disponible" }), {
+          status: 503,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

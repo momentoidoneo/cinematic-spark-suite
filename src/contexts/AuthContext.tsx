@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,54 +24,65 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const initialized = useRef(false);
-
-  const checkAdmin = async (userId: string) => {
-    try {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .eq("role", "admin")
-        .maybeSingle();
-      setIsAdmin(!!data);
-    } catch {
-      setIsAdmin(false);
-    }
-  };
-
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        if (newSession?.user) {
-          // Use setTimeout to avoid Supabase client deadlock
-          setTimeout(() => checkAdmin(newSession.user.id), 0);
-        } else {
-          setIsAdmin(false);
-        }
-        setLoading(false);
-        initialized.current = true;
-      }
-    );
+    let active = true;
+    let revision = 0;
+    let eventSeen = false;
+    const timers = new Set<ReturnType<typeof setTimeout>>();
 
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      // Only process if onAuthStateChange hasn't already initialized
-      if (!initialized.current) {
-        setSession(existingSession);
-        setUser(existingSession?.user ?? null);
-        if (existingSession?.user) {
-          checkAdmin(existingSession.user.id);
-        }
+    const applySession = (nextSession: Session | null) => {
+      const current = ++revision;
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+      setIsAdmin(false);
+      if (!nextSession?.user) {
         setLoading(false);
-        initialized.current = true;
+        return;
       }
+      // Do not redirect protected deep links before the role lookup finishes.
+      setLoading(true);
+      // Defer database work outside the Supabase auth callback lock.
+      const timer = setTimeout(async () => {
+        timers.delete(timer);
+        let admin = false;
+        try {
+          const { data, error } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", nextSession.user.id)
+            .eq("role", "admin")
+            .maybeSingle();
+          admin = !error && !!data;
+        } catch {
+          admin = false;
+        }
+        // A previous lookup must never restore access after sign-out/account change.
+        if (active && current === revision) {
+          setIsAdmin(admin);
+          setLoading(false);
+        }
+      }, 0);
+      timers.add(timer);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, nextSession) => {
+        eventSeen = true;
+        if (active) applySession(nextSession);
+      },
+    );
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      if (active && !eventSeen) applySession(existingSession);
+    }).catch(() => {
+      if (active && !eventSeen) applySession(null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      ++revision;
+      timers.forEach(clearTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {

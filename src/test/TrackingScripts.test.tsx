@@ -6,7 +6,8 @@ import {
   saveCookieConsent,
 } from "@/lib/cookieConsent";
 
-const { fromMock } = vi.hoisted(() => ({
+const { fromMock, productionHostMock } = vi.hoisted(() => ({
+  productionHostMock: vi.fn(() => true),
   fromMock: vi.fn(() => ({
     select: () => ({
       in: async () => ({
@@ -18,6 +19,8 @@ const { fromMock } = vi.hoisted(() => ({
     }),
   })),
 }));
+
+vi.mock("@/lib/trackingHost", () => ({ isProductionTrackingHost: productionHostMock }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
@@ -53,12 +56,21 @@ describe("TrackingScripts", () => {
   beforeEach(() => {
     installLocalStorage();
     fromMock.mockClear();
+    productionHostMock.mockReturnValue(true);
     window.localStorage.removeItem(COOKIE_CONSENT_STORAGE_KEY);
     window.dataLayer = [];
     window.gtag = vi.fn();
     window.fbq = undefined;
     window.__consent_mode_initialized = false;
     document.getElementById("sc-meta-pixel-12345678")?.remove();
+  });
+
+  it("does not initialize external tracking in a diagnostic preview", () => {
+    productionHostMock.mockReturnValue(false);
+    render(<TrackingScripts />);
+    expect(fromMock).not.toHaveBeenCalled();
+    expect(window.gtag).not.toHaveBeenCalled();
+    expect(document.getElementById("sc-meta-pixel-12345678")).toBeNull();
   });
 
   it("does not load Meta Pixel until marketing consent is granted", async () => {

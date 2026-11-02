@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
 import { fireGoogleAdsConversion, trackEvent } from "@/lib/trackingEvents";
+import { isControlledTestLead, isSavedContact } from "@/lib/leadSubmission";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio").max(100),
@@ -136,7 +137,7 @@ const CTASection = ({
       },
     });
 
-    if (error || (data && data.error)) {
+    if (error || !isSavedContact(data)) {
       const msg =
         (data?.error as string) ||
         "Error al enviar el mensaje. Inténtalo de nuevo.";
@@ -146,14 +147,16 @@ const CTASection = ({
       setSent(true);
       setForm(initialForm(defaultService));
       toast.success("¡Mensaje enviado correctamente!");
-      trackEvent("generate_lead", {
-        event_category: "contact",
-        event_label: trackingLabel,
-      });
-      fireGoogleAdsConversion({
-        eventLabel: trackingLabel,
-        transactionId: data?.id,
-      });
+      if (!isControlledTestLead(result.data.name, result.data.message)) {
+        trackEvent("generate_lead", {
+          event_category: "contact",
+          event_label: trackingLabel,
+        });
+        fireGoogleAdsConversion({
+          eventLabel: trackingLabel,
+          transactionId: data.id,
+        });
+      }
     }
     } catch {
       trackEvent("contact_form_error", { event_category: "funnel", event_label: "network" });

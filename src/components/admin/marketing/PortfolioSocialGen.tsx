@@ -1,3 +1,4 @@
+import {invokeAdminAi} from "@/lib/adminAiOperation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -39,14 +40,15 @@ const PortfolioSocialGen = () => {
     if (selected.size === 0) return toast.error("Selecciona al menos una imagen");
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-social-from-portfolio", {
-        body: { image_ids: Array.from(selected), format, overlay_text: overlay || undefined, save_to_bank: true },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      const ok = (data.results || []).filter((r: any) => !r.error).length;
-      const fail = (data.results || []).filter((r: any) => r.error).length;
-      toast.success(`Generadas ${ok}${fail ? ` · ${fail} fallaron` : ""} — guardadas en Banco de contenido`);
+      let completed=0;
+      for(const id of selected){
+        const {data,error}=await invokeAdminAi('generate-social-from-portfolio',{body:{image_ids:[id],format,overlay_text:overlay||undefined,save_to_bank:true}});
+        if(error)throw error;
+        if(data?.results?.[0]?.error)throw new Error(data.results[0].error);
+        if(!data?.results?.[0]?.url)throw new Error('La imagen no se guardó');
+        completed++;
+      }
+      toast.success(`${completed} imágenes guardadas en el Banco de contenido`);
       setSelected(new Set());
     } catch (e) {
       toast.error((e as Error).message);

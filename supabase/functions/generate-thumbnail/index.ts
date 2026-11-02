@@ -1,10 +1,12 @@
+import {asyncAdminOperation} from '../_shared/asyncAdminOperation.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAdmin } from "../_shared/adminAuth.ts";
 import {
-  callLovableChat,
+  callIndependentChat,
   extractImageUrl,
-  isLovableStatus,
-} from "../_shared/lovableAi.ts";
+  imageUrlToBytes,
+  isIndependentStatus,
+} from "../_shared/independentAi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +14,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-serve(async (req) => {
+serve(asyncAdminOperation("generate-thumbnail", async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,8 +23,6 @@ serve(async (req) => {
     const adminAuth = await requireAdmin(req, corsHeaders);
     if ("response" in adminAuth) return adminAuth.response;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const { prompt, width, height, numberResults } = await req.json();
     if (!prompt) throw new Error("Missing prompt");
@@ -39,13 +39,13 @@ serve(async (req) => {
     for (let i = 0; i < count; i++) {
       let data: any;
       try {
-        data = await callLovableChat(LOVABLE_API_KEY, {
+        data = await callIndependentChat({
           model: "google/gemini-2.5-flash-image",
           messages: [{ role: "user", content: enhancedPrompt }],
           modalities: ["image", "text"],
         });
       } catch (error) {
-        if (isLovableStatus(error, 429)) {
+        if (isIndependentStatus(error, 429)) {
           return new Response(
             JSON.stringify({
               error: "Rate limit exceeded, please try again later.",
@@ -56,11 +56,11 @@ serve(async (req) => {
             },
           );
         }
-        if (isLovableStatus(error, 402)) {
+        if (isIndependentStatus(error, 503)) {
           return new Response(
-            JSON.stringify({ error: "Payment required, please add credits." }),
+            JSON.stringify({ error: "OpenClaw temporalmente no disponible." }),
             {
-              status: 402,
+              status: 503,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
             },
           );
@@ -70,11 +70,12 @@ serve(async (req) => {
 
       const imageData = extractImageUrl(data);
 
-      if (imageData) {
-        images.push({
-          imageURL: imageData,
-          positivePrompt: prompt,
-        });
+      if(imageData){
+        const image=await imageUrlToBytes(imageData);
+        const path=`thumbnails/${crypto.randomUUID()}.${image.extension}`;
+        const {error:uploadError}=await adminAuth.supabase.storage.from('social-media-assets').upload(path,image.bytes,{contentType:image.contentType,upsert:false});
+        if(uploadError)throw uploadError;
+        images.push({imageURL:adminAuth.supabase.storage.from('social-media-assets').getPublicUrl(path).data.publicUrl,positivePrompt:prompt});
       }
     }
 
@@ -88,4 +89,4 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));

@@ -8,7 +8,9 @@ const corsHeaders = {
 // Secrets we want to surface in the admin panel. We never leak values,
 // only whether each one is currently configured.
 const TRACKED_SECRETS = [
-  "LOVABLE_API_KEY",
+  "GMAIL_CLIENT_ID",
+  "GMAIL_CLIENT_SECRET",
+  "GMAIL_REFRESH_TOKEN",
   "RESEND_API_KEY",
   "RUNWAY_API_KEY",
   "RUNWARE_API_KEY",

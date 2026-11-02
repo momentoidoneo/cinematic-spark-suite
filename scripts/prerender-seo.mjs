@@ -9,9 +9,7 @@ const projectRoot = path.resolve(
 const distDir = path.join(projectRoot, "dist");
 const siteUrl = "https://silviocosta.net";
 const defaultImage = `${siteUrl}/og-image.jpg`;
-const supabaseUrl =
-  process.env.VITE_SUPABASE_URL ||
-  "https://edpqywwtgoiktotxrqrz.supabase.co";
+
 
 const escapeHtml = (value = "") =>
   String(value)
@@ -66,6 +64,8 @@ async function loadEnvFile(filename) {
 
 await loadEnvFile(".env");
 await loadEnvFile(".env.local");
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+if (!supabaseUrl) throw new Error("VITE_SUPABASE_URL is required for prerender");
 
 const anonKey =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||

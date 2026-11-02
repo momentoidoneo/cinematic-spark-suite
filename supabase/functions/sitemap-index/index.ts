@@ -1,5 +1,5 @@
 // Sitemap index — links to segmented sitemaps
-const SUPABASE_FUNCTIONS = "https://edpqywwtgoiktotxrqrz.supabase.co/functions/v1";
+const SUPABASE_FUNCTIONS = `${Deno.env.get("SUPABASE_URL")}/functions/v1`;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",

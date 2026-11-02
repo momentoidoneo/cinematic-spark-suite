@@ -1,3 +1,4 @@
+import {invokeAdminAi} from "@/lib/adminAiOperation";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -54,6 +55,7 @@ type GeneratedSocialResult = {
   bestTimeToPost?: string;
   contentTips?: string[];
   generatedImageUrl?: string;
+  imageGenerationNotice?: string;
 };
 
 type RepurposeResult = GeneratedSocialResult & {
@@ -396,6 +398,7 @@ function AIContentGenerator() {
                 {result.title && <div><Label className="text-xs text-muted-foreground">Título</Label><p className="font-medium">{result.title}</p></div>}
                 {result.hook && <div><Label className="text-xs text-muted-foreground">Hook</Label><p className="text-sm text-primary font-medium">"{result.hook}"</p></div>}
                 {result.caption && <div><Label className="text-xs text-muted-foreground">Caption</Label><p className="text-sm whitespace-pre-wrap">{result.caption}</p></div>}
+                {result.imageGenerationNotice && <p className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm" role="status">{result.imageGenerationNotice}</p>}
                 {result.generatedImageUrl && (
                   <div>
                     <Label className="text-xs text-muted-foreground">Imagen generada</Label>
@@ -1026,12 +1029,12 @@ function VideoTab() {
     if (!thumbPrompt) return toast.error("Escribe un prompt para la miniatura");
     setIsGeneratingThumb(true);
     try {
-    const { data, error } = await supabase.functions.invoke("generate-thumbnail", {
-        body: { prompt: thumbPrompt, width: thumbWidth, height: thumbHeight, numberResults: 2 },
-      });
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
-      setGeneratedThumbs(prev => [...(data.images || []), ...prev]);
+      for(let i=0;i<2;i++){
+        const {data,error}=await invokeAdminAi('generate-thumbnail',{body:{prompt:thumbPrompt,width:thumbWidth,height:thumbHeight,numberResults:1}});
+        if(error)throw error;
+        if(!data?.images?.length)throw new Error('No se recibió la miniatura');
+        setGeneratedThumbs(prev=>[...data.images,...prev]);
+      }
       toast.success("Miniaturas generadas");
     } catch (e: unknown) {
       toast.error(errorMessage(e, "Error generando miniatura"));

@@ -74,7 +74,7 @@ const sanitizePayload = (payload: unknown): WeoPayload => {
       country: cleanText(client.country, 2).toUpperCase() || "PT",
     },
     ordercart: ordercart
-      .map((item) => {
+      .map((item): WeoLineItem => {
         const tax = Number(item.tax) || 0;
         const rawTaxReason = cleanText(item.taxreason, 40).toUpperCase();
         return {

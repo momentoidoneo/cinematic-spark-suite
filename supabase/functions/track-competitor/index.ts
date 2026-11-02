@@ -1,6 +1,7 @@
+import { requireAdmin } from "../_shared/adminAuth.ts";
 // Firecrawl-powered competitor tracker: scrapes URL, stores snapshot, detects changes.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
-import { callLovableChat, getAssistantText } from "../_shared/lovableAi.ts";
+import { callIndependentChat, getAssistantText } from "../_shared/independentAi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,10 +23,12 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const adminAuth = await requireAdmin(req, corsHeaders);
+    if ("response" in adminAuth) return adminAuth.response;
+
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY not configured");
 
     const { competitor_id, mode = "manual" } = await req.json();
@@ -83,9 +86,9 @@ Deno.serve(async (req) => {
 
         // AI summary if changes
         let changesSummary: string | null = null;
-        if (hasChanges && LOVABLE_API_KEY && lastSnap?.markdown) {
+        if (hasChanges && lastSnap?.markdown) {
           try {
-            const aiJson = await callLovableChat(LOVABLE_API_KEY, {
+            const aiJson = await callIndependentChat({
               model: "google/gemini-2.5-flash",
               messages: [
                 {
@@ -96,8 +99,8 @@ Deno.serve(async (req) => {
                 {
                   role: "user",
                   content: `ANTERIOR:\n${
-                    lastSnap.markdown.slice(0, 8000)
-                  }\n\nACTUAL:\n${markdown.slice(0, 8000)}`,
+                    lastSnap.markdown.slice(0, 7000)
+                  }\n\nACTUAL:\n${markdown.slice(0, 7000)}`,
                 },
               ],
             });

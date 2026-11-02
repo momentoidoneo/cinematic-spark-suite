@@ -37,9 +37,11 @@ describe("AI quote lead capture", () => {
 
   it("schedules the owner email after saving the lead", () => {
     expect(edgeSource).toContain(
-      "sendNotificationEmails(body, quote, requestId)",
+      'deliverLeadNotice("quote", requestId)',
     );
-    expect(edgeSource).toContain('"silvio@silviocosta.net"');
+    expect(edgeSource).toContain("ownerNotifications.ts");
+    const mailSource = readFileSync(resolve(process.cwd(), "supabase/functions/_shared/gmailDirect.ts"), "utf8");
+    expect(mailSource).toContain('"silvio@silviocosta.net"');
     expect(edgeSource).toContain("EdgeRuntime.waitUntil(emailPromise)");
   });
 

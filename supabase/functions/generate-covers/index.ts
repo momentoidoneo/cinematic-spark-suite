@@ -1,11 +1,13 @@
+import {asyncAdminOperation} from '../_shared/asyncAdminOperation.ts';
+import { requireAdmin } from "../_shared/adminAuth.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
-  callLovableChat,
+  callIndependentChat,
   extractImageUrl,
   imageUrlToBytes,
-  isLovableStatus,
-} from "../_shared/lovableAi.ts";
+  isIndependentStatus,
+} from "../_shared/independentAi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -133,7 +135,6 @@ function buildPrompt(
 
 async function generateCoversForItems(
   supabase: any,
-  LOVABLE_API_KEY: string,
   items: any[],
   type: "subcategory" | "category",
   styleHint?: string,
@@ -146,7 +147,7 @@ async function generateCoversForItems(
     try {
       console.log(`Generating ${type} cover for: ${item.name}`);
 
-      const aiData = await callLovableChat(LOVABLE_API_KEY, {
+      const aiData = await callIndependentChat({
         model: "google/gemini-2.5-flash-image",
         messages: [{
           role: "user",
@@ -168,7 +169,7 @@ async function generateCoversForItems(
       const image = await imageUrlToBytes(imageUrl);
 
       const folder = type === "category" ? "categories" : "subcategories";
-      const filePath = `covers/${folder}/ai-${item.id}.${image.extension}`;
+      const filePath = `covers/${folder}/ai-${item.id}-${crypto.randomUUID()}.${image.extension}`;
 
       const { error: uploadErr } = await supabase.storage
         .from("portfolio")
@@ -194,16 +195,17 @@ async function generateCoversForItems(
       const table = type === "category"
         ? "portfolio_categories"
         : "portfolio_subcategories";
-      await supabase.from(table).update({ cover_image: publicUrl }).eq(
+      const {error:saveError}=await supabase.from(table).update({ cover_image: publicUrl }).eq(
         "id",
         item.id,
       );
 
+      if(saveError)throw new Error("No se pudo guardar la portada");
       results.push({ id: item.id, name: item.name, status: "ok" });
       console.log(`✓ ${item.name}`);
       await new Promise((r) => setTimeout(r, 2000));
     } catch (e) {
-      if (isLovableStatus(e, 429)) {
+      if (isIndependentStatus(e, 429)) {
         await new Promise((r) => setTimeout(r, 5000));
       }
       results.push({
@@ -217,14 +219,15 @@ async function generateCoversForItems(
   return results;
 }
 
-serve(async (req) => {
+serve(asyncAdminOperation("generate-covers", async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const adminAuth = await requireAdmin(req, corsHeaders);
+    if ("response" in adminAuth) return adminAuth.response;
+
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -280,7 +283,6 @@ serve(async (req) => {
 
     const results = await generateCoversForItems(
       supabase,
-      LOVABLE_API_KEY,
       items,
       type,
       styleHint,
@@ -303,4 +305,4 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));

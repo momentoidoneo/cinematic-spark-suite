@@ -1,0 +1,19 @@
+[Unit]
+Description=silviocosta.net isolated OpenClaw quote worker
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/kevin/apps/silviocosta-net/openclaw-quote-worker
+ExecStart=/home/kevin/.local/share/node-v24.22.1-linux-x64/bin/node /home/kevin/apps/silviocosta-net/openclaw-quote-worker/worker.mjs
+Restart=on-failure
+RestartSec=15
+UMask=0077
+NoNewPrivileges=true
+# Native infer must see the live gateway ownership lock in the shared temp namespace.
+# All project prompts/artifacts use the private 0700 project directory instead.
+PrivateTmp=false
+TimeoutStopSec=240
+
+[Install]
+WantedBy=default.target

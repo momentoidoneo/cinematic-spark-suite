@@ -176,3 +176,29 @@
     display: none;
   }
 }
+
+
+/* Shared tracks keep every pack section and feature row aligned without truncating text. */
+.pack-grid-preview {
+  --pack-feature-count: 4;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(82vw, 340px);
+}
+.pack-card {
+  display: grid;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+  min-width: 0;
+}
+.pack-card-preview { grid-row: span 9; }
+.pack-card-catalog { grid-row: span calc(var(--pack-feature-count) + 4); }
+.pack-features {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span var(--pack-feature-count);
+  row-gap: 0;
+}
+.pack-card > a { align-self: end; }
+@media (min-width: 768px) {
+  .pack-grid-preview { grid-auto-flow: row; grid-auto-columns: auto; }
+}

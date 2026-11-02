@@ -1,3 +1,4 @@
+import { OwnerNotificationStatus } from "@/components/admin/OwnerNotificationStatus";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -248,6 +249,7 @@ const AdminMessages = () => {
 
   return (
     <div className="space-y-4">
+      <OwnerNotificationStatus kind="contact" leadId={selectedId} />
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>

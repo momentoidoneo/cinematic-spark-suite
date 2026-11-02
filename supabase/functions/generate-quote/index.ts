@@ -1,12 +1,10 @@
+import { deliverLeadNotice } from "../_shared/ownerNotifications.ts";
 import {
   createClient,
   type SupabaseClient,
 } from "jsr:@supabase/supabase-js@2";
-import {
-  callLovableChat,
-  getAssistantText,
-  parseJsonFromText,
-} from "../_shared/lovableAi.ts";
+import { callOpenClawQuote } from "../_shared/openclawQuote.ts";
+import { consistentQuoteCopy } from "./presentation.ts";
 import {
   isValidQuoteLeadEmail,
   isValidQuoteLeadName,
@@ -95,7 +93,7 @@ interface ERPSettingsRow {
   payment_terms?: string | null;
 }
 
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "openclaw/silviocosta-net";
 
 const EU_COUNTRY_CODES = new Set([
   "AT",
@@ -281,7 +279,7 @@ const buildSystemPrompt = (pricingReferences: PricingReference[]) => {
       )
       .join("\n");
 
-  return `Eres el asistente de presupuestos de Silvio Costa Photography (silviocosta.net), estudio profesional de fotografía, vídeo, dron, tours virtuales Matterport, eventos y renders 3D con base en Portugal/España.
+  return `Eres el asistente de presupuestos de Silvio Costa Photography (silviocosta.net), estudio profesional de fotografía, vídeo, dron, tours virtuales Matterport, eventos y renders 3D con base de trabajo en Madrid y cobertura según el proyecto.
 
 Tu tarea: dada la información del cliente, generar un presupuesto orientativo en EUR con un rango (mínimo-máximo), explicar qué incluye y qué factores hacen variar el precio. Usa tono profesional, cercano y conciso.
 
@@ -628,8 +626,6 @@ const generateWithAI = async (
   body: QuoteRequest,
   fallback: QuoteResult,
 ): Promise<QuoteResult> => {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) return fallback;
 
   const userPrompt = `Cliente solicita presupuesto:
   - Servicios (${body.services.length}): ${body.services.join("; ")}
@@ -642,34 +638,22 @@ ${body.services.map((service) =>
 - País fiscal: ${body.countryCode || "PT"} ${
     body.countryName ? `· ${body.countryName}` : ""
   }
-- NIF/CIF/VAT: ${body.vatNumber || "No indicado"}
 ${body.details ? `- Detalles adicionales: ${body.details}` : ""}
 
 Genera el presupuesto orientativo en JSON.`;
 
   try {
-    const data = await callLovableChat(LOVABLE_API_KEY, {
-      model: MODEL,
-      messages: [
-        {
-          role: "system",
-          content: buildSystemPrompt(fallback.pricingReferences || []),
-        },
-        { role: "user", content: userPrompt },
-      ],
-      response_format: { type: "json_object" },
-    });
-    const content = getAssistantText(data) || "{}";
-    const normalized = normalizeQuote(
-      parseJsonFromText(content, "object"),
-      fallback,
-    );
-    if (body.services.length <= 1) return normalized;
+    const data = await callOpenClawQuote([
+      { role: "system", content: buildSystemPrompt(fallback.pricingReferences || []) },
+      { role: "user", content: userPrompt },
+    ]);
+    const normalized = normalizeQuote(data, fallback);
+    if (body.services.length <= 1) return consistentQuoteCopy(normalized, fallback);
 
-    return {
+    return consistentQuoteCopy({
       ...normalized,
       ...reconcileMultiserviceRange(body.services, normalized, fallback),
-    };
+    }, fallback);
   } catch (error) {
     console.error("[generate-quote] AI fallback:", error);
     return fallback;
@@ -703,7 +687,7 @@ const saveQuoteRequest = async (body: QuoteRequest, quote: QuoteResult) => {
     response_payload: quote,
     source: "smart_quoter",
     ai_provider: quote.source === "ai"
-      ? "lovable-ai-gateway"
+      ? "openclaw-silvio-server"
       : "internal-estimator",
     ai_model: quote.source === "ai"
       ? `${MODEL}${
@@ -1079,132 +1063,6 @@ const createCommercialQuoteDraft = async (
   }
 };
 
-const ADMIN_EMAIL = Deno.env.get("ADMIN_NOTIFICATION_EMAIL") ||
-  "silvio@silviocosta.net";
-const GMAIL_GATEWAY =
-  "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
-
-const buildRawEmail = (
-  opts: { to: string; subject: string; html: string; replyTo?: string },
-) => {
-  const headers = [
-    `To: ${opts.to}`,
-    `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(opts.subject)))}?=`,
-    "MIME-Version: 1.0",
-    'Content-Type: text/html; charset="UTF-8"',
-    "Content-Transfer-Encoding: 7bit",
-  ];
-  if (opts.replyTo) headers.push(`Reply-To: ${opts.replyTo}`);
-  const message = headers.join("\r\n") + "\r\n\r\n" + opts.html;
-  return btoa(unescape(encodeURIComponent(message)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-};
-
-const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-
-const sanitizeEmailHeader = (value: string) =>
-  value.replace(/[\r\n]+/g, " ").trim();
-
-const sendNotificationEmails = async (
-  body: QuoteRequest,
-  quote: QuoteResult,
-  requestId: string | null,
-) => {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  const GOOGLE_MAIL_API_KEY = Deno.env.get("GOOGLE_MAIL_API_KEY");
-  if (!LOVABLE_API_KEY || !GOOGLE_MAIL_API_KEY) {
-    console.log(
-      "[generate-quote] Gmail connector not configured, skipping email",
-    );
-    return;
-  }
-
-  const safeName = escapeHtml(body.name);
-  const safeEmail = escapeHtml(body.email);
-  const safePhone = escapeHtml(body.phone || "");
-  const safeService = escapeHtml(body.service);
-  const safeScope = escapeHtml(body.scope);
-  const safeLocation = escapeHtml(body.location);
-  const safeUrgency = escapeHtml(body.urgency);
-  const safeDetails = escapeHtml(body.details || "—");
-  const safeVat = escapeHtml(body.vatNumber || "—");
-  const safeCountry = escapeHtml(`${body.countryCode || "PT"} · ${
-    body.countryName || countryLabel(body.countryCode || "PT")
-  }`);
-  const rangeText = `${quote.min} – ${quote.max} €`;
-
-  const html = `
-    <div style="font-family:Inter,Arial,sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#0F172A;color:#fff;">
-      <h2 style="color:#fff;margin:0 0 8px;">Nueva solicitud del Cotizador IA</h2>
-      <p style="color:#94A3B8;margin:0 0 20px;">Recibida desde silviocosta.net</p>
-      <div style="background:#1E293B;border-radius:8px;padding:16px;margin:0 0 16px;border-left:3px solid #5EEAD4;">
-        <p style="margin:0;color:#94A3B8;font-size:13px;">Presupuesto orientativo IA</p>
-        <p style="margin:6px 0 0;color:#5EEAD4;font-size:22px;font-weight:700;">${rangeText}</p>
-        <p style="margin:8px 0 0;color:#CBD5E1;font-size:14px;">${
-    escapeHtml(quote.summary)
-  }</p>
-      </div>
-      <table style="width:100%;border-collapse:collapse;background:#1E293B;border-radius:8px;overflow:hidden;">
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;width:140px;">Cliente</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeName}</td></tr>
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Email</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="mailto:${safeEmail}">${safeEmail}</a></td></tr>
-        ${
-    body.phone
-      ? `<tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Teléfono</td><td style="padding:12px;border-bottom:1px solid #334155;"><a style="color:#5EEAD4;" href="tel:${safePhone}">${safePhone}</a></td></tr>`
-      : ""
-  }
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">País fiscal</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeCountry}</td></tr>
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">NIF/CIF/VAT</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeVat}</td></tr>
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Servicio</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeService}</td></tr>
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Alcance</td><td style="padding:12px;border-bottom:1px solid #334155;white-space:pre-wrap;">${safeScope}</td></tr>
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Ubicación</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeLocation}</td></tr>
-        <tr><td style="padding:12px;border-bottom:1px solid #334155;color:#94A3B8;">Urgencia</td><td style="padding:12px;border-bottom:1px solid #334155;">${safeUrgency}</td></tr>
-        <tr><td style="padding:12px;color:#94A3B8;vertical-align:top;">Detalles</td><td style="padding:12px;white-space:pre-wrap;">${safeDetails}</td></tr>
-      </table>
-      ${
-    requestId
-      ? `<p style="margin-top:20px;color:#94A3B8;font-size:13px;">ID de solicitud: <code style="color:#5EEAD4;">${requestId}</code></p>`
-      : ""
-  }
-      <p style="margin-top:8px;color:#94A3B8;font-size:13px;">Responde directamente a este email o entra al panel de administración.</p>
-    </div>
-  `;
-
-  const raw = buildRawEmail({
-    to: ADMIN_EMAIL,
-    subject: sanitizeEmailHeader(
-      `🤖 Nueva solicitud cotizador IA — ${body.service}`,
-    ),
-    html,
-    replyTo: body.email,
-  });
-
-  const res = await fetch(`${GMAIL_GATEWAY}/users/me/messages/send`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": GOOGLE_MAIL_API_KEY,
-    },
-    body: JSON.stringify({ raw }),
-  });
-  if (!res.ok) {
-    const txt = await res.text();
-    console.error(
-      `[generate-quote] Gmail send failed [${res.status}]: ${
-        txt.slice(0, 300)
-      }`,
-    );
-  }
-};
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -1216,7 +1074,7 @@ Deno.serve(async (req) => {
   try {
     const raw = await req.json();
     const legacyService = cleanText(raw.service, 120);
-    const requestedServices = Array.isArray(raw.services)
+    const requestedServices: string[] = Array.isArray(raw.services)
       ? raw.services.map((service: unknown) => cleanText(service, 120)).filter(
         Boolean,
       )
@@ -1224,7 +1082,7 @@ Deno.serve(async (req) => {
     if (requestedServices.length === 0 && legacyService) {
       requestedServices.push(legacyService);
     }
-    const services = [...new Map(requestedServices.map((service: string) => [
+    const services = [...new Map<string, string>(requestedServices.map((service) => [
       normalize(service),
       service,
     ])).values()].slice(0, 8);
@@ -1271,6 +1129,14 @@ Deno.serve(async (req) => {
       }, 400);
     }
 
+    const limiter = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const emailHash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body.email)))).map(b=>b.toString(16).padStart(2,'0')).join('');
+    const {data: allowed,error: limitError}=await limiter.rpc('allow_web_request',{p_bucket:`quote-email:${emailHash}`,p_limit:3});
+    if(limitError) return jsonResponse({error:'Servicio temporalmente no disponible'},503);
+    if(!allowed) return jsonResponse({error:'Has solicitado varios presupuestos. Contacta con nosotros para concretar tu proyecto.'},429);
+    const {data: capacity,error: capacityError}=await limiter.rpc('allow_web_request',{p_bucket:'quote-global',p_limit:120});
+    if(capacityError || !capacity) return jsonResponse({error:'Servicio temporalmente ocupado. Contacta con nosotros.'},503);
+
     const pricingCatalog = await loadPricingCatalog();
     const adminPricingReferences = matchPricingReferences(body, pricingCatalog);
     const pricingReferences = adminPricingReferences.length > 0
@@ -1285,11 +1151,16 @@ Deno.serve(async (req) => {
     }
 
     const requestId = await saveQuoteRequest(body, quote);
+    if (!requestId) {
+      return jsonResponse({
+        error: "No se pudo guardar la solicitud. Inténtalo de nuevo o contacta por WhatsApp.",
+      }, 503);
+    }
     await createDronePermitRequest(body, quote, requestId);
     await createCommercialQuoteDraft(body, quote, requestId);
 
     // Notificación admin (no bloquea la respuesta al usuario)
-    const emailPromise = sendNotificationEmails(body, quote, requestId).catch((
+    const emailPromise = deliverLeadNotice("quote", requestId).catch((
       err,
     ) => console.error("[generate-quote] Notification error:", err));
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureDataLayer, setGoogleAdsConversion } from "@/lib/trackingEvents";
+import { isProductionTrackingHost } from "@/lib/trackingHost";
 import {
   COOKIE_CONSENT_UPDATED_EVENT,
   initializeConsentMode,
@@ -69,6 +70,7 @@ const grantMetaPixelConsent = (pixelId: string) => {
 
 const TrackingScripts = () => {
   useEffect(() => {
+    if (!isProductionTrackingHost(window.location.hostname)) return;
     let active = true;
     let removeConsentListener: (() => void) | undefined;
 

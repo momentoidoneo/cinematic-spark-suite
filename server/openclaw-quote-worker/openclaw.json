@@ -1,0 +1,56 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "openai/gpt-6.1-sol",
+        "fallbacks": []
+      },
+      "models": {
+        "openai/gpt-6.1-sol": {
+          "agentRuntime": {
+            "id": "codex"
+          },
+          "codeMode": false
+        }
+      },
+      "skipBootstrap": true,
+      "systemAgent": {
+        "agentId": "main"
+      }
+    }
+  },
+  "auth": {
+    "order": {
+      "openai": [
+        "openai:momentoidoneo@gmail.com"
+      ]
+    },
+    "profiles": {
+      "openai:momentoidoneo@gmail.com": {
+        "provider": "openai",
+        "mode": "oauth",
+        "email": "momentoidoneo@gmail.com"
+      }
+    }
+  },
+  "tools": {
+    "profile": "minimal",
+    "deny": [
+      "*"
+    ],
+    "codeMode": false
+  },
+  "plugins": {
+    "enabled": true,
+    "allow": [
+      "openai",
+      "codex"
+    ]
+  },
+  "browser": {
+    "enabled": false
+  },
+  "skills": {
+    "allowBundled": []
+  }
+}

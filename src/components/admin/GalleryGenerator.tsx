@@ -1,3 +1,4 @@
+import {invokeAdminAi} from "@/lib/adminAiOperation";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Loader2, ImagePlus } from "lucide-react";
@@ -27,16 +28,14 @@ const GalleryGenerator = ({ subcategoryId, subcategoryName, categoryName, onComp
     toast.info(`Generando ${count} imágenes con IA para "${subcategoryName}"… esto puede tardar unos minutos.`);
 
     try {
-      const { data, error } = await supabase.functions.invoke("generate-gallery", {
-        body: {
-          subcategory_id: subcategoryId,
-          style: style.trim() || undefined,
-          context: context.trim() || undefined,
-          count,
-        },
-      });
-      if (error) throw error;
-      toast.success(data?.message || "Imágenes generadas");
+      let completed=0;
+      for(let i=0;i<count;i++){
+        const {data,error}=await invokeAdminAi('generate-gallery',{body:{subcategory_id:subcategoryId,style:style.trim()||undefined,context:context.trim()||undefined,count:1,variation:i+1}});
+        if(error)throw error;
+        if(data?.results?.[0]?.status!=='ok')throw new Error(data?.results?.[0]?.status||'La imagen no se guardó');
+        completed++;
+      }
+      toast.success(`${completed} imágenes generadas y guardadas`);
       onComplete();
     } catch (e: any) {
       toast.error("Error generando galería: " + (e.message || "desconocido"));
@@ -87,7 +86,7 @@ const GalleryGenerator = ({ subcategoryId, subcategoryName, categoryName, onComp
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Cada imagen tarda unos segundos. Recomendado: 4-8 imágenes.
+                Cada imagen puede tardar varios minutos. Se procesan una a una y se conservan las completadas.
               </p>
             </div>
 

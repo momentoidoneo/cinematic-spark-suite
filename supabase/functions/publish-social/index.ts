@@ -174,7 +174,7 @@ serve(async (req) => {
       }
       const duration = Date.now() - startTime;
       if (result.success) {
-        await supabase.from("social_publish_queue").update({ status: "published", published_at: new Date().toISOString(), platform_post_id: result.postId, platform_post_url: result.postUrl, platform_response: result }).eq("id", queueId);
+        await supabase.from("social_publish_queue").update({ status: "published", published_at: new Date().toISOString(), platform_post_id: result.postId, platform_post_url: "postUrl" in result ? result.postUrl : null, platform_response: result }).eq("id", queueId);
         if (queueItem.content_id) { await supabase.from("social_content").update({ status: "published" }).eq("id", queueItem.content_id); }
       } else {
         const shouldRetry = (queueItem.attempt_count || 0) + 1 < (queueItem.max_attempts || 3);
