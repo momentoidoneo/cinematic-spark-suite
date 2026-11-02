@@ -10,3 +10,12 @@ Scope: this project only; production https://silviocosta.net.
 - Backend Supabase `edpqywwtgoiktotxrqrz` is accessible through the exact Lovable project (owner silvio@silviocosta.net); direct Supabase connector permission is separate. Verify deployed function behavior, not just repository source.
 - Google Ads: customer 725-747-3398, login momentoidoneo@gmail.com. No campaign activation or budget changes without specific approval.
 - Preserve existing uncommitted work. See docs/incident-recovery-2026-09-08.md before further changes.
+
+## Current production after independent migration (2026-11-02; supersedes historical backend notes)
+
+- Production backend is independent Supabase `sffgaplkqmmnikqhhftx` in organization `momentoidoneo`. Old `edpqywwtgoiktotxrqrz` / Lovable project is recovery-only; do not use it for new deployments.
+- Current code is in `/Users/silviocosta_m5/Documents/Silvio Projects/cinematic-spark-suite/supabase-migration`, branch `codex/supabase-independent-20261102`. The original root working copy was preserved; do not publish its older `.env` or overwrite its uncommitted work. Reconcile with the verified release first.
+- Verified Cloudflare release `54f639dc-2a68-4121-9369-a6c8f71b29ad`, app commit `44413b128a4c4d9850586cc20b7995cb6e57c0f1`. Git builds remain disconnected. Verify live state again before a future release.
+- AI text and images use dedicated OpenClaw agent `silviocosta-net` on silvio-server with OpenAI OAuth. Gmail direct sends owner notices. Never add API-key fallbacks or reuse sibling credentials.
+- Source backup and rollback release remain intact. Reconcile late source writes and destination-only leads before rollback. Never replay historical notifications or overwrite the advanced quote counter.
+- Read the migration report in the release worktree for evidence and limits. No Ads changes or recurring monitor were authorized by this migration.

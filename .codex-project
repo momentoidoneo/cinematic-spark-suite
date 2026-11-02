@@ -19,5 +19,11 @@ policy=isolated-project
 deployment_provider=cloudflare
 cloudflare_worker=silviocosta-net
 lovable_operations=authorized-2026-09-09
-supabase_project_id=edpqywwtgoiktotxrqrz
+supabase_project_id=sffgaplkqmmnikqhhftx
 automatic_git_deployments=disconnected-2026-09-08
+
+independent_backend_cutover=2026-11-02
+legacy_supabase_project_id=edpqywwtgoiktotxrqrz
+active_release_worktree=/Users/silviocosta_m5/Documents/Silvio Projects/cinematic-spark-suite/supabase-migration
+ai_provider=openclaw-silvio-server
+owner_notifications=gmail-direct-oauth

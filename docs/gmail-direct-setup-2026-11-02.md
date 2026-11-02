@@ -70,3 +70,9 @@ El usuario mostró «No hay llaves de acceso disponibles para localhost». No se
 - Evidencia privada sin secretos: `.migration-private/2026-11-02/target-contact-SC-ADS-20261102-03.json` y `gmail-oauth/gmail.env.status.json`. Captura: `/tmp/silviocosta-gmail-prueba-recibida-20261102.png`.
 - El envío está demostrado, pero la función todavía no persiste el ID devuelto por Gmail ni el estado de notificación; los fallos solo se registran en logs. Corregir antes del corte.
 - La web pública sigue conectada al origen. Pendientes IA OpenClaw, funciones administrativas/auth, delta de datos, pruebas integrales y corte reversible.
+
+## Estado actual — 2026-11-02, 17:53 Europe/Madrid
+
+El apartado anterior es histórico. La web pública ya utiliza el backend independiente. El registro durable owner_notifications conserva estado, intentos, identificador Gmail y errores; los resultados ambiguos no se reenvían automáticamente. El panel muestra aceptación por Gmail sin confundirla con recepción.
+
+Tras el cambio público se hicieron dos envíos únicos y claramente marcados como pruebas: contacto SC-ADS-20261102-08 recibido17:43 y cotizador SC-ADS-20261102-09 recibido17:44. Ambos comprobados en Recibidos de silvio@silviocosta.net, además de estado sent/attempts1 en base de datos. La revisión de bandeja se realizó por navegador, sin ampliar los permisos del backend. No se utilizaron credenciales de otros proyectos ni el conector Gmail de una cuenta distinta.

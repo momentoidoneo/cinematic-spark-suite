@@ -1,73 +1,45 @@
-# Welcome to your Lovable project
+# Silvio Costa - silviocosta.net
 
-## Project info
+Commercial website and admin panel. Isolated project: `cinematic-spark-suite`.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Active production (2026-11-02)
 
-## How can I edit this code?
+- Domain registered at IONOS; frontend manually deployed to Cloudflare Worker `silviocosta-net`.
+- Independent Supabase backend: `sffgaplkqmmnikqhhftx`, organization `momentoidoneo`. Database, auth, Storage and functions no longer require Lovable Cloud.
+- Text, quotes and images: dedicated OpenClaw agent `silviocosta-net` on silvio-server using OpenAI OAuth. No OpenAI API key or Lovable gateway in these paths.
+- Owner contact/quote notifications: Gmail direct, send-only OAuth and a durable delivery ledger. No Gmail read permission in the backend.
+- Admin: https://silviocosta.net/admin. After migration, sign in again with the existing password if asked.
+- Google Ads was not paused or edited. Marked `SC-ADS-YYYYMMDD-NN` test leads are excluded from advertising conversions and real-lead totals.
 
-There are several ways of editing your application.
+Old Lovable backend `edpqywwtgoiktotxrqrz` is retained for recovery and reconciliation of visitors with older pages still open. Do not delete it or reconnect automatic publishing.
 
-**Use Lovable**
+## Development and checks
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+React, TypeScript, Vite, Tailwind and shadcn/ui. `.env` contains public Supabase configuration only; never add private credentials.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm ci
 npm run dev
+npx vitest run --config vitest.migration.config.ts
+npx tsc -p tsconfig.app.json --noEmit
+npm run build
+npm run smoke:site
 ```
 
-**Edit a file directly in GitHub**
+Development hosts do not load external measurement tags. Do not generate real leads or Ads conversions for testing.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Release and recovery
 
-**Use GitHub Codespaces**
+Read `AGENTS.md` first. Verify the Cloudflare identity, live version, commit, worktree, backend and trigger chain before deployment. Git builds remain disconnected: a push does not publish the website.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Migration app commit: `44413b128a4c4d9850586cc20b7995cb6e57c0f1`.
+Cloudflare release: `54f639dc-2a68-4121-9369-a6c8f71b29ad`.
+Previous release: `fcab550c-6443-43d4-8297-a64e8962e84e`.
 
-## What technologies are used for this project?
+The previous release and private backup remain available. Reconcile destination-only leads before rollback: reverting the frontend does not move database records.
 
-This project is built with:
+Do not blindly run `supabase db push`: historical filenames and applied timestamps can differ by seconds. Never overwrite new auth sessions with old sessions or replay historical notification triggers.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Evidence and limitations: [migration report](docs/supabase-independent-migration-2026-11-02.md), [direct Gmail](docs/gmail-direct-setup-2026-11-02.md).
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Optional Runway video, scraping, newsletter, invoicing and social-publishing modules need their own authorized provider access. Deployed code does not establish an operational provider connection. Do not purchase or connect providers without specific approval.

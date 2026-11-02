@@ -1,6 +1,8 @@
 # silviocosta.net — independent Supabase migration checkpoint
 
-**Status: data staging verified; NOT cut over; NOT yet independent in production.**
+**Current status (2026-11-02, 17:53 Europe/Madrid): independent backend LIVE.**
+
+Production Cloudflare version `54f639dc-2a68-4121-9369-a6c8f71b29ad` serves Supabase `sffgaplkqmmnikqhhftx`. Public contact and quote tests persisted and both notices were received in Gmail. OpenClaw OAuth text, image generation and image editing verified; authenticated admin tested against the new backend. No Ads campaign change or test conversion. Source is retained for recovery, not the currently served application. Earlier checkpoints below are historical and are superseded by the final acceptance section.
 
 Checkpoint: 2026-11-02, Europe/Madrid. Scope: cinematic-spark-suite only.
 
@@ -287,3 +289,41 @@ OpenClaw on silvio-server for AI, direct Gmail for owner notifications, exact si
 - Cloudflare UI autenticada cuenta momentoidoneo y worker exacto: Builds muestra Git repository / Connect; desconectado. Sin cron, queues ni email routing para este worker. No .github/workflows ni en checkout ni en origin/main consultado. CLI confirma misma cuenta y versión fcab550c-6443-43d4-8297-a64e8962e84e como última pública.
 - origin/main avanzó de bd055fe a b6bcb4459bbaf77874e32b2b12d5a323009b3bb8 solo por tres archivos de alineación de packs; esos archivos locales coinciden exactamente. Integrar historia sin descartar cambios ni reconectar Git automático. Copia rollback SHA256977b06bee79198a3e4f6c092fc2f972c51986d5b5e9f22f9901d0cf5e24a06d1 verificada.
 - Próximo paso: cambio manual de frontend, pruebas técnicas finales sin conversiones Ads, conciliación de escrituras tardías. No declarar atribución publicitaria individual demostrada.
+
+## Final acceptance — 2026-11-02, 17:53 Europe/Madrid
+
+### Goal
+Complete the authorized independent Supabase migration without losing source data or pausing Ads, using OpenClaw/OpenAI OAuth for text and images and Gmail direct for owner notifications.
+
+### Instructions
+Exact project only. Do not ask again about the image provider; the user selected OpenClaw. No new paid provider, API-key fallback, Ads edits, recurring monitor, source deletion or automatic Git deployment. Engram runtime remains unregistered; this operational checkpoint is not an attributed memory write.
+
+### Discoveries
+- New Supabase sessions are origin-scoped; existing credentials work in the authenticated preview, but the first production admin visit may require signing in again. Do not transfer sessions or impersonate the user.
+- Git remote main had the already-deployed pack alignment commit; it was reconciled without overwriting the original dirty root. Root marker and safeguards now point to the active release worktree, while root application edits remain preserved.
+- GTM published container version7 maps lead_conversion to Ads label ss0VCISFlIAbEJmNtYUp, WhatsApp to XwCLCLeq39gcEJmNtYUp and phone to bOYUCLqq39gcEJmNtYUp, all AW-11017209497. Target settings match. This verifies wiring, not a real customer's Google Ads attribution or primary/secondary configuration. No GTM edits.
+- The Gmail connector is linked to a different account: it was not used to search/read mail. All receipt checks used the existing browser session explicitly verified as the site owner.
+
+### Accomplished
+- Cloudflare manual cutover succeeded, release54f639dc-2a68-4121-9369-a6c8f71b29ad, application commit44413b128a4c4d9850586cc20b7995cb6e57c0f1. Git builds remain disconnected. 170 tests/26files, TypeScript app/node and build passed; public smoke passes pages, sitemap, admin routes, GTM, robots,301,404 and intentional410.
+- Public bundle /assets/index-CTxzPG5e.js SHA256ffcec5e10aca92a7a5c4ee81a3f1fd4d2a54ad5b0ed67e1ffe23fe284eb53d08 contains target backend and no source backend. Compiled HTML/JS has no old backend or Lovable AI gateway reference.
+- Public browser contact SC-ADS-20261102-08 saved once as62bed736-8103-4cee-aec6-9bc5660886c7; notification sent once and Inbox receipt verified17:43.
+- Public browser multiservice quote SC-ADS-20261102-09 saved once as82f8ce0f-6767-4c62-bd79-d90a325929f0; actual OpenClaw AI, pack-aware150–240EUR, commercial draft, one Gmail send and Inbox receipt verified17:44. No WhatsApp send, reservation or invoice.
+- CDP captured67requests across the production checks, no truncation/dropped pages: one POST per contact/quote, both200, zero old-backend calls, zero Ads conversion requests and zero lead conversion events. Tests deliberately marked and excluded; cookies temporarily rejected for testing and restored to the previously observed analytics/marketing selection after both tests. Do not portray tests as real commercial leads or advertising attribution.
+- Data reconciliation after cutover17:46: source47publictable fingerprints unchanged from immediately before cutover. No late source writes pending in that observed window. All initial73public/authtable fingerprints and157portfoliofilechecks were previously verified. Destination-only test rows and advanced quote number retained.
+- Dedicated OpenClaw worker active, credential heartbeat4seconds old at17:52. Shared gateway not restarted in this stage. Source backend and old Cloudflare release remain intact for recovery.
+- Evidence: /tmp/silviocosta-formulario-produccion-independiente-20261102.png, /tmp/silviocosta-cotizador-produccion-independiente-20261102.png, /tmp/silviocosta-gmail-produccion-independiente-20261102.png, /tmp/silviocosta-admin-openclaw-imagenes-20261102.png.
+
+### Next Steps / limits
+- Verify the next actual commercial lead against Ads attribution through the correct account; no fabricated conversions. No recurring monitor created.
+- Old pages already open can still call the old backend; keep the source archive and check any late records before retiring it or rolling back. Do not delete/cancel the old environment without approval.
+- Runway video, Firecrawl scraping, newsletters, fiscal invoicing and social publishing are optional provider-dependent modules, not covered by these live generation/contact tests. Their deployment is not a claim that provider access or real external execution works.
+- Minor pre-existing nested-button React warnings in message-list checkboxes remain; they did not prevent verified admin reads. Not silently claimed fixed.
+
+### Relevant Files
+- .codex-project, AGENTS.md, README.md: current independent target and deployment safeguards.
+- src/contexts/AuthContext.tsx: wait for verified role and ignore stale role results.
+- src/lib/adminAiOperation.ts, src/components/admin/AdminAiRecovery.tsx: durable image operation and non-generating recovery.
+- server/openclaw-quote-worker/: isolated native OAuth text/image worker, strict provider scope.
+- supabase/functions/_shared/gmailDirect.ts, ownerNotifications.ts: send-only Gmail and durable notification ledger.
+- src/components/SmartQuoter.tsx, CTASection.tsx: persistence gate and controlled-test conversion exclusion.
