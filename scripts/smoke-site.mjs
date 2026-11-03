@@ -57,7 +57,8 @@ for (const [path, canonical] of publicPages) {
     `${path} no contiene el contenedor GTM`,
   );
   expect(
-    body.includes("data-prerendered-route="),
+    body.includes("data-prerendered-route=") ||
+      (body.includes('id="sc-public-content"') && /<h1\b/.test(body) && /<img\b/.test(body)),
     `${path} no contiene HTML prerenderizado`,
   );
 }

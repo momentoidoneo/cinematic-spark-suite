@@ -1,0 +1,674 @@
+{
+  "checkedAt": "2026-11-03T07:39:50.640Z",
+  "release": "a3f176fe-53e1-4a3a-a6a1-b206b671fef3",
+  "appCommit": "b15a098",
+  "urls": [
+    {
+      "path": "/",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/",
+      "title": "Producción audiovisual en Madrid y Castilla-La Mancha | Silvio Costa",
+      "h1": 1,
+      "h2": 7,
+      "images": 16,
+      "matchesBuild": true
+    },
+    {
+      "path": "/blog",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/blog",
+      "title": "Blog de fotografía y producción audiovisual | Silvio Costa",
+      "h1": 1,
+      "h2": 6,
+      "images": 7,
+      "matchesBuild": true
+    },
+    {
+      "path": "/blog/cobertura-audiovisual-eventos-guia-completa",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/blog/cobertura-audiovisual-eventos-guia-completa",
+      "title": "Cobertura Audiovisual de Eventos: Guía Completa",
+      "h1": 1,
+      "h2": 7,
+      "images": 2,
+      "matchesBuild": true
+    },
+    {
+      "path": "/blog/fotografia-inmobiliaria-7-claves-vender-rapido",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/blog/fotografia-inmobiliaria-7-claves-vender-rapido",
+      "title": "Fotografía Inmobiliaria: 7 Claves para Vender Rápido",
+      "h1": 1,
+      "h2": 10,
+      "images": 2,
+      "matchesBuild": true
+    },
+    {
+      "path": "/blog/grabacion-dron-normativa-espana-consejos",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/blog/grabacion-dron-normativa-espana-consejos",
+      "title": "Grabación con Dron en España: Normativa y Consejos",
+      "h1": 1,
+      "h2": 5,
+      "images": 2,
+      "matchesBuild": true
+    },
+    {
+      "path": "/blog/renders-3d-arquitectonicos-visualiza-proyecto",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/blog/renders-3d-arquitectonicos-visualiza-proyecto",
+      "title": "Renders 3D Arquitectónicos: Visualiza Tu Proyecto",
+      "h1": 1,
+      "h2": 6,
+      "images": 2,
+      "matchesBuild": true
+    },
+    {
+      "path": "/blog/tours-virtuales-matterport-revolucion-inmobiliaria",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/blog/tours-virtuales-matterport-revolucion-inmobiliaria",
+      "title": "Tours Virtuales Matterport para Inmobiliarias | Blog",
+      "h1": 1,
+      "h2": 7,
+      "images": 2,
+      "matchesBuild": true
+    },
+    {
+      "path": "/blog/video-corporativo-empresa-necesita-2025",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/blog/video-corporativo-empresa-necesita-2025",
+      "title": "Vídeo Corporativo para Empresas en 2026 | Silvio Costa",
+      "h1": 1,
+      "h2": 7,
+      "images": 2,
+      "matchesBuild": true
+    },
+    {
+      "path": "/casos-estudio",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/casos-estudio",
+      "title": "Casos de estudio audiovisuales | Silvio Costa Photography",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/fotografia-inmobiliaria-madrid",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/fotografia-inmobiliaria-madrid",
+      "title": "Fotografía inmobiliaria en Madrid | Silvio Costa",
+      "h1": 1,
+      "h2": 7,
+      "images": 5,
+      "matchesBuild": true
+    },
+    {
+      "path": "/fotografia-madrid",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/fotografia-madrid",
+      "title": "Fotografía profesional en Madrid | Silvio Costa",
+      "h1": 1,
+      "h2": 7,
+      "images": 5,
+      "matchesBuild": true
+    },
+    {
+      "path": "/glosario",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/glosario",
+      "title": "Glosario audiovisual: fotografía, vídeo, dron y tours 360° | Silvio Costa",
+      "h1": 1,
+      "h2": 111,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/guia-servicios-audiovisuales",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/guia-servicios-audiovisuales",
+      "title": "Guía de servicios audiovisuales | Silvio Costa",
+      "h1": 1,
+      "h2": 8,
+      "images": 2,
+      "matchesBuild": true
+    },
+    {
+      "path": "/legal/cookies",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/legal/cookies",
+      "title": "Política de Cookies | Silvio Costa Photography",
+      "h1": 1,
+      "h2": 6,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/legal/legal-notice",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/legal/legal-notice",
+      "title": "Aviso Legal y Términos de Uso | Silvio Costa Photography",
+      "h1": 1,
+      "h2": 5,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/legal/privacy-policy",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/legal/privacy-policy",
+      "title": "Política de Privacidad | Silvio Costa Photography",
+      "h1": 1,
+      "h2": 8,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/legal/terms",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/legal/terms",
+      "title": "Términos y condiciones de uso | Silvio Costa Photography",
+      "h1": 1,
+      "h2": 6,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio",
+      "title": "Portafolio de fotografía, vídeo, dron y Matterport | Silvio Costa",
+      "h1": 1,
+      "h2": 0,
+      "images": 7,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/dron",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/dron",
+      "title": "Portafolio de Dron | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 7,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/dron/fotografia-aerea",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/dron/fotografia-aerea",
+      "title": "Portafolio de Dron: Fotografía aérea | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/dron/fotogrametria",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/dron/fotogrametria",
+      "title": "Portafolio de Dron: Fotogrametría | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/dron/inspecciones",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/dron/inspecciones",
+      "title": "Portafolio de Dron: Inspecciones | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/dron/modelos-3d",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/dron/modelos-3d",
+      "title": "Portafolio de Dron: Modelos 3D | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/dron/video",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/dron/video",
+      "title": "Portafolio de Dron: Video | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/dron/video-inmobiliario",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/dron/video-inmobiliario",
+      "title": "Portafolio de Dron: Video Inmobiliario | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/eventos",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/eventos",
+      "title": "Portafolio de Eventos | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 5,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/eventos/fotografia",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/eventos/fotografia",
+      "title": "Portafolio de Eventos: Fotografía | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/eventos/sonido",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/eventos/sonido",
+      "title": "Portafolio de Eventos: Sonido | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/eventos/streaming",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/eventos/streaming",
+      "title": "Portafolio de Eventos: Streaming | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/eventos/video",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/eventos/video",
+      "title": "Portafolio de Eventos: Video | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia",
+      "title": "Portafolio de Fotografía | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 13,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia/corporativa",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia/corporativa",
+      "title": "Portafolio de Fotografía: Corporativa | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 8,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia/deportiva",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia/deportiva",
+      "title": "Portafolio de Fotografía: Deportiva | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 10,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia/eventos",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia/eventos",
+      "title": "Portafolio de Fotografía: Eventos | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 9,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia/fotografia-360",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia/fotografia-360",
+      "title": "Portafolio de Fotografía: Fotografía 360 | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia/fotografia-social",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia/fotografia-social",
+      "title": "Portafolio de Fotografía: Fotografía Social | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia/gastronomia",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia/gastronomia",
+      "title": "Portafolio de Fotografía: Gastronomía | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 13,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia/life-style",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia/life-style",
+      "title": "Portafolio de Fotografía: Life Style | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 10,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia/moda",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia/moda",
+      "title": "Portafolio de Fotografía: Moda | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 6,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia/producto",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia/producto",
+      "title": "Portafolio de Fotografía: Producto | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 9,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia/publicidad",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia/publicidad",
+      "title": "Portafolio de Fotografía: Publicidad | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 3,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia/real-estate-e-interiorismo",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia/real-estate-e-interiorismo",
+      "title": "Portafolio de Fotografía: Real Estate e Interiorismo | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 24,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/fotografia/retrato",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/fotografia/retrato",
+      "title": "Portafolio de Fotografía: Retrato | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 3,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/renders",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/renders",
+      "title": "Portafolio de Renders | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 2,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/renders/renders-3d",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/renders/renders-3d",
+      "title": "Portafolio de Renders: Renders 3D | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 9,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/tours-virtuales",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/tours-virtuales",
+      "title": "Portafolio de Tours Virtuales | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 3,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/tours-virtuales/matterport",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/tours-virtuales/matterport",
+      "title": "Portafolio de Tours Virtuales: Matterport | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/tours-virtuales/renders",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/tours-virtuales/renders",
+      "title": "Portafolio de Tours Virtuales: Renders | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/video",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/video",
+      "title": "Portafolio de Video | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 10,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/video/deporte",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/video/deporte",
+      "title": "Portafolio de Video: Deporte | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/video/eventos",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/video/eventos",
+      "title": "Portafolio de Video: Eventos | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/video/podcast",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/video/podcast",
+      "title": "Portafolio de Video: Podcast | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/video/producto",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/video/producto",
+      "title": "Portafolio de Video: Producto | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/video/publicidad",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/video/publicidad",
+      "title": "Portafolio de Video: Publicidad | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/video/real-estate",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/video/real-estate",
+      "title": "Portafolio de Video: Real Estate | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/video/streaming",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/video/streaming",
+      "title": "Portafolio de Video: Streaming | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/portafolio/video/timelapse-de-larga-duracion",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/portafolio/video/timelapse-de-larga-duracion",
+      "title": "Portafolio de Video: Timelapse de larga duración | Silvio Costa",
+      "h1": 1,
+      "h2": 1,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/precios",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/precios",
+      "title": "Precios de fotografía y servicios audiovisuales | Silvio Costa",
+      "h1": 1,
+      "h2": 3,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/servicios-audiovisuales-castilla-la-mancha",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/servicios-audiovisuales-castilla-la-mancha",
+      "title": "Producción audiovisual en Castilla-La Mancha | Silvio Costa",
+      "h1": 1,
+      "h2": 6,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/servicios-audiovisuales-madrid",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/servicios-audiovisuales-madrid",
+      "title": "Producción audiovisual en Madrid para empresas | Silvio Costa",
+      "h1": 1,
+      "h2": 6,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/servicios/eventos",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/servicios/eventos",
+      "title": "Fotografía y vídeo de eventos en Madrid y Castilla-La Mancha | Silvio Costa",
+      "h1": 1,
+      "h2": 6,
+      "images": 2,
+      "matchesBuild": true
+    },
+    {
+      "path": "/servicios/fotografia",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/servicios/fotografia",
+      "title": "Fotografía profesional en Madrid y Castilla-La Mancha | Silvio Costa",
+      "h1": 1,
+      "h2": 6,
+      "images": 5,
+      "matchesBuild": true
+    },
+    {
+      "path": "/servicios/renders",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/servicios/renders",
+      "title": "Renders 3D y visualización arquitectónica | Silvio Costa",
+      "h1": 1,
+      "h2": 6,
+      "images": 2,
+      "matchesBuild": true
+    },
+    {
+      "path": "/servicios/tour-virtual",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/servicios/tour-virtual",
+      "title": "Tours virtuales 360° Matterport en Madrid y Castilla-La Mancha | Silvio Costa",
+      "h1": 1,
+      "h2": 9,
+      "images": 1,
+      "matchesBuild": true
+    },
+    {
+      "path": "/servicios/video-dron",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/servicios/video-dron",
+      "title": "Vídeo profesional y dron en Madrid y Castilla-La Mancha | Silvio Costa",
+      "h1": 1,
+      "h2": 6,
+      "images": 5,
+      "matchesBuild": true
+    },
+    {
+      "path": "/trabaja-con-nosotros",
+      "status": 200,
+      "finalUrl": "https://silviocosta.net/trabaja-con-nosotros",
+      "title": "Trabaja con nosotros | Silvio Costa Photography",
+      "h1": 1,
+      "h2": 2,
+      "images": 1,
+      "matchesBuild": true
+    }
+  ],
+  "bundle": {
+    "path": "/assets/index-BRLTmdH0.js",
+    "matchesBuild": true,
+    "sha256": "a698426ef46fa2385490fcd64ede3d0b2734a84cda6dfc2e00821cd75a9e1479",
+    "independentBackend": true,
+    "legacyBackend": false
+  }
+}

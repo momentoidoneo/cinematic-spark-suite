@@ -24,3 +24,10 @@ Scope: this project only; production https://silviocosta.net.
 - Current verified frontend release: `5cd06a71-c33d-416d-97fd-f4f615fbe60e`, app commit `b4cd1b2`. Rollback to the independent-backend cutover remains `54f639dc-2a68-4121-9369-a6c8f71b29ad`.
 - Google Ads changes were explicitly authorized for this correction: two exact negatives and four campaign sitelinks; campaign 24091355671 remains enabled, 9.70 EUR/day, Maximize Clicks, max CPC 2.50 EUR. No ongoing monitoring authorized.
 - Read docs/google-ads-corrections-2026-11-02.md for verification limits and the one identified diagnostic ping that must not be counted as a real lead. Do not claim real Ads attribution or enhanced-conversion warnings resolved from local tests.
+
+## Full public SEO release (2026-11-03; newer than measurement correction)
+- Current verified frontend: Cloudflare `a3f176fe-53e1-4a3a-a6a1-b206b671fef3`, app commit `b15a098`. Previous rollback: `5cd06a71-c33d-416d-97fd-f4f615fbe60e`. Verify live state before the next deployment.
+- Build now renders real public React components with an explicit anonymous public-content snapshot; `.prerender` is build-only and must never be deployed. `npm run build` includes 66-route HTML validation. Never seed sessions, leads, secrets or admin data into public HTML.
+- Public content edited later in Admin still needs a manual rebuild/deploy for static HTML to match the live client data. Git builds remain disconnected; do not reconnect them implicitly.
+- Owner-confirmed commercial terms: property photography 24–48 hours; Matterport includes 12 months hosting. Preserve consistency across visible copy, FAQs and AI files.
+- Four blog articles, eight product image alt texts and the cases-index SEO description changed with guarded SQL and backups. See docs/seo-geo-aeo-corrections-2026-11-03.md. No Ads changes or real lead tests in this release.
