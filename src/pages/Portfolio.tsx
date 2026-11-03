@@ -1,3 +1,5 @@
+import { usePublicRows } from "@/seo/PublicContent";
+import { portfolioMetadata, portfolioImageAlt } from "@/seo/portfolioMetadata";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -128,11 +130,11 @@ function FreeGrid<T extends { id: string; grid_row: number | null; grid_col: num
 
 const Portfolio = () => {
   const { categorySlug, subcategorySlug } = useParams();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-  const [images, setImages] = useState<PortfolioImage[]>([]);
-  const [selectedCat, setSelectedCat] = useState<Category | null>(null);
-  const [selectedSub, setSelectedSub] = useState<Subcategory | null>(null);
+  const [categories, setCategories] = useState<Category[]>(usePublicRows<Category>("portfolio_categories"));
+  const [subcategories, setSubcategories] = useState<Subcategory[]>(usePublicRows<Subcategory>("portfolio_subcategories"));
+  const [images, setImages] = useState<PortfolioImage[]>(usePublicRows<PortfolioImage>("portfolio_images"));
+  const [selectedCat, setSelectedCat] = useState<Category | null>(categories.find(x => x.slug === categorySlug) || null);
+  const [selectedSub, setSelectedSub] = useState<Subcategory | null>(subcategories.find(x => x.slug === subcategorySlug) || null);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [fullscreenIframe, setFullscreenIframe] = useState<string | null>(null);
 
@@ -165,14 +167,14 @@ const Portfolio = () => {
       const { data: subs } = await supabase.from("portfolio_subcategories").select("*").eq("category_id", selectedCat.id).eq("is_visible", true).order("order");
       if (subs) {
         setSubcategories(subs as Subcategory[]);
-        if (subcategorySlug && !selectedSub) {
+        if (subcategorySlug) {
           const found = (subs as Subcategory[]).find(s => s.slug === subcategorySlug);
           if (found) setSelectedSub(found);
         }
       }
     };
     fetchSubs();
-  }, [selectedCat]);
+  }, [selectedCat, subcategorySlug]);
 
   useEffect(() => {
     if (!selectedSub) { setImages([]); return; }
@@ -205,13 +207,9 @@ const Portfolio = () => {
       if (isEmbed) return <iframe src={embedUrl} className="w-[90vw] max-w-4xl aspect-video rounded-lg border-0" allowFullScreen onClick={(e) => e.stopPropagation()} />;
       return <video src={item.video_url} controls autoPlay className="max-w-[90vw] max-h-[90vh] rounded-lg" onClick={(e) => e.stopPropagation()} />;
     }
-    return <img src={item.image_url} alt={item.alt_text || ""} className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />;
+    return <img src={item.image_url} alt={portfolioImageAlt(item, selectedCat, selectedSub)} className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />;
   };
 
-  const handleBack = () => {
-    if (selectedSub) { setSelectedSub(null); }
-    else if (selectedCat) { setSelectedCat(null); setSelectedSub(null); }
-  };
 
   const currentTitle = selectedSub ? selectedSub.name : selectedCat ? selectedCat.name : null;
   const breadcrumb = selectedCat
@@ -220,6 +218,7 @@ const Portfolio = () => {
       : "← Volver al portafolio"
     : null;
 
+  const metadata = portfolioMetadata(selectedCat, selectedSub);
   const siteUrl = getSiteUrl();
   const portfolioPath = `/portafolio${categorySlug ? `/${categorySlug}` : ""}${
     subcategorySlug ? `/${subcategorySlug}` : ""
@@ -228,8 +227,8 @@ const Portfolio = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title={`Portafolio${selectedCat ? ` — ${selectedCat.name}` : ""} | Silvio Costa Photography`}
-        description="Portafolio profesional de fotografía, vídeo, dron y tours virtuales 360°. Descubre nuestros proyectos en España y Portugal."
+        title={metadata.title}
+        description={metadata.description}
         canonical={`${siteUrl}${portfolioPath}`}
         jsonLd={breadcrumbSchema([
           { name: "Inicio", url: siteUrl },
@@ -249,18 +248,18 @@ const Portfolio = () => {
       <div className="pt-24 pb-20 px-6 max-w-7xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
           <h1 className="font-display text-4xl md:text-6xl font-bold mb-4">
-            Nuestro <span className="text-gradient-accent italic">Portafolio</span>
+            {metadata.heading}
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Explora nuestros proyectos y descubre la calidad de nuestro trabajo audiovisual.
+            {metadata.description}
           </p>
         </motion.div>
 
         {breadcrumb && (
           <div className="mb-6">
-            <button onClick={handleBack} className="text-sm text-primary hover:underline inline-block">
+            <a href={selectedSub ? `/portafolio/${selectedCat?.slug}` : "/portafolio"} className="text-sm text-primary hover:underline inline-block">
               {breadcrumb}
-            </button>
+            </a>
             <h2 className="font-display text-3xl font-bold text-foreground mt-2">{currentTitle}</h2>
           </div>
         )}
@@ -272,11 +271,11 @@ const Portfolio = () => {
             columns={3}
             emptyMessage="No hay categorías en el portafolio aún."
             renderItem={(cat, i) => (
-              <motion.button
+              <motion.a
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                onClick={() => setSelectedCat(cat)}
+                href={`/portafolio/${cat.slug}`}
                 className="group relative aspect-[4/3] rounded-2xl overflow-hidden text-left border border-border bg-card hover:border-primary/30 transition-all w-full"
               >
                 {cat.cover_image && (
@@ -296,7 +295,7 @@ const Portfolio = () => {
                   <h3 className="font-display text-sm md:text-2xl font-bold text-foreground truncate">{cat.name}</h3>
                   {cat.description && <p className="text-xs md:text-sm text-muted-foreground mt-0.5 md:mt-1 line-clamp-2">{cat.description}</p>}
                 </div>
-              </motion.button>
+              </motion.a>
             )}
           />
         )}
@@ -308,11 +307,11 @@ const Portfolio = () => {
             columns={3}
             emptyMessage="No hay subcategorías en esta categoría."
             renderItem={(sub, i) => (
-              <motion.button
+              <motion.a
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                onClick={() => setSelectedSub(sub)}
+                href={`/portafolio/${selectedCat.slug}/${sub.slug}`}
                 className="group relative aspect-[4/3] rounded-2xl overflow-hidden text-left border border-border bg-card hover:border-primary/30 transition-all w-full"
               >
                 {sub.cover_image && (
@@ -333,7 +332,7 @@ const Portfolio = () => {
                   <h3 className="font-display text-sm md:text-2xl font-bold text-foreground truncate">{sub.name}</h3>
                   {sub.description && <p className="text-xs md:text-sm text-muted-foreground mt-0.5 md:mt-1 line-clamp-2">{sub.description}</p>}
                 </div>
-              </motion.button>
+              </motion.a>
             )}
           />
         )}
@@ -397,7 +396,7 @@ const Portfolio = () => {
                         src={getOptimizedImageUrl(img.thumbnail_url || img.image_url, { width: 480, height: 480, quality: 70, resize: "cover" })}
                         srcSet={getOptimizedImageSrcSet(img.thumbnail_url || img.image_url, [240, 360, 480, 720], { quality: 70, resize: "cover" })}
                         sizes="(min-width: 1024px) 23vw, (min-width: 768px) 31vw, 50vw"
-                        alt={img.alt_text || ""}
+                        alt={portfolioImageAlt(img, selectedCat, selectedSub)}
                         title=""
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         loading={i < 8 ? "eager" : "lazy"}
@@ -424,8 +423,7 @@ const Portfolio = () => {
                 Solicita un presupuesto sin compromiso para tu proyecto de {selectedSub.name.toLowerCase()}.
               </p>
               <a
-                href="#contacto"
-                onClick={(e) => { e.preventDefault(); window.location.href = "/#contacto"; }}
+                href="/#contacto"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3 rounded-full font-semibold hover:opacity-90 transition-opacity"
               >
                 Solicitar presupuesto

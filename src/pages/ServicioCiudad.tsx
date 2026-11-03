@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -66,7 +67,7 @@ const SERVICES: Record<string, { title: string; desc: string; bullets: string[];
   },
   "tour-virtual": {
     title: "Tour Virtual 360° Matterport",
-    desc: "Recorridos 3D con Matterport Pro3: doble la conversión de leads en inmobiliaria y hostelería. Embed en tu web y compatible Google Street View.",
+    desc: "Recorridos 3D con Matterport Pro3: recorridos interactivos para inmobiliaria y hostelería. Embed en tu web y compatible Google Street View.",
     bullets: ["Matterport Pro3 (LiDAR)", "Plano 2D y 3D Dollhouse", "Embed iframe responsive", "Hosting incluido 1 año"],
     cta: "Cotizar tour virtual",
   },
@@ -126,14 +127,15 @@ export default function ServicioCiudad() {
   // the service prefix is preserved (e.g. "fotografia-inmobiliaria-madrid").
   const slug = pathname.replace(/^\/+|\/+$/g, "");
 
-  const [city, setCity] = useState<CityRecord | null>(null);
-  const [loaded, setLoaded] = useState(false);
 
   // Parse: try longest-match service prefix
   const serviceKeys = Object.keys(SERVICES).sort((a, b) => b.length - a.length);
   const matchedServiceKey = serviceKeys.find(k => slug.startsWith(k + "-"));
   const citySlug = matchedServiceKey ? slug.slice(matchedServiceKey.length + 1) : "";
   const service = matchedServiceKey ? SERVICES[matchedServiceKey] : null;
+  const initialCity = usePublicRows<CityRecord & {slug: string}>("seo_cities").find(x => x.slug === citySlug) || HARDCODED_CITIES[citySlug] || null;
+  const [city, setCity] = useState<CityRecord | null>(initialCity);
+  const [loaded, setLoaded] = useState(!!initialCity);
 
   useEffect(() => {
     if (!citySlug) { setLoaded(true); return; }

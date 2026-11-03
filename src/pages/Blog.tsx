@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,8 +20,8 @@ interface BlogPost {
 }
 
 const Blog = () => {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<BlogPost[]>(usePublicRows<BlogPost>("blog_posts"));
+  const [loading, setLoading] = useState(!posts.length);
 
   useEffect(() => {
     const load = async () => {

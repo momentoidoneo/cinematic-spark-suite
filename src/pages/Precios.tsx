@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,9 +37,9 @@ interface PricingService {
 }
 
 const Precios = () => {
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [services, setServices] = useState<PricingService[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [plans, setPlans] = useState<Plan[]>(usePublicRows<Plan>("pricing_plans"));
+  const [services, setServices] = useState<PricingService[]>(usePublicRows<PricingService>("pricing_services"));
+  const [loading, setLoading] = useState(!plans.length && !services.length);
 
   useEffect(() => {
     const load = async () => {

@@ -1,3 +1,4 @@
+import ServiceFAQ from "@/components/ServiceFAQ";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -44,7 +45,7 @@ const useCases = [
 const benefits = [
   "Calidad fotorrealista cinematográfica",
   "Iluminación y materiales hiperrealistas",
-  "Revisiones incluidas hasta tu aprobación",
+  "Rondas de revisión definidas en el presupuesto",
   "Entrega en alta resolución (hasta 8K)",
   "Compatible con planos AutoCAD, Revit y SketchUp",
   "Integración con tours virtuales Matterport",
@@ -266,6 +267,7 @@ const ServicioRenders = () => {
         </div>
       </section>
 
+      <ServiceFAQ items={faqs} title="Preguntas frecuentes sobre renders 3D" />
       <Footer />
       <WhatsAppButton />
       <FloatingCTA />

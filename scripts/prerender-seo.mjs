@@ -1,3 +1,6 @@
+import { JSDOM } from "jsdom";
+import { publicQueries, contentForRoute, serializePublicContent } from "./public-content.mjs";
+import { renderPublicPage } from "../.prerender/renderPublicPage.js";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -74,9 +77,10 @@ const anonKey =
   "";
 
 async function fetchRows(table, query) {
-  if (!anonKey) return [];
+  if (!anonKey) throw new Error("Public anon key required");
   try {
     const response = await fetch(`${supabaseUrl}/rest/v1/${table}?${query}`, {
+      signal: AbortSignal.timeout(20000),
       headers: {
         apikey: anonKey,
         Authorization: `Bearer ${anonKey}`,
@@ -88,8 +92,7 @@ async function fetchRows(table, query) {
     const rows = await response.json();
     return Array.isArray(rows) ? rows : [];
   } catch (error) {
-    console.warn(`[prerender] ${table}: ${error.message}`);
-    return [];
+    throw new Error(`[prerender] Refusing incomplete publication: ${table}: ${error.message}`);
   }
 }
 
@@ -100,33 +103,11 @@ const catalog = JSON.parse(
   ),
 );
 
-const [seoOverrides, posts, categories, subcategories, caseStudies, cities] =
-  await Promise.all([
-    fetchRows(
-      "seo_metadata",
-      "select=page_path,title,description,og_image",
-    ),
-    fetchRows(
-      "blog_posts",
-      "select=slug,title,excerpt,content,cover_image&status=eq.published",
-    ),
-    fetchRows(
-      "portfolio_categories",
-      "select=id,slug,name,description,cover_image&is_visible=eq.true",
-    ),
-    fetchRows(
-      "portfolio_subcategories",
-      "select=slug,name,description,cover_image,category_id&is_visible=eq.true",
-    ),
-    fetchRows(
-      "case_studies",
-      "select=slug,title,summary,content,cover_image&is_published=eq.true",
-    ),
-    fetchRows(
-      "seo_cities",
-      "select=slug,name,region,intro&is_visible=eq.true",
-    ),
-  ]);
+const publicContent = Object.fromEntries(await Promise.all(Object.entries(publicQueries).map(async ([key, config]) => {
+  const [table, query] = Array.isArray(config) ? config : [key, config];
+  return [key, await fetchRows(table, query)];
+})));
+const { seo_metadata: seoOverrides, blog_posts: posts, portfolio_categories: categories, portfolio_subcategories: subcategories, case_studies: caseStudies, seo_cities: cities } = publicContent;
 
 const overridesByPath = new Map(
   seoOverrides
@@ -283,16 +264,18 @@ function fallbackMarkup(route) {
     </div>`;
 }
 
-function renderRoute(route) {
+async function renderRoute(route) {
+  const tables = contentForRoute(publicContent, route.path);
+  const rendered = await renderPublicPage(route.path, tables);
   const normalizedPath = route.path.replace(/\/$/, "") || "/";
   const override = overridesByPath.get(normalizedPath);
   const title =
-    (!route.managedMetadata && override?.title) || route.title;
+    rendered.head.title;
   const description = truncate(
-    (!route.managedMetadata && override?.description) || route.description,
+    rendered.head.description,
     160,
   );
-  const image = override?.og_image || route.image || defaultImage;
+  const image = rendered.head.ogImage || route.image || defaultImage;
   const canonical = `${siteUrl}${normalizedPath === "/" ? "" : normalizedPath}`;
   const ogType = route.kind === "BlogPosting" ? "article" : "website";
   const schemaType = route.kind || "WebPage";
@@ -329,10 +312,29 @@ function renderRoute(route) {
       `    <link rel="alternate" hreflang="x-default" href="${escapeHtml(canonical)}" />\n` +
       `    <link rel="alternate" type="text/plain" title="LLM summary" href="${siteUrl}/llms.txt" data-ai-discovery="true" />\n` +
       `    <link rel="alternate" type="text/markdown" title="AI services guide" href="${siteUrl}/ai-context/servicios-audiovisuales.md" data-ai-discovery="true" />\n` +
-      `    <script type="application/ld+json" data-seo-jsonld="true">${JSON.stringify(schema).replaceAll("<", "\\u003c")}</script>\n` +
+      `    <script type="application/ld+json" data-seo-jsonld="true">${serializePublicContent(rendered.head.jsonLd || schema)}</script>\n` +
       "  </head>",
   );
-  html = html.replace('<div id="root"></div>', fallbackMarkup(route));
+  // React animation initial states must not hide HTML from no-JS visitors.
+  const document = new JSDOM(rendered.html).window.document;
+  document.querySelectorAll('[style]').forEach(el => {
+    if (el.style.opacity === "0") { el.style.opacity = "1"; el.style.removeProperty("transform"); }
+  });
+  // No-JS visitors must never submit contact details via the browser's default GET.
+  // React replaces this build-only guard with the normal, validated client form.
+  document.querySelectorAll("form").forEach(form => {
+    const fieldset = document.createElement("fieldset");
+    fieldset.disabled = true;
+    fieldset.style.display = "contents";
+    fieldset.setAttribute("data-prerender-form-guard", "true");
+    while (form.firstChild) fieldset.appendChild(form.firstChild);
+    form.appendChild(fieldset);
+    const note = document.createElement("noscript");
+    note.innerHTML = '<p>Para enviar este formulario necesitas JavaScript. También puedes escribir a <a href="mailto:silvio@silviocosta.net">silvio@silviocosta.net</a>.</p>';
+    form.appendChild(note);
+  });
+  if (document.querySelectorAll("h1").length !== 1) throw new Error(`Expected one visible H1: ${route.path}`);
+  html = html.replace('<div id="root"></div>', () => `<div id="root">${document.body.innerHTML}</div><script type="application/json" id="sc-public-content">${serializePublicContent(tables)}</script>`);
   return html;
 }
 
@@ -340,7 +342,7 @@ for (const route of routesByPath.values()) {
   const normalized = route.path.replace(/^\/+|\/+$/g, "");
   const outputDir = normalized ? path.join(distDir, normalized) : distDir;
   await mkdir(outputDir, { recursive: true });
-  await writeFile(path.join(outputDir, "index.html"), renderRoute(route));
+  await writeFile(path.join(outputDir, "index.html"), await renderRoute(route));
 }
 
 const sitemapPaths = [...routesByPath.keys()].sort((left, right) => {
@@ -504,7 +506,9 @@ const notFoundRoute = {
   kind: "WebPage",
   managedMetadata: true,
 };
-let notFoundHtml = renderRoute(notFoundRoute);
+let notFoundHtml = setTitle(sourceHtml, notFoundRoute.title);
+notFoundHtml = setMeta(notFoundHtml, "name", "description", notFoundRoute.description);
+notFoundHtml = notFoundHtml.replace('<div id="root"></div>', fallbackMarkup(notFoundRoute));
 notFoundHtml = setMeta(notFoundHtml, "name", "robots", "noindex, nofollow");
 await writeFile(path.join(distDir, "404.html"), notFoundHtml);
 

@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     question: "¿Cuánto tarda la entrega?",
-    answer: "Fotografía y tours virtuales suelen entregarse en 48-72 horas. Vídeo, dron, streaming o renders 3D dependen de la edición y complejidad, normalmente entre varios días y dos semanas.",
+    answer: "La fotografía inmobiliaria se entrega habitualmente en 24-48 horas; los tours virtuales, en 48-72 horas, con 12 meses de hosting incluidos. Vídeo, dron, streaming o renders 3D dependen de la edición y complejidad, normalmente entre varios días y dos semanas.",
   },
   {
     question: "¿Trabajáis fuera de Madrid y Castilla-La Mancha?",
@@ -195,7 +195,7 @@ const GuiaServiciosAudiovisuales = () => {
               <Clock className="h-6 w-6 text-primary mb-4" />
               <h2 className="font-display text-xl font-bold text-foreground mb-3">Plazo</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Fotografía y Matterport suelen estar listos en 48-72 horas. Vídeo, eventos y renders requieren
+                La fotografía inmobiliaria suele estar lista en 24-48 horas y Matterport en 48-72 horas, con 12 meses de hosting incluidos. Vídeo, eventos y renders requieren
                 más planificación, edición y revisión.
               </p>
             </div>

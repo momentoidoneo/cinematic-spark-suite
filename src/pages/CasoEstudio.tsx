@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -15,8 +16,8 @@ interface CaseStudy {
 
 const CasoEstudio = () => {
   const { slug } = useParams();
-  const [item, setItem] = useState<CaseStudy | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [item, setItem] = useState<CaseStudy | null>(usePublicRows<CaseStudy>("case_studies").find(x => x.slug === slug) || null);
+  const [loading, setLoading] = useState(!item);
   const siteUrl = getSiteUrl();
 
   useEffect(() => {

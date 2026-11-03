@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -82,7 +83,7 @@ const serviceDefinitions = [
 ];
 
 const ServicesSection = () => {
-  const [covers, setCovers] = useState<Record<string, string>>({});
+  const [covers, setCovers] = useState<Record<string, string>>(Object.fromEntries(usePublicRows<CategoryCover>("portfolio_categories").filter(x => x.cover_image).map(x => [x.slug, x.cover_image!])));
 
   useEffect(() => {
     supabase

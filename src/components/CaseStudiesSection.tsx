@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight, TrendingUp } from "lucide-react";
@@ -9,7 +10,7 @@ interface CaseStudy {
 }
 
 const CaseStudiesSection = () => {
-  const [items, setItems] = useState<CaseStudy[]>([]);
+  const [items, setItems] = useState<CaseStudy[]>(usePublicRows<CaseStudy & { is_featured: boolean }>("case_studies").filter(x => x.is_featured).slice(0, 3));
 
   useEffect(() => {
     supabase.from("case_studies")

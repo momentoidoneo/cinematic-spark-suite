@@ -1,6 +1,6 @@
 # Guía de servicios audiovisuales de Silvio Costa Photography
 
-Última actualización: 2026-07-27
+Última actualización: 2026-11-03
 
 Silvio Costa Photography ofrece fotografía profesional, vídeo, dron, tours virtuales Matterport, cobertura de eventos, streaming y renders 3D para empresas, inmobiliarias, arquitectura, hostelería, turismo, producto y espacios comerciales. La cobertura prioritaria está en Madrid y Castilla-La Mancha, con desplazamientos por España y Portugal cuando el proyecto lo requiere.
 
@@ -22,7 +22,7 @@ URL: https://silviocosta.net/servicios/video-dron
 
 ### Tour virtual Matterport 360
 
-Recomendado para inmuebles, hoteles, restaurantes, comercios, museos, coworkings y espacios de eventos. Un tour Matterport permite enseñar un espacio de forma remota con recorrido 360, gemelo digital, planos, herramientas de medición y hosting según presupuesto.
+Recomendado para inmuebles, hoteles, restaurantes, comercios, museos, coworkings y espacios de eventos. Un tour Matterport permite enseñar un espacio de forma remota con recorrido 360, gemelo digital, planos, herramientas de medición y 12 meses de hosting incluidos.
 
 URL: https://silviocosta.net/servicios/tour-virtual
 
@@ -50,7 +50,7 @@ El coste depende de servicio, alcance, localización, desplazamiento, número de
 
 ### ¿Cuánto tarda la entrega?
 
-Fotografía y tours virtuales suelen entregarse en 48-72 horas para proyectos estándar. Vídeo, dron, streaming, eventos o renders 3D dependen de planificación, edición y complejidad, normalmente entre varios días y dos semanas.
+La fotografía inmobiliaria se entrega habitualmente en 24-48 horas. Los tours virtuales suelen entregarse en 48-72 horas para proyectos estándar e incluyen 12 meses de hosting. Vídeo, dron, streaming, eventos o renders 3D dependen de planificación, edición y complejidad, normalmente entre varios días y dos semanas.
 
 ### ¿Trabaja fuera de Madrid o Castilla-La Mancha?
 

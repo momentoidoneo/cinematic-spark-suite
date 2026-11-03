@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import {
   Mail,
@@ -56,7 +57,7 @@ const socialIconMap: Record<
 };
 
 const Footer = () => {
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(usePublicRows<SocialLink>("social_links"));
 
   const trackWhatsAppClick = (label: string) => {
     trackEvent("whatsapp_click", {

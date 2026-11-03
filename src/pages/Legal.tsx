@@ -1,3 +1,5 @@
+import { usePublicRows } from "@/seo/PublicContent";
+import SEOHead, { getSiteUrl } from "@/components/SEOHead";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,13 +9,14 @@ import { ArrowLeft } from "lucide-react";
 
 const Legal = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [content, setContent] = useState("");
-  const [title, setTitle] = useState("");
-  const [loading, setLoading] = useState(true);
+  const initial = usePublicRows<{slug: string; title: string; content: string}>("legal_texts").find(x => x.slug === slug);
+  const [content, setContent] = useState(initial?.content || "");
+  const [title, setTitle] = useState(initial?.title || "");
+  const [loading, setLoading] = useState(!initial);
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
+      setLoading(!initial);
       const { data } = await supabase
         .from("legal_texts")
         .select("title, content")
@@ -27,10 +30,11 @@ const Legal = () => {
       setLoading(false);
     };
     load();
-  }, [slug]);
+  }, [slug, initial]);
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title={`${title} | Silvio Costa`} description={`${title} de Silvio Costa Photography.`} canonical={`${getSiteUrl()}/legal/${slug}`} />
       <Navbar />
       <main className="pt-28 pb-16 px-6">
         <div className="max-w-3xl mx-auto">

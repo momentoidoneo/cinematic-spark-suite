@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -12,7 +13,7 @@ interface CaseStudy {
 }
 
 const CasosEstudio = () => {
-  const [items, setItems] = useState<CaseStudy[]>([]);
+  const [items, setItems] = useState<CaseStudy[]>(usePublicRows<CaseStudy>("case_studies"));
   const siteUrl = getSiteUrl();
 
   useEffect(() => {
@@ -25,7 +26,7 @@ const CasosEstudio = () => {
     <div className="min-h-screen bg-background">
       <SEOHead
         title="Casos de estudio | Silvio Costa Photography"
-        description="Proyectos audiovisuales reales con resultados medibles: inmobiliaria, hotelero, arquitectura y eventos."
+        description="Casos de estudio audiovisuales de Silvio Costa. Mientras preparamos las fichas de proyectos, consulta los trabajos publicados en nuestro portafolio."
         canonical={`${siteUrl}/casos-estudio`}
       />
       <Navbar />
@@ -37,7 +38,11 @@ const CasosEstudio = () => {
             <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">Proyectos completos con contexto, proceso y resultados.</p>
           </header>
           {items.length === 0 ? (
-            <p className="text-center text-muted-foreground py-20">Próximamente publicaremos los primeros casos.</p>
+            <section className="text-center max-w-2xl mx-auto py-12">
+              <h2 className="font-display text-2xl mb-4">Consulta nuestros trabajos publicados</h2>
+              <p className="text-muted-foreground mb-6">Estamos preparando las fichas con el contexto, el proceso y los entregables de cada proyecto. Mientras tanto, puedes ver fotografías, vídeos y tours en el portafolio. No publicamos cifras de resultados que no podamos documentar.</p>
+              <a href="/portafolio" className="inline-flex rounded-full bg-primary text-primary-foreground px-6 py-3 font-semibold">Ver portafolio real</a>
+            </section>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {items.map(c => (

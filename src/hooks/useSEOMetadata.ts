@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -10,7 +11,8 @@ interface SEOOverride {
 const cache = new Map<string, SEOOverride | null>();
 
 export function useSEOMetadata(pagePath: string): SEOOverride | null {
-  const [data, setData] = useState<SEOOverride | null>(cache.get(pagePath) ?? null);
+  const initial = usePublicRows<SEOOverride & { page_path: string }>("seo_metadata").find(row => row.page_path === pagePath);
+  const [data, setData] = useState<SEOOverride | null>(cache.get(pagePath) ?? initial ?? null);
 
   useEffect(() => {
     if (cache.has(pagePath)) {

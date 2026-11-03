@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { ArrowRight, Clock, MapPin, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +19,7 @@ const trustSignals = [
 ];
 
 const HeroSection = () => {
-  const [customHero, setCustomHero] = useState<string | null>(null);
+  const [customHero, setCustomHero] = useState<string | null>(usePublicRows<{key: string; value: string}>("site_settings").find(x => x.key === "hero_bg")?.value || null);
 
   useEffect(() => {
     supabase

@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Calculator } from "lucide-react";
@@ -16,8 +17,8 @@ interface Option {
 }
 
 const QuoteCalculator = () => {
-  const [opts, setOpts] = useState<Option[]>([]);
-  const [category, setCategory] = useState<string>("");
+  const [opts, setOpts] = useState<Option[]>(usePublicRows<Option>("quote_calculator_options"));
+  const [category, setCategory] = useState<string>(opts[0]?.category || "");
   const [selected, setSelected] = useState<Record<string, number>>({});
 
   useEffect(() => {

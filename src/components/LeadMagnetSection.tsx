@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Download, FileText, CheckCircle2 } from "lucide-react";
@@ -13,7 +14,7 @@ interface LeadMagnet {
 }
 
 const LeadMagnetSection = () => {
-  const [item, setItem] = useState<LeadMagnet | null>(null);
+  const [item, setItem] = useState<LeadMagnet | null>(usePublicRows<LeadMagnet>("lead_magnets")[0] || null);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [sent, setSent] = useState(false);

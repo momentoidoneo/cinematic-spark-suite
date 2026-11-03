@@ -30,7 +30,7 @@ export const defaultPricingPlans: DefaultPricingPlan[] = [
     features: [
       "15-25 fotografías editadas",
       "Corrección de color, luz y perspectiva",
-      "Entrega habitual en 48-72 horas",
+      "Entrega habitual en 24-48 horas",
       "Licencia para web, portales y redes propias",
     ],
     is_highlighted: false,

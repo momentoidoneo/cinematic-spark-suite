@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Camera } from "lucide-react";
@@ -44,8 +45,8 @@ type FeaturedWork = {
 };
 
 const PortfolioSection = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [featured, setFeatured] = useState<FeaturedWork[]>([]);
+  const [categories, setCategories] = useState<Category[]>(usePublicRows<Category>("portfolio_categories"));
+  const [featured, setFeatured] = useState<FeaturedWork[]>(usePublicRows<FeaturedWork>("featured_images"));
 
   useEffect(() => {
     Promise.all([

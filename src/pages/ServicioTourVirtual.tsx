@@ -1,3 +1,4 @@
+import ServiceFAQ from "@/components/ServiceFAQ";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -10,7 +11,7 @@ import {
 } from "lucide-react";
 
 const tourServices = [
-  { icon: Building, title: "Tour virtual inmobiliario", desc: "Permite a los compradores recorrer propiedades desde cualquier parte del mundo, acelerando la toma de decisiones. Las propiedades con tour virtual reciben hasta un 49% más de consultas cualificadas." },
+  { icon: Building, title: "Tour virtual inmobiliario", desc: "Permite a los compradores recorrer propiedades desde cualquier parte del mundo, acelerando la toma de decisiones. Permite conocer la distribución del inmueble antes de concertar una visita." },
   { icon: Home, title: "Tour de interiores", desc: "Experiencia inmersiva 360° que muestra cada rincón de un espacio con máximo detalle y realismo. Navegación fluida entre estancias con puntos de interés personalizados." },
   { icon: Store, title: "Tour para comercios", desc: "Permite que tus clientes conozcan tu tienda, restaurante u oficina antes de visitarte presencialmente. Integrable directamente en Google Maps y tu ficha de Google Business." },
   { icon: Hotel, title: "Tour para hostelería", desc: "Hoteles, resorts y alojamientos turísticos que se muestran con experiencias interactivas memorables. Los huéspedes pueden explorar habitaciones, zonas comunes y servicios antes de reservar." },
@@ -30,10 +31,10 @@ const benefits = [
 ];
 
 const stats = [
-  { value: "300%", label: "Más interacción que fotos estáticas" },
-  { value: "49%", label: "Más tiempo en página web" },
-  { value: "95%", label: "De clientes quieren tours virtuales" },
-  { value: "32%", label: "Más rápido se venden las propiedades" },
+  { value: "360°", label: "Recorrido interactivo del espacio" },
+  { value: "24/7", label: "Visitas virtuales a cualquier hora" },
+  { value: "12 meses", label: "De hosting incluidos" },
+  { value: "Web y móvil", label: "Acceso desde el navegador" },
 ];
 
 const matterportFeatures = [
@@ -47,7 +48,8 @@ const matterportFeatures = [
   { icon: Globe, title: "Property Intelligence con IA", desc: "La inteligencia artificial de Matterport analiza propiedades y carteras completas para generar información estratégica automatizada. Desde evaluación del estado de la propiedad hasta análisis de accesibilidad y cumplimiento normativo." },
 ];
 
-const tourVirtualFAQs = [
+export const tourVirtualFAQs = [
+  { question: "¿El tour incluye alojamiento?", answer: "Sí. El tour Matterport incluye 12 meses de hosting. Las condiciones de renovación y los servicios adicionales se detallan en el presupuesto." },
   { question: "¿Qué es un tour virtual Matterport?", answer: "Es un recorrido interactivo 360° creado con tecnología Matterport Pro3. Permite a los usuarios explorar un espacio físico desde cualquier dispositivo, con navegación fluida, vistas en 3D, planos de planta y herramientas de medición integradas." },
   { question: "¿Cuánto cuesta un tour virtual 360°?", answer: "El precio se calcula según los metros cuadrados del espacio y las personalizaciones necesarias. Ofrecemos presupuestos personalizados sin compromiso. Contacta con nosotros para recibir una propuesta adaptada." },
   { question: "¿Cuánto tarda la entrega de un tour virtual?", answer: "El procesamiento estándar es de 48 a 72 horas tras el escaneo del espacio. Para proyectos complejos con muchas personalizaciones, el plazo puede extenderse a 5-7 días laborables." },
@@ -289,7 +291,7 @@ const ServicioTourVirtual = () => {
             <div className="grid md:grid-cols-2 gap-6 text-muted-foreground leading-relaxed">
               <div className="space-y-4">
                 <p>
-                  <strong className="text-foreground">Sector inmobiliario:</strong> Las agencias inmobiliarias y promotoras que integran tours virtuales Matterport reducen las visitas físicas innecesarias y atraen compradores internacionales que pueden explorar las propiedades desde cualquier parte del mundo. Las propiedades con tour virtual se venden un 32% más rápido.
+                  <strong className="text-foreground">Sector inmobiliario:</strong> Las agencias inmobiliarias y promotoras que integran tours virtuales Matterport reducen las visitas físicas innecesarias y atraen compradores internacionales que pueden explorar las propiedades desde cualquier parte del mundo. El impacto comercial depende del inmueble, su precio, la demanda y la difusión del anuncio.
                 </p>
                 <p>
                   <strong className="text-foreground">Hostelería y turismo:</strong> Hoteles, resorts, casas rurales y restaurantes que muestran sus instalaciones con tours inmersivos generan mayor confianza en la reserva. Los huéspedes pueden ver exactamente lo que van a encontrar, reduciendo las expectativas no cumplidas y mejorando las valoraciones.
@@ -356,6 +358,7 @@ const ServicioTourVirtual = () => {
         </div>
       </section>
 
+      <ServiceFAQ items={tourVirtualFAQs} title="Preguntas frecuentes sobre tours virtuales" />
       <Footer />
       <WhatsAppButton />
       <FloatingCTA />

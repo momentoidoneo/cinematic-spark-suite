@@ -1,3 +1,5 @@
+import { usePublicHeadCollector } from "@/seo/PublicContent";
+import publicRoutes from "@/seo/publicRoutes.json";
 import { useEffect } from "react";
 import { useSEOMetadata } from "@/hooks/useSEOMetadata";
 import { landingFaqItems } from "@/content/landingFaq";
@@ -38,9 +40,13 @@ const SEOHead = ({
     : null;
   const seoOverride = useSEOMetadata(pagePath || "/");
 
-  const finalTitle = seoOverride?.title || title;
-  const finalDescription = seoOverride?.description || description;
+  const managed = publicRoutes.find((route) => route.path === pagePath);
+  const finalTitle = seoOverride?.title || managed?.title || title;
+  const finalDescription = seoOverride?.description || managed?.description || description;
   const finalOgImage = seoOverride?.og_image || ogImage;
+
+  const collectHead = usePublicHeadCollector();
+  collectHead?.({ title: finalTitle, description: finalDescription, canonical, ogType, ogImage: finalOgImage, noindex, jsonLd });
 
   useEffect(() => {
     // Title

@@ -1,3 +1,4 @@
+import ServiceFAQ from "@/components/ServiceFAQ";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -28,7 +29,7 @@ const eventosServiceSchema = {
 const services = [
   { icon: Camera, title: "Fotografía de eventos", desc: "Cobertura fotográfica completa que captura cada momento clave: ponentes, networking, detalles de organización y emociones de los asistentes. Entrega en 48-72h." },
   { icon: Video, title: "Vídeo de eventos", desc: "Grabación multicámara en 4K con edición profesional. Resúmenes, after movies y piezas para redes sociales que inmortalizan tu evento." },
-  { icon: MonitorPlay, title: "Streaming en directo", desc: "Retransmisión profesional con calidad broadcast, grafismo en directo, múltiples cámaras y conexión estable garantizada en YouTube, Vimeo o plataformas privadas." },
+  { icon: MonitorPlay, title: "Streaming en directo", desc: "Retransmisión profesional con calidad broadcast, grafismo en directo, múltiples cámaras y conectividad planificada según las condiciones del recinto en YouTube, Vimeo o plataformas privadas." },
   { icon: Headphones, title: "Sonido profesional", desc: "Sistemas de PA, microfonía inalámbrica, mezcla en directo y grabación multipista. Desde conferencias íntimas hasta eventos de gran formato." },
   { icon: Music, title: "DJ y ambientación musical", desc: "Servicio de DJ profesional con equipo de sonido e iluminación para crear la atmósfera perfecta en galas, cenas de empresa y celebraciones." },
   { icon: Radio, title: "Producción técnica integral", desc: "Coordinación completa del apartado técnico: iluminación escénica, pantallas LED, videomapping y dirección técnica para eventos complejos." },
@@ -53,9 +54,9 @@ const benefits = [
 const faqs = [
   { question: "¿Qué incluye la cobertura de un evento?", answer: "Ofrecemos paquetes personalizados que pueden incluir fotografía, vídeo multicámara, streaming en directo, sonido profesional y producción técnica. Cada propuesta se adapta al tipo de evento, número de asistentes y necesidades específicas." },
   { question: "¿Cuánto cuesta la cobertura de un evento?", answer: "El precio depende de la duración del evento, los servicios contratados y la complejidad técnica. Ofrecemos presupuestos personalizados sin compromiso. Contacta con nosotros para una propuesta detallada." },
-  { question: "¿Podéis hacer streaming en directo del evento?", answer: "Sí, ofrecemos retransmisión en directo con calidad broadcast, múltiples cámaras, grafismo en tiempo real y conexión estable garantizada. Compatible con YouTube, Vimeo, LinkedIn Live y plataformas privadas." },
+  { question: "¿Podéis hacer streaming en directo del evento?", answer: "Sí, ofrecemos retransmisión en directo con calidad broadcast, múltiples cámaras, grafismo en tiempo real y conectividad planificada según las condiciones del recinto. Compatible con YouTube, Vimeo, LinkedIn Live y plataformas privadas." },
   { question: "¿En cuánto tiempo se entregan las fotos y vídeos?", answer: "Las fotografías editadas se entregan en 48-72 horas. Los vídeos resumen están disponibles en 5-7 días laborables. Ofrecemos servicio express para highlights en redes sociales disponibles en 24h." },
-  { question: "¿Cubríis eventos fuera de la Costa del Sol?", answer: "Sí, nos desplazamos a cualquier punto de España y Portugal. Hemos cubierto eventos en Madrid, Barcelona, Lisboa, Sevilla y muchas otras ciudades." },
+  { question: "¿Desde dónde trabajáis y qué zonas cubrís?", answer: "Trabajamos desde Madrid, con cobertura prioritaria en Madrid y Castilla-La Mancha. Valoramos desplazamientos por España y Portugal según las necesidades del proyecto." },
 ];
 
 const ServicioEventos = () => {
@@ -260,6 +261,7 @@ const ServicioEventos = () => {
         </div>
       </section>
 
+      <ServiceFAQ items={faqs} title="Preguntas frecuentes sobre eventos" />
       <Footer />
       <WhatsAppButton />
       <FloatingCTA />

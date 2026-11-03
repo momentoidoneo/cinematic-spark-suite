@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { ArrowRight, CheckCircle, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -22,9 +23,9 @@ type PricingPlan = {
 };
 
 const PricingPreviewSection = () => {
-  const [plans, setPlans] = useState<PricingPlan[]>([]);
+  const [plans, setPlans] = useState<PricingPlan[]>(usePublicRows<PricingPlan>("pricing_plans"));
   const [configuredPlanIds, setConfiguredPlanIds] = useState<string[] | null>(
-    null,
+    parseLandingPricingPlanIds(usePublicRows<{key: string; value: string}>("site_settings").find(x => x.key === LANDING_PRICING_SETTING_KEY)?.value),
   );
 
   useEffect(() => {

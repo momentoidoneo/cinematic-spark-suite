@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,19 +16,21 @@ interface BlogPost {
   cover_image: string | null;
   published_at: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [post, setPost] = useState<BlogPost | null>(null);
-  const [loading, setLoading] = useState(true);
+  const initialPost = usePublicRows<BlogPost & {slug: string}>("blog_posts").find(x => x.slug === slug) || null;
+  const [post, setPost] = useState<BlogPost | null>(initialPost);
+  const [loading, setLoading] = useState(!post);
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
+      setLoading(!initialPost);
       const { data } = await supabase
         .from("blog_posts")
-        .select("title, content, excerpt, cover_image, published_at, created_at")
+        .select("title, content, excerpt, cover_image, published_at, created_at, updated_at")
         .eq("slug", slug || "")
         .eq("status", "published")
         .maybeSingle();
@@ -35,7 +38,7 @@ const BlogPost = () => {
       setLoading(false);
     };
     load();
-  }, [slug]);
+  }, [slug, initialPost]);
 
   const siteUrl = getSiteUrl();
 
@@ -60,7 +63,8 @@ const BlogPost = () => {
               slug: slug || "",
               excerpt: post.excerpt || undefined,
               coverImage: post.cover_image || undefined,
-              publishedAt: post.published_at || undefined,
+              publishedAt: post.published_at || post.created_at,
+              updatedAt: post.updated_at,
             }),
             breadcrumbSchema([
               { name: "Inicio", url: siteUrl },
@@ -106,6 +110,10 @@ const BlogPost = () => {
                   year: "numeric",
                 })}
               </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Publicado por <Link to="/" className="text-primary hover:underline">Silvio Costa Photography</Link>
+                {post.updated_at && <span> · Actualizado el {new Date(post.updated_at).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}</span>}
+              </p>
               <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-6">
                 {post.title}
               </h1>

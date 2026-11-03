@@ -22,7 +22,7 @@ export const landingFaqItems: LandingFaqItem[] = [
   {
     question: "¿Cuánto tarda la entrega?",
     answer:
-      "El plazo depende del volumen y del tipo de producción. En fotografía inmobiliaria la entrega habitual es de 48 a 72 horas; en vídeo, eventos, renders y proyectos complejos se acuerda un calendario antes de comenzar.",
+      "El plazo depende del volumen y del tipo de producción. En fotografía inmobiliaria la entrega habitual es de 24 a 48 horas; en vídeo, eventos, renders y proyectos complejos se acuerda un calendario antes de comenzar.",
   },
   {
     question: "¿Los servicios con dron incluyen la gestión de permisos?",

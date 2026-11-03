@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,7 +10,7 @@ interface ClientLogo {
 }
 
 const ClientLogosStrip = () => {
-  const [logos, setLogos] = useState<ClientLogo[]>([]);
+  const [logos, setLogos] = useState<ClientLogo[]>(usePublicRows<ClientLogo>("client_logos"));
 
   useEffect(() => {
     supabase

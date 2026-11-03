@@ -1,3 +1,4 @@
+import { usePublicRows } from "@/seo/PublicContent";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Star, ChevronLeft, ChevronRight, Quote } from "lucide-react";
@@ -14,7 +15,7 @@ interface Testimonial {
 }
 
 const TestimonialsSection = () => {
-  const [items, setItems] = useState<Testimonial[]>([]);
+  const [items, setItems] = useState<Testimonial[]>(usePublicRows<Testimonial>("testimonials"));
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
