@@ -42,11 +42,6 @@ const Index = () => {
     url: siteUrl,
     description:
       "Fotografía profesional, vídeo, dron y tours virtuales 360° con cobertura prioritaria en Madrid y Castilla-La Mancha.",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${siteUrl}/blog?q={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
   };
 
   return (

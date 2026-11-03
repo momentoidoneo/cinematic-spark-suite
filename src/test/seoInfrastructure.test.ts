@@ -44,6 +44,12 @@ const wranglerConfig = JSON.parse(
 );
 
 describe("initial SEO shell", () => {
+  it("does not advertise an internal search that the blog does not implement", () => {
+    const home = readFileSync(resolve(process.cwd(), "src/pages/Index.tsx"), "utf8");
+    expect(home).not.toContain("SearchAction");
+    expect(home).not.toContain("search_term_string");
+  });
+
   it("does not claim that every client-side route is the home page", () => {
     expect(html).not.toMatch(/<link\s+rel="canonical"/);
     expect(html).not.toMatch(/<link\s+rel="alternate"\s+hreflang=/);
