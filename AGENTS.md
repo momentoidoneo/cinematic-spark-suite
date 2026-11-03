@@ -31,3 +31,9 @@ Scope: this project only; production https://silviocosta.net.
 - Public content edited later in Admin still needs a manual rebuild/deploy for static HTML to match the live client data. Git builds remain disconnected; do not reconnect them implicitly.
 - Owner-confirmed commercial terms: property photography 24–48 hours; Matterport includes 12 months hosting. Preserve consistency across visible copy, FAQs and AI files.
 - Four blog articles, eight product image alt texts and the cases-index SEO description changed with guarded SQL and backups. See docs/seo-geo-aeo-corrections-2026-11-03.md. No Ads changes or real lead tests in this release.
+
+## Search Console repair release (2026-11-03; newer than full public SEO)
+- Current verified frontend: Cloudflare `9dbd643b-fb79-4d1a-aad9-2b2ff1b6d821`, app commit `0a7b4f6`; immediate rollback `fd0f5e14-6971-40e2-9348-822379ec396a`, pre-audit baseline `a3f176fe-53e1-4a3a-a6a1-b206b671fef3`. Verify live before future deployment.
+- Wix redirects are exact known mappings; do not restore `/single-post/* /blog/:splat`, which redirected changed slugs to404. Build validates all destinations against published sitemap. Retired profiles/articles without equivalent stay genuine404.
+- Search Console URL-prefix property https://silviocosta.net/ is available to momentoidoneo@gmail.com. Sitemap successfully re-read 3November,66discovered URLs. Real-estate gallery index request accepted, not proof of indexing. GBP same account shows0businesses; need correct manager account, never create duplicate.
+- See docs/search-console-cwv-gbp-2026-11-03.md. 193tests,66livepages,17redirects verified. Removed unsupported SearchAction for a nonexistent blog search. CWV insufficient real-user data; lab scores99mobile/97desktop are a single sample, not a field-data pass.

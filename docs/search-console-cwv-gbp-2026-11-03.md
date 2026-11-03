@@ -49,8 +49,8 @@ CrUX no tiene datos suficientes. No declarar Core Web Vitals aprobados, INP medi
 - 192 pruebas / 27 archivos, TypeScript app/node, diff --check, build y validación de 66 páginas correctos.
 
 ## Next Steps
-- Completar inspección publicada e indexación selectiva, seguridad/manual actions y otras exclusiones.
-- Publicar y verificar el parche; contrastar Lighthouse posterior sin atribuir variaciones de una sola muestra exclusivamente al cambio.
+- Comprobaciones técnicas, inspección, solicitud selectiva, publicación y verificación terminadas (ver resultados debajo).
+- Google debe procesar las nuevas URL; volver a comprobar cuando lo pida el titular, sin monitor automático.
 - GBP pendiente de identificar la cuenta con acceso a la ficha real.
 
 ## Relevant Files
@@ -64,3 +64,33 @@ CrUX no tiene datos suficientes. No declarar Core Web Vitals aprobados, INP medi
 ## Key Learnings:
 1. Una redirección genérica de Wix a /blog puede ocultar enlaces rotos si también cambiaron los slugs; usar correspondencias explícitas y comprobar el HTTP final.
 2. Páginas descubiertas, indexadas y métricas de laboratorio son estados distintos; Search Console conserva retraso de procesamiento.
+
+## Resultado externo y publicación
+- Prueba en tiempo real de Google, galería inmobiliaria, 3 noviembre 09:00: **URL disponible para Google, se puede indexar, un breadcrumb válido**. Solicitud de indexación aceptada y añadida a cola prioritaria. No declaramos que ya esté indexada.
+- Search Console Core Web Vitals, actualizado 1 noviembre: ambos tipos de dispositivo sin datos de uso suficientes; el mensaje de la interfaz se refiere a los últimos 90 días. No se interpreta como fallo ni como aprobado.
+- Acciones manuales y problemas de seguridad: ambos **No se ha detectado ningún problema**.
+- Las 4 exclusiones por redirección son /contacto, /tour-virtual, /portfolio, /trabajos-realizados. Todas están en el catálogo de 301 y sus destinos responden 200. Son exclusiones esperadas.
+- Publicación manual: **fd0f5e14-6971-40e2-9348-822379ec396a**, commit **41ea60d**, rollback **a3f176fe-53e1-4a3a-a6a1-b206b671fef3**. No cambia backend ni automatizaciones.
+- Verificación viva 09:03 Madrid: 66/66 HTML HTTP200, idénticos al build, 66 títulos únicos. 17/17 redirecciones exactas HTTP301 hacia destinos HTTP200. Smoke completo correcto (Admin, GTM, robots, 301, 404, 410).
+- JS /assets/index-DutgWD6E.js, SHA256 1946f89e5f3be8c90966982f8d2a3be00708895fab41265acfe7939c3003174d, idéntico al build, solo backend independiente. Footer real del navegador confirma dimensiones 556x432 y carga correcta. Sin envíos de formularios ni eventos de lead.
+
+## Laboratorio posterior
+https://pagespeed.web.dev/analysis/https-silviocosta-net/xhyf7wr6cj — 3 noviembre 09:02 CET.
+- Móvil: **99/100**, FCP/LCP 0,9s, TBT110ms, CLS0,007, SpeedIndex1,1s.
+- Escritorio: **97/100**, FCP/LCP0,3s, TBT90ms, CLS0,093, SpeedIndex0,4s.
+- Accesibilidad, buenas prácticas y SEO automatizado100 en ambos. Ya no figura el diagnóstico de imágenes sin width/height.
+- Las muestras varían: no atribuir el salto de 86 a99 al pequeño ajuste del footer. Las fuentes siguen explicando parte del CLS de escritorio; margen estrecho respecto a0,1. No se garantiza idéntica puntuación ni CWV real. Etiquetas Ads/GA4/consentimiento preservadas.
+- Potenciales mejoras no urgentes: reducir SDK/JS público sin romper auth, ajustar métricas de fuentes y mejorar política de imágenes versionadas. No hay necesidad de tocar medición o forzar caché inmutable en contenido mutable.
+
+## Última exclusión: plantilla de buscador inexistente
+- Alternativa canónica histórica: /blog?q={search_term_string}. HTTP200 y canonical actual https://silviocosta.net/blog: la consolidación es correcta.
+- Se encontró un SearchAction en el schema WebSite de inicio anunciando esa búsqueda, pero Blog no implementa filtro q ni buscador. Se retira la declaración falsa, sin tocar el catálogo ni inventar una función. No se solicita indexar la URL de plantilla.
+- Nueva regresión específica; **193 pruebas/27 archivos**, TypeScript y build66 correctos tras retirar el schema.
+
+
+## Cierre técnico final
+- Última publicación de esta intervención: **9dbd643b-fb79-4d1a-aad9-2b2ff1b6d821**, app **0a7b4f6**, posterior a retirar SearchAction. Rollback inmediato fd0f5e14-6971-40e2-9348-822379ec396a; baseline anterior a la auditoría a3f176fe-53e1-4a3a-a6a1-b206b671fef3.
+- Comprobación final 09:07 Madrid: 66/66 HTML idénticos al build y HTTP200; 17/17 reglas exactas301 con destino200; sin plantilla search_term_string en HTML público ni bundle. JS index-Bbxp6YKD.js SHA256 4d4972ee75a7d8ea255548285a269e0f8a22e9a661b793ac76b1a4bbebaef31d; backend independiente; smoke completo correcto.
+- El informe Lighthouse09:02 corresponde al parche anterior al último cambio exclusivo de metadatos; no se ha vuelto a muestrear después de retirar SearchAction. No se presenta como prueba de un aumento causado por ese cambio.
+- Único bloqueo de acceso: cuenta gestora de Google Business Profile pendiente de confirmar. Ficha no modificada ni duplicada. Pendiente externo: procesamiento e indexación por Google y acumulación suficiente de datos de usuarios reales.
+- No se han pausado, activado ni editado campañas; sin presupuesto/pujas/objetivos, sin cambios de etiquetas o consentimiento, sin leads sintéticos ni envíos de prueba.
