@@ -80,9 +80,18 @@ describe("Cloudflare edge configuration", () => {
     expect(prerenderScript).not.toContain("301!");
     expect(prerenderScript).not.toContain('"/* /404.html 404"');
     expect(prerenderScript).not.toContain('"/admin/* /index.html 200"');
-    expect(prerenderScript).toContain(
+    expect(prerenderScript).not.toContain(
       '"/single-post/* /blog/:splat 301"',
     );
+    expect(prerenderScript).toContain('`${encodeURI(from)} ${to} 301`');
+    expect(prerenderScript).toContain('from: `/single-post/${post.slug}`');
+  });
+
+  it("maps migrated Wix slugs to published replacements instead of broken blog URLs", () => {
+    expect(prerenderScript).toContain('from: "/servicios", to: "/guia-servicios-audiovisuales"');
+    expect(prerenderScript).toContain('oldSlug: "2019/09/12/visitas-virtuales-360º-tour-virtual-360º"');
+    expect(prerenderScript).toContain('to: "/blog/tours-virtuales-matterport-revolucion-inmobiliaria"');
+    expect(prerenderScript).toContain('to: "/blog/grabacion-dron-normativa-espana-consejos"');
   });
 
   it("keeps private routes out of search and caches hashed assets", () => {

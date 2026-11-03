@@ -426,6 +426,7 @@ const legacyRedirects = [
   { from: "/tour-virtual", to: "/servicios/tour-virtual" },
   { from: "/portfolio", to: "/portafolio" },
   { from: "/servicios-1", to: "/servicios/fotografia" },
+  { from: "/servicios", to: "/guia-servicios-audiovisuales" },
   { from: "/contacto", to: "/#contacto" },
   {
     from: "/service-page/servicios-de-fotografía-varios",
@@ -434,6 +435,22 @@ const legacyRedirects = [
       "/service-page/servicios-de-fotograf%C3%ADa-varios",
     ],
   },
+  // Search Console 2026-11-03: Wix article URLs have changed, not just
+  // the /single-post prefix. Keep explicit replacements and never send
+  // unknown old posts to a nonexistent /blog page.
+  ...[
+    {
+      oldSlug: "fotografía-con-dron-para-arquitectura-y-construcción-usos-reales-normativa-y-ventajas-guía-2025",
+      to: "/blog/grabacion-dron-normativa-espana-consejos",
+    },
+    {
+      oldSlug: "2019/09/12/visitas-virtuales-360º-tour-virtual-360º",
+      to: "/blog/tours-virtuales-matterport-revolucion-inmobiliaria",
+    },
+  ].flatMap(({ oldSlug, to }) => [
+    { from: `/single-post/${oldSlug}`, to },
+    { from: `/blog/${oldSlug}`, to },
+  ]),
   ...posts
     .filter((post) => isSafeSlug(post.slug))
     .map((post) => ({
@@ -471,7 +488,11 @@ function renderLegacyRedirect({ from, to }) {
 }
 
 for (const redirect of legacyRedirects) {
-  const outputPaths = [redirect.from, ...(redirect.outputAliases || [])];
+  const outputPaths = new Set([
+    redirect.from,
+    encodeURI(redirect.from),
+    ...(redirect.outputAliases || []),
+  ]);
   for (const outputPath of outputPaths) {
     const outputDir = path.join(
       distDir,
@@ -485,15 +506,9 @@ for (const redirect of legacyRedirects) {
   }
 }
 
-const redirectLines = [
-  "/trabajos-realizados /portafolio 301",
-  "/tour-virtual /servicios/tour-virtual 301",
-  "/portfolio /portafolio 301",
-  "/servicios-1 /servicios/fotografia 301",
-  "/contacto /#contacto 301",
-  "/service-page/servicios-de-fotograf%C3%ADa-varios /servicios/fotografia 301",
-  "/single-post/* /blog/:splat 301",
-];
+const redirectLines = legacyRedirects.map(
+  ({ from, to }) => `${encodeURI(from)} ${to} 301`,
+);
 await writeFile(path.join(distDir, "_redirects"), `${redirectLines.join("\n")}\n`);
 
 const notFoundRoute = {

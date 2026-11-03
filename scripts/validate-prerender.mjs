@@ -25,6 +25,9 @@ for (const url of urls) {
     assert(image.hasAttribute("alt"),`Missing alt: ${url.pathname}`);
     if(image.getAttribute("src").startsWith("/assets/"))await access(path.join(root,image.getAttribute("src")));
   }
+  for(const image of body.querySelectorAll("footer img")) {
+    assert(Number(image.getAttribute("width")) > 0 && Number(image.getAttribute("height")) > 0, `Unsized footer image: ${url.pathname}`);
+  }
   for(const node of doc.querySelectorAll('script[type="application/ld+json"]')) {
     const data=JSON.parse(node.textContent); const schemas=Array.isArray(data)?data:[data];
     for(const schema of schemas)if(schema["@type"]==="FAQPage")for(const item of schema.mainEntity){
@@ -38,5 +41,14 @@ for(const route of ["admin","login"]) {
   const html=await readFile(path.join(root,route,"index.html"),"utf8");
   assert(!html.includes('id="sc-public-content"'),"Public snapshot must not be embedded in private shells");
   assert(html.includes("noindex, nofollow, noarchive"));
+}
+const redirects = (await readFile(path.join(root, "_redirects"), "utf8")).trim().split("\n");
+for (const line of redirects) {
+  const [from, to, status] = line.split(/\s+/);
+  assert.equal(status, "301");
+  assert(!from.includes("*"), "Legacy redirects must have a known destination, not a wildcard");
+  const target = new URL(to, "https://silviocosta.net");
+  assert(urls.some(url => url.pathname === target.pathname), `Redirect to missing/nonpublic page: ${line}`);
+  await access(path.join(root, target.pathname, "index.html"));
 }
 console.log(JSON.stringify({validated:results.length,duplicateTitles:0,pagesWithHeadings:results.filter(x=>x.h2>0).length,pagesWithImages:results.filter(x=>x.images>0).length,home:results.find(x=>x.path==="/")},null,2));

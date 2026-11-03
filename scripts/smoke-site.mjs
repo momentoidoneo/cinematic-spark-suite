@@ -76,6 +76,9 @@ const legacyChecks = [
   ["/trabajos-realizados", "/portafolio"],
   ["/portfolio", "/portafolio"],
   ["/tour-virtual", "/servicios/tour-virtual"],
+  ["/servicios", "/guia-servicios-audiovisuales"],
+  ["/single-post/fotografía-con-dron-para-arquitectura-y-construcción-usos-reales-normativa-y-ventajas-guía-2025", "/blog/grabacion-dron-normativa-espana-consejos"],
+  ["/single-post/2019/09/12/visitas-virtuales-360º-tour-virtual-360º", "/blog/tours-virtuales-matterport-revolucion-inmobiliaria"],
 ];
 
 for (const [from, to] of legacyChecks) {

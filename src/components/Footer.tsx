@@ -91,6 +91,10 @@ const Footer = () => {
               src={logo}
               alt="Silvio Costa Photography"
               className="h-24 w-auto mb-4"
+              width={556}
+              height={432}
+              loading="lazy"
+              decoding="async"
             />
             <p className="text-sm text-foreground/75 leading-relaxed">
               Elevando la fotografía a una experiencia cinematográfica.
